@@ -1209,35 +1209,44 @@ def fetch_rea_manual(criteria):
 # ── Deduplication ──────────────────────────────────────────────────────────
 
 def deduplicate(properties):
-    """Remove duplicate listings across sources. Keeps the richest version."""
+    """Remove duplicate listings across sources. Keeps the richest version.
+
+    Key is based on normalized street address + suburb + postcode (no price),
+    so the same property at different prices across sources still deduplicates.
+    """
     seen = {}
     for prop in properties:
-        # Deduplicate by address (normalized) or by exact postcode+suburb+price
-        key_parts = [
+        # Normalize address: strip punctuation, collapse whitespace, lowercase
+        addr = re.sub(r'[,.\-/]', ' ', prop.get("address", "")).lower()
+        addr = re.sub(r'\s+', ' ', addr).strip()
+        # Extract street number + name (first 3 words) + suburb + postcode
+        addr_words = addr.split()[:3]
+        key_parts = addr_words + [
             prop.get("suburb", "").lower().strip(),
             prop.get("postcode", ""),
         ]
-        # If we have a price, include it in the key
-        if prop.get("price"):
-            key_parts.append(str(prop["price"]))
-        # If we have an address, use the street part
-        addr = prop.get("address", "").lower().strip()
-        if addr:
-            # Extract street number + name (first two words typically)
-            addr_words = addr.split()[:3]
-            key_parts.extend(addr_words)
-
         key = "|".join(key_parts)
 
         if key in seen:
             existing = seen[key]
-            # Prefer Domain API = Domain Web (richest) > REA Web > Farmbuy > REA manual
-            source_priority = {"domain": 4, "domain_web": 4, "rea_web": 3, "farmbuy": 2, "rea_alert": 2, "listing_loop": 2, "property_whispers": 2, "rea": 1}
-            if source_priority.get(prop["source"], 0) > source_priority.get(existing["source"], 0):
+            source_priority = {
+                "domain": 5, "domain_web": 5,
+                "rea_web": 4,
+                "elders": 3, "str": 3,
+                "farmbuy": 2,
+                "rea_alert": 1, "listing_loop": 1, "property_whispers": 1, "rea": 1,
+            }
+            new_pri = source_priority.get(prop["source"], 0)
+            old_pri = source_priority.get(existing["source"], 0)
+            # Higher source priority wins
+            if new_pri > old_pri:
                 seen[key] = prop
-            # If same source priority, prefer the one with more data
-            elif prop.get("lat") and not existing.get("lat"):
-                seen[key] = prop
+            # Same priority: prefer the one with more data (description, coords)
+            elif new_pri == old_pri:
+                new_richness = bool(prop.get("description")) + bool(prop.get("lat")) + bool(prop.get("price"))
+                old_richness = bool(existing.get("description")) + bool(existing.get("lat")) + bool(existing.get("price"))
+                if new_richness > old_richness:
+                    seen[key] = prop
         else:
             seen[key] = prop
 
@@ -1820,7 +1829,10 @@ def fetch_elders(criteria):
                 address = address[1:].strip()
 
             unique_id = listing.get("unique_id", str(listing.get("id", "")))
-            listing_url = f"https://regionalnsw.eldersrealestate.com.au/rural/sale/{unique_id}/"
+            # Website detail pages are broken (all 404/redirect), so link to the
+            # PDF brochure which always works and contains full listing details
+            brochure_url = listing.get("pdf_brochure_url", "")
+            listing_url = brochure_url or f"https://regionalnsw.eldersrealestate.com.au/rural/sale/{unique_id}/"
 
             # Images
             photo_url = None
@@ -1843,9 +1855,10 @@ def fetch_elders(criteria):
                 "land_acres": land_acres,
                 "bedrooms": item.get("bedrooms"),
                 "bathrooms": item.get("bathrooms"),
-                "headline": listing.get("heading", ""),
-                "description": "",  # Need detail page fetch for description
+                "headline": listing.get("heading", "") or listing.get("price_view", ""),
+                "description": "",  # Enriched from PDF brochure below
                 "listing_url": listing_url,
+                "pdf_brochure_url": listing.get("pdf_brochure_url", ""),
                 "photo_url": photo_url,
                 "lat": _safe_float(listing.get("geo_latitude")),
                 "lng": _safe_float(listing.get("geo_longitude")),
@@ -1859,8 +1872,192 @@ def fetch_elders(criteria):
         page += 1
         time.sleep(1.0)
 
+    # Enrich with descriptions from PDF brochures
+    all_listings = _enrich_elders_from_brochures(all_listings)
+
     print(f"Elders: {len(all_listings)} listings in target postcodes")
     return all_listings
+
+
+def _enrich_elders_from_brochures(listings):
+    """Fetch PDF brochures from Elders and extract descriptions.
+
+    The Elders website detail pages are broken (all return 404), but every
+    listing has a PDF brochure at a predictable URL containing the full
+    description text. We download pages 1-2 and extract the narrative.
+    """
+    import io
+    try:
+        import pdfplumber
+    except ImportError:
+        print("  Elders enrich: pdfplumber not installed — skipping PDF enrichment")
+        return listings
+
+    need_enrich = [p for p in listings if not p.get("description") and p.get("pdf_brochure_url")]
+    if not need_enrich:
+        print("  Elders enrich: all listings already have descriptions")
+        return listings
+
+    print(f"  Elders enrich: fetching {len(need_enrich)} PDF brochures...")
+    session = _retry_session(retries=2, backoff=1.0)
+    enriched = 0
+
+    for prop in need_enrich:
+        pdf_url = prop["pdf_brochure_url"]
+        try:
+            resp = session.get(
+                pdf_url,
+                timeout=30,
+                headers={"User-Agent": "Mozilla/5.0 (property search tool)"},
+            )
+            if resp.status_code != 200:
+                continue
+        except requests.RequestException:
+            continue
+
+        try:
+            with pdfplumber.open(io.BytesIO(resp.content)) as pdf:
+                # Description is on pages 1-2 — skip image-only pages and footers
+                text_parts = []
+                for pg in pdf.pages[:2]:
+                    page_text = pg.extract_text(x_tolerance=2, y_tolerance=2) or ""
+                    text_parts.append(page_text)
+                raw_text = "\n".join(text_parts)
+
+                # Extract description: skip header lines (domain, address, area)
+                # and metadata blocks (TYPE:, INTERNET ID:, CONTACT DETAILS, etc.)
+                description = _extract_elders_description(raw_text)
+                if description and len(description) > 50:
+                    prop["description"] = description[:2000]
+                    enriched += 1
+
+                    # Extract headline from PDF — override if current one
+                    # is just a price/auction string from the API
+                    headline = _extract_elders_headline(raw_text)
+                    if headline:
+                        current_hl = prop.get("headline", "")
+                        is_price_hl = (
+                            not current_hl or
+                            re.match(r'^[\$\d]', current_hl) or
+                            current_hl.lower().startswith(("auction", "price", "contact", "by negotiation", "guide", "offers"))
+                        )
+                        if is_price_hl:
+                            prop["headline"] = headline
+
+        except Exception as e:
+            print(f"    PDF parse error for {prop.get('source_id')}: {e}")
+            continue
+
+        time.sleep(0.3)
+
+    print(f"  Elders enrich: {enriched}/{len(need_enrich)} descriptions extracted from PDFs")
+    return listings
+
+
+def _extract_elders_description(raw_text):
+    """Extract the property description from Elders PDF brochure text.
+
+    PDF has a two-column layout: description left, metadata right.
+    pdfplumber merges these into mixed lines. We filter out metadata
+    fragments and stitch the description back together.
+    """
+    lines = raw_text.split("\n")
+    desc_lines = []
+    past_area_line = False
+
+    # Metadata fragments that appear in the right column
+    _skip_prefixes = (
+        "TYPE:", "INTERNET", "AUCTION", "CONTACT", "HOMESTEAD",
+        "TITLE/", "SALE DETAILS", "IMPROVEMENTS",
+        "Rates ", "Bedrooms", "Bathrooms", "Toilets",
+        "Theparticularscontained", "The particulars contained",
+        "Land Area", "Disclaimer",
+    )
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # Skip header/domain lines
+        if re.match(r'^(https?://|elders\w*\.com)', stripped, re.IGNORECASE):
+            continue
+
+        # Skip address line (first line: "123 Road Name, SUBURB, NSW 2580" or "SUBURB NSW 2580")
+        if not past_area_line and (
+            re.match(r'^(?:\d+|Lot\s+\d+)\s+\w+.*,\s*[A-Z]+.*\d{4}', stripped) or
+            re.match(r'^[A-Z\s]+(?:NSW|ACT|VIC|QLD)\s+\d{4}$', stripped) or
+            re.search(r',\s*(?:NSW|ACT|VIC|QLD)\s+\d{4}', stripped)
+        ):
+            continue
+
+        # Skip area line ("32.60 hectares, 80.55 acres")
+        if re.match(r'^[\d,.]+\s+(hectares|acres)', stripped, re.IGNORECASE):
+            past_area_line = True
+            continue
+
+        # Skip pure metadata fragments
+        if stripped.startswith(_skip_prefixes):
+            continue
+        # Skip bullet points (improvements list)
+        if stripped.startswith(("• ", "- ")) and len(stripped) < 80:
+            continue
+        # Skip short metadata values (prices, phone numbers, names, dates)
+        if len(stripped) < 20 and (
+            re.match(r'^[\$\d,.\s]+$', stripped) or
+            re.match(r'^\d{4}\s+\w+', stripped) or  # "0413 996 971"
+            re.match(r'^[A-Z][a-z]+\s+[A-Z][a-z]+$', stripped)  # "Sam Simpson"
+        ):
+            continue
+
+        # Fix concatenated words from PDF extraction
+        if re.search(r'[a-z]{3}[A-Z]', stripped):
+            stripped = re.sub(r'([a-z])([A-Z])', r'\1 \2', stripped)
+
+        # Strip trailing metadata that got merged into description lines
+        # e.g. "...within easy comm TYPE: For Sale"
+        stripped = re.sub(r'\s+(TYPE:|INTERNET|AUCTION|CONTACT|SALE DETAILS).*$', '', stripped)
+
+        if len(stripped) > 15:
+            desc_lines.append(stripped)
+
+    return " ".join(desc_lines).strip()
+
+
+def _extract_elders_headline(raw_text):
+    """Extract the headline from Elders PDF brochure text.
+
+    Structure: line 0 = address, line 1 = headline, line 2 = area.
+    The headline is the second non-boilerplate line before the area.
+    """
+    lines = raw_text.split("\n")
+    found_address = False
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or re.match(r'^(https?://|elders)', stripped, re.IGNORECASE):
+            continue
+
+        # Address line — "123 Road Name, SUBURB, NSW 2580" or "Lot 52 ..." or "SUBURB NSW 2580"
+        if not found_address and (
+            re.match(r'^(?:\d+|Lot\s+\d+)\s+\w+.*,\s*[A-Z]+.*\d{4}', stripped) or
+            re.match(r'^[A-Z\s]+(?:NSW|ACT|VIC|QLD)\s+\d{4}$', stripped) or
+            re.search(r',\s*(?:NSW|ACT|VIC|QLD)\s+\d{4}', stripped)
+        ):
+            found_address = True
+            continue
+
+        # Area line means we've passed the headline zone
+        if re.match(r'^[\d,.]+\s+(hectares|acres)', stripped, re.IGNORECASE):
+            break
+
+        # This should be the headline
+        if found_address and len(stripped) > 10 and len(stripped) < 200:
+            if re.search(r'[a-z]{3}[A-Z]', stripped):
+                stripped = re.sub(r'([a-z])([A-Z])', r'\1 \2', stripped)
+            return stripped
+
+    return ""
 
 
 def _safe_float(val):
@@ -2018,11 +2215,28 @@ def _parse_str_detail(url, rex_id, target_postcodes):
     bedrooms = int(beds_match.group(1)) if beds_match else None
     bathrooms = int(baths_match.group(1)) if baths_match else None
 
-    # Extract description
+    # Extract description from v2-prose container (the actual listing description)
     description = ""
-    desc_blocks = re.findall(r'<p[^>]*class="[^"]*v2-text[^"]*"[^>]*>(.*?)</p>', html, re.DOTALL)
-    if desc_blocks:
-        description = " ".join(re.sub(r'<[^>]+>', '', b).strip() for b in desc_blocks[:5])[:1000]
+    prose_match = re.search(
+        r'<div[^>]*class="[^"]*v2-prose[^"]*"[^>]*>(.*?)</div>',
+        html, re.DOTALL
+    )
+    if prose_match:
+        # Extract all <p> text within the prose container
+        paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', prose_match.group(1), re.DOTALL)
+        desc_parts = [re.sub(r'<[^>]+>', '', p).strip() for p in paragraphs]
+        description = " ".join(d for d in desc_parts if d)[:2000]
+
+    # Fallback: og:description meta tag (always server-rendered)
+    if not description:
+        og_match = re.search(
+            r'<meta\s+property="og:description"\s+content="(.*?)"', html
+        )
+        if og_match:
+            desc_text = og_match.group(1).strip()
+            # Strip the "N bedroom property for Sale in Suburb - " prefix
+            desc_text = re.sub(r'^\d+\s+bedroom\s+property\s+for\s+\w+\s+in\s+\w+\s*-\s*', '', desc_text, flags=re.IGNORECASE)
+            description = desc_text[:2000]
 
     # Extract lat/lng from Leaflet marker
     lat = None
@@ -2031,6 +2245,16 @@ def _parse_str_detail(url, rex_id, target_postcodes):
     if marker_match:
         lat = float(marker_match.group(1))
         lng = float(marker_match.group(2))
+
+    # Extract headline from og:title (e.g. "40 Hectares – Approved for Living...")
+    headline = ""
+    og_title = re.search(r'<meta\s+property="og:title"\s+content="(.*?)"', html)
+    if og_title:
+        headline = og_title.group(1).strip().rstrip(" -")
+        # Decode HTML entities
+        headline = headline.replace("&amp;", "&").replace("&#8211;", "–").replace("&#8212;", "—")
+        # Strip trailing price if present (already captured separately)
+        headline = re.sub(r',?\s*\$[\d,]+(?:\s*-\s*\$[\d,]+)?\s*-?\s*$', '', headline).strip()
 
     # Extract first image
     photo_url = None
@@ -2052,7 +2276,7 @@ def _parse_str_detail(url, rex_id, target_postcodes):
         "land_acres": land_acres,
         "bedrooms": bedrooms,
         "bathrooms": bathrooms,
-        "headline": "",
+        "headline": headline,
         "description": description,
         "listing_url": url,
         "photo_url": photo_url,
