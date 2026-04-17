@@ -126,8 +126,26 @@
             transition: box-shadow 0.2s, opacity 0.4s, border-color 0.3s;
         }
         .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-        .card.dismissed { opacity: 0.35; }
+        .card.dismissed { opacity: 0.35; display: none; }
         .card.dismissed:hover { opacity: 0.6; }
+
+        /* ── Dismissed section ─────────────────── */
+        .dismissed-divider {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px; margin: 24px 0 12px;
+            border-top: 1px solid var(--light-border);
+        }
+        .dismissed-label {
+            font-size: 12px; font-weight: 600; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .dismissed-toggle {
+            font-family: Inter, -apple-system, sans-serif;
+            font-size: 12px; font-weight: 500; padding: 4px 12px;
+            border-radius: 16px; border: 1px solid var(--light-border);
+            background: #fff; color: var(--slate); cursor: pointer;
+        }
+        .dismissed-toggle:hover { border-color: var(--eucalyptus); color: var(--bark); }
         .card.favourited { border-color: var(--fav-gold); border-width: 2px; }
 
         .card-photo { overflow: hidden; }
@@ -17174,9 +17192,15 @@ Main Shed:
                 return diff !== 0 ? diff : parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
             },
         };
-        cards.sort(sortFns[by] || sortFns.score);
+        // Sort active cards, keep dismissed at the bottom
+        const active = cards.filter(c => !c.classList.contains('dismissed'));
+        const dismissed = cards.filter(c => c.classList.contains('dismissed'));
+        active.sort(sortFns[by] || sortFns.score);
+        const divider = document.getElementById('dismissed-divider');
         const footer = container.querySelector('.footer');
-        cards.forEach(c => container.insertBefore(c, footer));
+        const insertPoint = divider || footer;
+        active.forEach(c => container.insertBefore(c, insertPoint));
+        if (divider) dismissed.forEach(c => container.insertBefore(c, footer));
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === by));
     }
 
@@ -17244,8 +17268,15 @@ Main Shed:
             }
         });
 
-        // Dim card on "Not for me"
+        // "Not for me" → move card to dismissed section, hide from map
+        const wasDismissed = card.classList.contains('dismissed');
         card.classList.toggle('dismissed', reaction === 'pass');
+
+        if (reaction === 'pass' && !wasDismissed) {
+            moveToDismissed(card);
+        } else if (reaction !== 'pass' && wasDismissed) {
+            moveToActive(card);
+        }
 
         // Show confirmation
         const msg = reaction === 'love' ? 'Noted — love it!' :
@@ -17255,6 +17286,66 @@ Main Shed:
 
         // Update map pin
         updateMapPin(idx, reaction);
+        updateDismissedCount();
+    }
+
+    function moveToDismissed(card) {
+        const footer = document.querySelector('.footer');
+        const divider = document.getElementById('dismissed-divider');
+        if (divider) {
+            card.parentNode.insertBefore(card, divider);
+        } else if (footer) {
+            card.parentNode.insertBefore(card, footer);
+        }
+    }
+
+    function moveToActive(card) {
+        // Move back above the dismissed divider, at the end of active cards
+        const divider = document.getElementById('dismissed-divider');
+        if (divider) {
+            card.parentNode.insertBefore(card, divider);
+            // Re-sort: find the right position by score
+            const container = card.parentNode;
+            const activeCards = Array.from(container.querySelectorAll('.card:not(.dismissed)'));
+            const myScore = parseFloat(card.dataset.score) || 0;
+            const insertBefore = activeCards.find(c => c !== card && (parseFloat(c.dataset.score) || 0) < myScore);
+            if (insertBefore) {
+                container.insertBefore(card, insertBefore);
+            }
+        }
+    }
+
+    function updateDismissedCount() {
+        const dismissed = document.querySelectorAll('.card.dismissed');
+        const divider = document.getElementById('dismissed-divider');
+        const count = dismissed.length;
+        if (count > 0 && !divider) {
+            // Create dismissed section divider
+            const d = document.createElement('div');
+            d.id = 'dismissed-divider';
+            d.className = 'dismissed-divider';
+            d.innerHTML = '<span class="dismissed-label">Dismissed (' + count + ')</span>'
+                + '<button class="dismissed-toggle" onclick="toggleDismissedVisibility()">Show</button>';
+            const footer = document.querySelector('.footer');
+            footer.parentNode.insertBefore(d, footer);
+            // Move all dismissed cards below divider
+            dismissed.forEach(c => d.parentNode.insertBefore(c, footer));
+        } else if (divider) {
+            const label = divider.querySelector('.dismissed-label');
+            if (count > 0) {
+                label.textContent = 'Dismissed (' + count + ')';
+            } else {
+                divider.remove();
+            }
+        }
+    }
+
+    function toggleDismissedVisibility() {
+        const dismissed = document.querySelectorAll('.card.dismissed');
+        const btn = document.querySelector('.dismissed-toggle');
+        const showing = btn.textContent === 'Hide';
+        dismissed.forEach(c => c.style.display = showing ? 'none' : '');
+        btn.textContent = showing ? 'Show' : 'Hide';
     }
 
     // ── Favourites ────────────────────────────────────────────────────
@@ -17383,15 +17474,20 @@ Main Shed:
     }
 
     function updateMapPin(idx, reaction) {
+        const marker = mapMarkers[idx];
         const pin = mapPinEls[idx];
-        if (!pin) return;
         if (reaction === 'pass') {
-            pin.style.opacity = '0.35';
-        } else if (reaction === 'love') {
-            pin.style.background = '#166534';
-            pin.style.opacity = '1';
+            // Remove from map entirely
+            if (marker && map) map.removeLayer(marker);
         } else {
-            pin.style.opacity = '1';
+            // Add back if was removed
+            if (marker && map && !map.hasLayer(marker)) map.addLayer(marker);
+            if (pin) {
+                if (reaction === 'love') {
+                    pin.style.background = '#166534';
+                }
+                pin.style.opacity = '1';
+            }
         }
     }
 
