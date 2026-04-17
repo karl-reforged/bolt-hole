@@ -232,7 +232,7 @@ To send to George this weekend:
   Option B — Send the link email (shorter, points to shortlist):
     1. Open email_link_preview.html
     2. Copy-paste into Gmail, OR
-    3. Set up Resend (next week) for automated sending
+    3. Run email_sender.py (Resend integration, requires RESEND_API_KEY in .env)
 
   Don't forget to push the shortlist:
     git add docs/ && git commit -m "Update shortlist" && git push

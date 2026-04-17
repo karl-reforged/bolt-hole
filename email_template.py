@@ -279,20 +279,18 @@ def render_email(properties, search_date=None, card_count=10):
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px 24px;margin-bottom:24px;">
             <div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:12px;">How this works</div>
             <div style="font-size:13px;color:#475569;line-height:1.7;">
-                The system pulls listings daily from <strong>Domain</strong>, <strong>Elders</strong>,
-                <strong>Farmbuy</strong>, and <strong>Southern Tablelands Realty</strong>, then scores each one
-                against your criteria &mdash; water (25), drive time (20), terrain (20), seclusion (15),
-                house (15), and national park (5).<br><br>
+                The system pulls listings from <strong>Domain</strong>, <strong>REA / realestate.com.au</strong>,
+                <strong>Elders</strong>, <strong>Farmbuy</strong>, and <strong>Southern Tablelands Realty</strong>,
+                then scores each one against your criteria &mdash; water (25), drive time (20),
+                terrain (20), seclusion (15), house (15), and national park (5).<br><br>
                 Scoring is based on keywords in the listing description, so it's not perfect &mdash;
                 a property with "dam" in the text scores for water, but one that has a dam and doesn't
                 mention it will be underscored. Your feedback helps me catch what the keywords miss.
             </div>
             <div style="font-size:14px;font-weight:600;color:#1e293b;margin-top:16px;margin-bottom:8px;">What's not in yet</div>
             <div style="font-size:13px;color:#475569;line-height:1.7;">
-                <strong>REA / realestate.com.au</strong> &mdash; no public API and aggressive bot blocking. Covered via 5 daily email alerts feeding into the system (coming next week).<br>
                 <strong>Off-market channels</strong> &mdash; Listing Loop and Property Whispers accounts are set up but not yet feeding in automatically.<br>
-                <strong>Satellite/spatial data</strong> &mdash; watercourse proximity, mobile coverage, neighbour density. These would improve scoring accuracy. On the roadmap.<br>
-                <strong>Automated delivery</strong> &mdash; this email was sent manually. Weekly automated sends start next week.
+                <strong>Satellite/spatial data</strong> &mdash; watercourse proximity, mobile coverage, neighbour density. These would improve scoring accuracy. On the roadmap.
             </div>
         </div>
 

@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """
 Multi-source property ingestion — normalizes listings from Domain, Farmbuy,
-REA, and web-scraped sources into a common format for the scoring pipeline.
+REA, Elders, STR, and web-scraped sources into a common format for the scoring pipeline.
 
 Each source returns a list of NormalizedProperty dicts with consistent fields.
 The main pipeline (search.py) deduplicates and scores them all together.
 
 Sources:
-  - Domain API (official, requires production access)
-  - Domain Web (scrapes __NEXT_DATA__ from search pages — no API key needed)
+  - Domain Web (scrapes __NEXT_DATA__ from search pages via Playwright)
+  - Domain API (official, requires production access — currently sandbox-blocked)
   - Farmbuy.com (scrapes embedded JSON from listing pages)
-  - REA Web (scrapes ArgonautExchange from realestate.com.au — no API)
+  - Elders Real Estate (scrapes regionalnsw.eldersrealestate.com.au)
+  - Southern Tablelands Realty (scrapes yourstr.com.au)
+  - REA via Apify (abotapi/realestate-au-scraper actor — bypasses REA bot blocking)
   - REA Manual (manually captured listings from email alerts)
+  - Email Alerts (IMAP parsing of property alert emails)
 """
 
 import json
@@ -1231,10 +1234,10 @@ def deduplicate(properties):
             existing = seen[key]
             source_priority = {
                 "domain": 5, "domain_web": 5,
-                "rea_web": 4,
+                "rea_web": 4, "rea_apify": 4,
                 "elders": 3, "str": 3,
                 "farmbuy": 2,
-                "rea_alert": 1, "listing_loop": 1, "property_whispers": 1, "rea": 1,
+                "rea_alert": 1, "listing_loop": 1, "property_whispers": 1, "cre": 1, "rea": 1,
             }
             new_pri = source_priority.get(prop["source"], 0)
             old_pri = source_priority.get(existing["source"], 0)
@@ -1319,6 +1322,321 @@ def enrich_with_descriptions(properties):
     return properties
 
 
+# ── Source 3c: REA via Apify ──────────────────────────────────────────────
+#
+# REA aggressively blocks all automated access (429 on Playwright, requests,
+# and even browser-context fetch). Apify handles anti-bot via their proxy
+# infrastructure. We pass search URLs, they return structured listing JSON.
+#
+# Cost: ~$0.09 per 1,000 listings. Free tier ($5/mo) covers our volume easily.
+# Actor: configurable via APIFY_REA_ACTOR in .env (default: stealth_mode/realestate-property-search-scraper)
+# Docs: https://docs.apify.com/api/v2
+
+APIFY_API_BASE = "https://api.apify.com/v2"
+APIFY_DEFAULT_ACTOR = "abotapi/realestate-au-scraper"
+
+
+def fetch_rea_apify(criteria):
+    """Fetch REA listings via Apify actor.
+
+    Uses location mode with postcode + filters to get rural properties in
+    our target postcodes. The actor handles REA's anti-bot protection
+    server-side, and returns structured JSON we normalise into our format.
+    """
+    token = os.getenv("APIFY_API_TOKEN")
+    if not token:
+        print("REA (Apify): skipped — set APIFY_API_TOKEN in .env")
+        return []
+
+    actor = os.getenv("APIFY_REA_ACTOR", APIFY_DEFAULT_ACTOR)
+    gates = criteria["gates"]
+    postcodes = gates["geography"]["postcodes_west"] + gates["geography"]["postcodes_south"]
+
+    # Limit postcodes to control Apify cost (~$0.12 per postcode)
+    # Set APIFY_MAX_POSTCODES in .env to cap (default: all)
+    max_pc = int(os.getenv("APIFY_MAX_POSTCODES", "0")) or len(postcodes)
+    if max_pc < len(postcodes):
+        postcodes = postcodes[:max_pc]
+        print(f"REA (Apify): capped to {max_pc} postcodes (APIFY_MAX_POSTCODES)")
+
+    # Build location list from postcodes
+    locations = [{"postcode": pc, "state": "NSW"} for pc in postcodes]
+
+    print(f"REA (Apify): submitting {len(locations)} postcodes to actor {actor}...")
+
+    # Apify API uses ~ not / as separator: "user/actor" → "user~actor"
+    actor_api_id = actor.replace("/", "~")
+    session = _retry_session(retries=2, backoff=2.0)
+
+    # Actor input — location mode with filters matching our gates
+    actor_input = {
+        "mode": "location",
+        "locations": locations,
+        "listingType": "buy",
+        "propertyTypes": ["rural"],
+        "priceMin": gates["budget"]["min_price"],
+        "priceMax": gates["budget"]["max_price"],
+        "maxListings": 500,
+        "maxPages": 3,
+        "includeSurrounding": False,
+        "requestDelay": {"min": 2000, "max": 5000},
+    }
+
+    # ── Step 1: Start the actor run (async) ──
+    run_url = f"{APIFY_API_BASE}/acts/{actor_api_id}/runs"
+    try:
+        resp = session.post(
+            run_url,
+            params={"token": token},
+            json=actor_input,
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        print(f"REA (Apify): failed to start actor — {e}")
+        return []
+
+    if resp.status_code not in (200, 201):
+        print(f"REA (Apify): HTTP {resp.status_code} starting run — {resp.text[:200]}")
+        return []
+
+    run_data = resp.json().get("data", {})
+    run_id = run_data.get("id")
+    dataset_id = run_data.get("defaultDatasetId")
+
+    if not run_id:
+        print("REA (Apify): no run ID returned")
+        return []
+
+    print(f"REA (Apify): run started (ID: {run_id}), polling for completion...")
+
+    # ── Step 2: Poll until run finishes (max 30 min) ──
+    # 3 postcodes takes ~3.5 min; 27 postcodes ~30 min with rate limiting
+    poll_url = f"{APIFY_API_BASE}/actor-runs/{run_id}"
+    max_wait = 1800  # 30 minutes
+    poll_interval = 15
+    waited = 0
+
+    while waited < max_wait:
+        time.sleep(poll_interval)
+        waited += poll_interval
+
+        try:
+            poll_resp = session.get(poll_url, params={"token": token}, timeout=15)
+            if poll_resp.status_code != 200:
+                continue
+            status = poll_resp.json().get("data", {}).get("status")
+        except Exception:
+            continue
+
+        if status in ("SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"):
+            print(f"REA (Apify): run finished with status: {status} ({waited}s)")
+            break
+
+        if waited % 60 == 0:
+            print(f"REA (Apify): still running... ({waited}s)")
+
+    else:
+        print(f"REA (Apify): timed out after {max_wait}s waiting for run to complete")
+        return []
+
+    if status != "SUCCEEDED":
+        print(f"REA (Apify): run {status} — no results")
+        return []
+
+    # ── Step 3: Fetch dataset items ──
+    if not dataset_id:
+        dataset_id = poll_resp.json().get("data", {}).get("defaultDatasetId")
+    if not dataset_id:
+        print("REA (Apify): no dataset ID found")
+        return []
+
+    items_url = f"{APIFY_API_BASE}/datasets/{dataset_id}/items"
+    try:
+        items_resp = session.get(
+            items_url,
+            params={"token": token, "format": "json"},
+            timeout=60,
+        )
+    except requests.RequestException as e:
+        print(f"REA (Apify): failed to fetch results — {e}")
+        return []
+
+    if items_resp.status_code != 200:
+        print(f"REA (Apify): HTTP {items_resp.status_code} fetching dataset")
+        return []
+
+    try:
+        items = items_resp.json()
+    except (json.JSONDecodeError, ValueError):
+        print("REA (Apify): invalid JSON in dataset")
+        return []
+
+    if not isinstance(items, list):
+        print(f"REA (Apify): unexpected dataset type: {type(items)}")
+        return []
+
+    print(f"REA (Apify): {len(items)} raw items returned")
+
+    # Normalise — Apify actors return varied schemas, so we handle flexibly
+    target_postcodes = set(postcodes)
+    normalized = []
+    seen_ids = set()
+
+    for item in items:
+        try:
+            prop = _normalize_apify_rea_listing(item, target_postcodes)
+        except Exception:
+            continue
+        if not prop:
+            continue
+        if prop["source_id"] in seen_ids:
+            continue
+        seen_ids.add(prop["source_id"])
+        normalized.append(prop)
+
+    print(f"REA (Apify): {len(normalized)} listings in target postcodes")
+    return normalized
+
+
+def _normalize_apify_rea_listing(item, target_postcodes):
+    """Normalise an Apify REA listing into our standard format.
+
+    Schema (abotapi/realestate-au-scraper):
+      address: {full, street, suburb, state, postcode}
+      coordinates: {latitude, longitude}  — may be absent
+      price: {display, value?}
+      features: {bedrooms, bathrooms, parkingSpaces, landSize, landSizeUnit}
+      media: {images: [{url, isFloorplan}], imageCount, floorplanUrl}
+      agent: {name, phone, photoUrl}
+      agency: {name, logoUrl}
+      description: string
+      url: string
+      propertyId: string
+      badge: "Under offer" | "" | etc  — listing status
+    """
+    # Skip under-offer / sold listings — George wants active listings only
+    badge = (item.get("badge") or "").lower()
+    if "under offer" in badge or "sold" in badge:
+        return None
+
+    # ── Address ──
+    addr = item.get("address", {}) or {}
+    address = addr.get("full", "")
+    suburb = addr.get("suburb", "")
+    postcode = str(addr.get("postcode", ""))
+    state = addr.get("state", "NSW")
+
+    # Postcode fallback from full address
+    if not postcode and address:
+        pc_match = re.search(r'\b(\d{4})\b', address)
+        postcode = pc_match.group(1) if pc_match else ""
+
+    # Filter to target postcodes
+    if postcode and postcode not in target_postcodes:
+        return None
+
+    # ── Coordinates (top-level, not nested under address) ──
+    coords = item.get("coordinates", {}) or {}
+    lat = coords.get("latitude")
+    lng = coords.get("longitude")
+
+    # ── Price ──
+    price_obj = item.get("price", {}) or {}
+    price_display = price_obj.get("display", "") if isinstance(price_obj, dict) else str(price_obj)
+    price_num = price_obj.get("value") if isinstance(price_obj, dict) else None
+
+    if price_num is None and price_display:
+        match = re.search(r'\$[\d,]+', str(price_display).replace(' ', ''))
+        if match:
+            try:
+                price_num = int(match.group().replace('$', '').replace(',', ''))
+            except ValueError:
+                pass
+
+    # ── Land size (under features, not propertySizes) ──
+    land_sqm, land_ha, land_acres = None, None, None
+    features = item.get("features", {}) or {}
+    land_val = features.get("landSize")
+    land_unit = (features.get("landSizeUnit") or "sqm").lower()
+
+    if land_val is not None and land_val > 0:
+        # Heuristic: landSizeUnit is often "sqm" even for hectare values.
+        # If value < 500 and unit says "sqm", it's almost certainly hectares.
+        if land_unit == "sqm" and land_val < 500:
+            # Treat as hectares
+            land_ha = round(land_val, 2)
+            land_sqm = land_ha * 10000
+            land_acres = round(land_ha * 2.471, 1)
+        elif "ha" in land_unit or "hectare" in land_unit:
+            land_ha = round(land_val, 2)
+            land_sqm = land_ha * 10000
+            land_acres = round(land_ha * 2.471, 1)
+        elif "ac" in land_unit or "acre" in land_unit:
+            land_acres = round(land_val, 1)
+            land_ha = round(land_val / 2.471, 2)
+            land_sqm = land_ha * 10000
+        else:
+            # Assume sqm
+            land_sqm = float(land_val)
+            land_ha = round(land_sqm / 10000, 2)
+            land_acres = round(land_ha * 2.471, 1)
+
+    beds = features.get("bedrooms")
+    baths = features.get("bathrooms")
+
+    # ── Description ──
+    description = (item.get("description") or "")[:2000]
+
+    # ── Photo ──
+    media = item.get("media", {}) or {}
+    images = media.get("images", []) or []
+    photo_url = None
+    if images:
+        first = images[0]
+        if isinstance(first, dict):
+            photo_url = first.get("url")
+        elif isinstance(first, str):
+            photo_url = first
+
+    # ── URL ──
+    listing_url = item.get("url", "")
+    if listing_url and not listing_url.startswith("http"):
+        listing_url = f"https://www.realestate.com.au{listing_url}"
+
+    # ── ID ──
+    listing_id = str(item.get("propertyId", item.get("id", "")))
+
+    # ── Agent / Agency ──
+    agency = item.get("agency", {}) or {}
+    agent = item.get("agent", {}) or {}
+    agent_name = agency.get("name") or agent.get("name")
+
+    return {
+        "source": "rea_apify",
+        "source_id": f"rea-{listing_id}" if listing_id else "",
+        "address": address,
+        "suburb": suburb,
+        "postcode": postcode,
+        "state": state,
+        "price": price_num,
+        "display_price": price_display or "Price on application",
+        "land_sqm": land_sqm,
+        "land_ha": land_ha,
+        "land_acres": land_acres,
+        "bedrooms": beds,
+        "bathrooms": baths,
+        "headline": "",
+        "description": description,
+        "listing_url": listing_url,
+        "photo_url": photo_url,
+        "lat": lat,
+        "lng": lng,
+        "date_listed": item.get("scrapedAt"),
+        "agent": agent_name,
+        "raw": item,
+    }
+
+
 # ── Source 4: Email alerts (REA, Listing Loop, Property Whispers) ─────────
 
 GMAIL_IMAP_HOST = "imap.gmail.com"
@@ -1326,8 +1644,9 @@ GMAIL_IMAP_HOST = "imap.gmail.com"
 # Sender patterns — match From: addresses for each alert service
 _ALERT_SENDERS = {
     "rea": ["noreply@realestate.com.au", "alerts@realestate.com.au"],
-    "listing_loop": ["noreply@listingloop.com.au", "alerts@listingloop.com.au"],
+    "listing_loop": ["noreply@listingloop.com.au", "alerts@listingloop.com.au", "matches@alerts.listingloop.com.au"],
     "property_whispers": ["noreply@propertywhispers.com.au", "alerts@propertywhispers.com.au"],
+    "cre": ["noreply@commercialrealestate.com.au"],
 }
 
 # Label to apply after processing (avoids re-reading same emails)
@@ -1487,9 +1806,11 @@ def _parse_listing_loop_alert(html, criteria):
     """
     properties = []
 
-    # Listing Loop property links
+    # Listing Loop property links — two known formats:
+    #   listingloop.com.au/property/<id>
+    #   buyer.listingloop.com.au/buyer/#/properties/<uuid>
     listing_links = re.findall(
-        r'href="(https?://(?:www\.)?listingloop\.com\.au/property/[^"]+)"',
+        r'href="(https?://(?:www\.|buyer\.)?listingloop\.com\.au/(?:property/|buyer/#/properties/)[^"]+)"',
         html
     )
     seen_urls = set()
@@ -1501,37 +1822,42 @@ def _parse_listing_loop_alert(html, criteria):
             unique_links.append(clean)
 
     for url in unique_links:
-        # Extract ID from URL
-        id_match = re.search(r'/property/(\d+)', url)
+        # Extract ID from URL (numeric or UUID)
+        id_match = re.search(r'/propert(?:y|ies)/([a-f0-9-]+|\d+)', url)
         listing_id = id_match.group(1) if id_match else url.split("/")[-1]
 
-        idx = html.find(url)
-        context_html = html[max(0, idx-500):idx+1000] if idx > -1 else ""
-        context_text = re.sub(r'<[^>]+>', ' ', context_html)
+        # Search full email HTML for context (single-property emails from Listing Loop)
+        full_text = re.sub(r'<[^>]+>', ' ', html)
+        full_text = re.sub(r'\s+', ' ', full_text)
 
-        # Try to extract address from context
+        # Try to extract address from full email
         address = ""
         addr_match = re.search(r'(\d+\s+\w[\w\s]+(?:Road|Street|Lane|Drive|Court|Place|Avenue|Way|Close))',
-                               context_text, re.IGNORECASE)
+                               full_text, re.IGNORECASE)
         if addr_match:
             address = addr_match.group(1).strip()
 
         suburb = ""
-        # Look for NSW suburb patterns (word followed by NSW or postcode)
-        suburb_match = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*,?\s*NSW', context_text)
+        suburb_match = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*,?\s*(?:NSW|VIC|QLD|SA|WA|ACT|NT)\s+(\d{4})', full_text)
         if suburb_match:
             suburb = suburb_match.group(1).strip()
 
         postcode = ""
-        pc_match = re.search(r'\b(2\d{3})\b', context_text)
+        pc_match = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*,?\s*(?:NSW|VIC|QLD|SA|WA|ACT|NT)\s+(\d{4})', full_text)
         if pc_match:
-            postcode = pc_match.group(1)
+            postcode = pc_match.group(2)
 
-        price = _extract_price_from_text(context_text)
-        land_acres = _extract_land_from_text(context_text)
+        # Extract beds/baths from email body
+        beds_m = re.search(r'(\d+)\s*Bed', full_text, re.IGNORECASE)
+        baths_m = re.search(r'(\d+)\s*Bath', full_text, re.IGNORECASE)
+        bedrooms = int(beds_m.group(1)) if beds_m else None
+        bathrooms = int(baths_m.group(1)) if baths_m else None
+
+        price = _extract_price_from_text(full_text)
+        land_acres = _extract_land_from_text(full_text)
 
         photo = None
-        img_match = re.search(r'<img[^>]+src="(https?://[^"]+\.(?:jpg|jpeg|png|webp))', context_html)
+        img_match = re.search(r'<img[^>]+src="(https?://[^"]+\.(?:jpg|jpeg|png|webp))', html)
         if img_match:
             photo = img_match.group(1)
 
@@ -1547,8 +1873,8 @@ def _parse_listing_loop_alert(html, criteria):
             "land_sqm": (land_acres * 4046.86) if land_acres else None,
             "land_ha": (land_acres * 0.404686) if land_acres else None,
             "land_acres": land_acres,
-            "bedrooms": None,
-            "bathrooms": None,
+            "bedrooms": bedrooms,
+            "bathrooms": bathrooms,
             "headline": "",
             "description": "",
             "listing_url": url,
@@ -1679,8 +2005,103 @@ def _extract_land_from_text(text):
     return None
 
 
+def _parse_cre_alert(html, criteria):
+    """Parse Commercial Real Estate alert email into normalized properties.
+
+    CRE emails contain property cards in a repeating pattern:
+    price → street address → suburb STATE postcode → "View property" link.
+    We split by "View" boundaries to isolate each card before extracting fields.
+    """
+    properties = []
+
+    # Strip HTML tags, normalize whitespace, remove table-attribute noise
+    text = re.sub(r'<[^>]+>', ' ', html)
+    text = re.sub(r'&nbsp;', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    # Remove standalone "000" noise from table width/padding attributes
+    text = re.sub(r'(?:^|\s)000(?=\s)', ' ', text)
+
+    # Split into card segments by "View property" (each property ends with this)
+    segments = re.split(r'View\s+property', text, flags=re.IGNORECASE)
+
+    price_pat = r'(\$[\d,]+(?:\s*-\s*\$[\d,]+)?(?:\s*\(GST[^)]*\))?|AUCTION|Contact Agent|Offers? (?:Over|Above) \$[\d,]+|Expression[s]? [Oo]f Interest[^)]*)'
+    addr_pat = r'(\d+[\w\s/-]+?(?:Street|Road|Lane|Drive|Court|Place|Avenue|Way|Close|Highway|Parade|Crescent|Circuit|Terrace|Grove))'
+    # Suburb: 1-3 title-case words (no road-type words) before STATE POSTCODE
+    suburb_pat = r'(?:Road|Street|Lane|Drive|Highway|Avenue|Way|Close|Parade|Crescent|Circuit|Terrace|Grove)\s+((?:[A-Z][a-z]+\s*){1,4})\s+(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\s+(\d{4})'
+    # Fallback: any title-case words before state
+    suburb_fallback = r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})\s+(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\s+(\d{4})'
+
+    for seg in segments:
+        # Try suburb after road type first (avoids capturing "Mount Baw Baw Road" as suburb)
+        suburb_m = re.search(suburb_pat, seg)
+        if not suburb_m:
+            suburb_m = re.search(suburb_fallback, seg)
+        if not suburb_m:
+            continue
+
+        suburb = suburb_m.group(1).strip()
+        state = suburb_m.group(2)
+        postcode = suburb_m.group(3)
+
+        address = ""
+        addr_m = re.search(addr_pat, seg, re.IGNORECASE)
+        if addr_m:
+            address = addr_m.group(1).strip()
+            # Clean leading noise (stray numbers from HTML table attributes)
+            address = re.sub(r'^(?:Part\s+)?\d{1,3}\s+(?=\d)', '', address).strip()
+
+        price = None
+        display_price = ""
+        price_matches = re.findall(price_pat, seg)
+        if price_matches:
+            display_price = price_matches[-1].strip()
+            nums = re.findall(r'\$([\d,]+)', display_price)
+            if nums:
+                price = int(nums[0].replace(",", ""))
+
+        land_acres = None
+        ha_m = re.search(r'([\d,.]+)\s*(?:Ha|hectares?)', seg, re.IGNORECASE)
+        if ha_m:
+            land_acres = float(ha_m.group(1).replace(",", "")) / 0.404686
+        else:
+            ac_m = re.search(r'([\d,.]+)\s*acres?', seg, re.IGNORECASE)
+            if ac_m:
+                land_acres = float(ac_m.group(1).replace(",", ""))
+
+        full_address = f"{address}, {suburb} {state} {postcode}" if address else f"{suburb} {state} {postcode}"
+        slug = re.sub(r'[^a-z0-9]+', '-', full_address.lower()).strip('-')
+        listing_url = f"https://www.commercialrealestate.com.au/property/{slug}"
+
+        prop = {
+            "source": "cre",
+            "source_id": f"cre_{postcode}_{re.sub(r'[^a-z0-9]', '', address[:20].lower())}",
+            "address": full_address,
+            "suburb": suburb,
+            "postcode": postcode,
+            "state": state,
+            "price": price,
+            "display_price": display_price or (f"${price:,.0f}" if price else ""),
+            "land_sqm": (land_acres * 4046.86) if land_acres else None,
+            "land_ha": (land_acres * 0.404686) if land_acres else None,
+            "land_acres": land_acres,
+            "bedrooms": None,
+            "bathrooms": None,
+            "headline": f"{suburb} — {display_price}" if display_price else suburb,
+            "description": "",
+            "listing_url": listing_url,
+            "photo_url": None,
+            "lat": None,
+            "lng": None,
+            "agent": None,
+            "raw": {"alert_source": "cre"},
+        }
+        properties.append(prop)
+
+    return properties
+
+
 def fetch_email_alerts(criteria):
-    """Fetch property listings from email alerts (REA, Listing Loop, Property Whispers).
+    """Fetch property listings from email alerts (REA, Listing Loop, Property Whispers, CRE).
 
     Connects to Gmail IMAP, reads recent alert emails, parses property data,
     and returns normalized listings. Gracefully returns empty if Gmail not configured.
@@ -1695,6 +2116,7 @@ def fetch_email_alerts(criteria):
         "rea": _parse_rea_alert,
         "listing_loop": _parse_listing_loop_alert,
         "property_whispers": _parse_property_whispers_alert,
+        "cre": _parse_cre_alert,
     }
 
     try:
@@ -2309,7 +2731,7 @@ def fetch_all(criteria=None):
         ("Farmbuy", fetch_farmbuy),
         ("Elders", fetch_elders),
         ("Southern Tablelands Realty", fetch_str),
-        ("REA Web", fetch_rea_web),
+        ("REA (Apify)", fetch_rea_apify),
         ("REA Manual", fetch_rea_manual),
         ("Email Alerts", fetch_email_alerts),
     ]
