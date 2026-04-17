@@ -442,6 +442,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
         .card:hover {{ box-shadow: 0 4px 12px rgba(0,0,0,0.06); }}
         .card.dismissed {{ opacity: 0.35; display: none; }}
+        .card.dismissed.show-dismissed {{ display: block; }}
         .card.dismissed:hover {{ opacity: 0.6; }}
 
         /* ── Dismissed section ─────────────────── */
@@ -848,7 +849,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const dismissed = document.querySelectorAll('.card.dismissed');
         const btn = document.querySelector('.dismissed-toggle');
         const showing = btn.textContent === 'Hide';
-        dismissed.forEach(c => c.style.display = showing ? 'none' : '');
+        dismissed.forEach(c => c.classList.toggle('show-dismissed', !showing));
         btn.textContent = showing ? 'Show' : 'Hide';
     }}
 
