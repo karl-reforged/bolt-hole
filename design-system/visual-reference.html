@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolt Hole — Design System Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Core */
+    --limestone: #F4F1EC;
+    --paper: #FFFFFF;
+    --bark: #2B2523;
+    --shale: #6B635B;
+    --dust: #9C948B;
+
+    /* Accent */
+    --eucalyptus: #4A7C6B;
+    --canopy: #2D5A4A;
+    --lichen: #E8F0EC;
+    --ochre: #C17817;
+    --sandstone: #F5E6D0;
+
+    /* Semantic */
+    --creek: #3D8B6E;
+    --dry-grass: #B8960F;
+    --ironbark: #A8453E;
+    --fence: #E2DDD6;
+    --wire: #EDEBE7;
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --radius-card: 12px;
+    --radius-btn: 8px;
+    --radius-tag: 6px;
+    --radius-img: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--limestone) url('assets/topo-pattern.png') repeat;
+    background-size: 400px;
+    background-blend-mode: soft-light;
+    color: var(--bark);
+    line-height: 1.65;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-lg);
+  }
+
+  /* ── Section Dividers ── */
+  .section {
+    margin-bottom: var(--space-3xl);
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dust);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--fence);
+  }
+
+  /* ── Header / Wordmark ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) 0;
+    margin-bottom: var(--space-3xl);
+    border-bottom: 1px solid var(--fence);
+  }
+  .wordmark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--bark);
+    letter-spacing: -0.01em;
+  }
+  .nav-pills {
+    display: flex;
+    gap: var(--space-xs);
+  }
+  .nav-pill {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: var(--radius-btn);
+    color: var(--shale);
+    cursor: pointer;
+    transition: all 200ms ease;
+    border: none;
+    background: none;
+  }
+  .nav-pill:hover {
+    background: var(--wire);
+    color: var(--bark);
+  }
+  .nav-pill.active {
+    background: var(--eucalyptus);
+    color: white;
+  }
+
+  /* ── Color Palette ── */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-md);
+  }
+  .swatch {
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    border: 1px solid var(--fence);
+  }
+  .swatch-color {
+    height: 80px;
+  }
+  .swatch-info {
+    padding: 12px;
+    background: var(--paper);
+  }
+  .swatch-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .swatch-hex {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--dust);
+  }
+  .swatch-role {
+    font-size: 11px;
+    color: var(--shale);
+    margin-top: 4px;
+  }
+
+  /* ── Typography Samples ── */
+  .type-sample {
+    margin-bottom: var(--space-xl);
+  }
+  .type-meta {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--dust);
+    margin-bottom: var(--space-xs);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .type-display {
+    font-family: 'DM Serif Display', serif;
+    font-size: 40px;
+    line-height: 1.2;
+    color: var(--bark);
+  }
+  .type-heading {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--bark);
+  }
+  .type-subheading {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--bark);
+  }
+  .type-body {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--bark);
+    max-width: 65ch;
+  }
+  .type-caption {
+    font-size: 13px;
+    color: var(--shale);
+  }
+  .type-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--eucalyptus);
+  }
+
+  /* ── Property Card ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+  }
+  .property-card {
+    background: var(--paper);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--fence);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 200ms ease;
+  }
+  .property-card:hover {
+    border-color: var(--eucalyptus);
+  }
+  .card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+  .card-image-placeholder {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #C8D5C0 0%, #A8BFA0 40%, #8BA882 70%, #6B8F60 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-image-placeholder::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to top, rgba(107,143,96,0.3), transparent);
+  }
+  .card-image-placeholder svg {
+    opacity: 0.3;
+    color: var(--canopy);
+  }
+  .card-body {
+    padding: var(--space-md) var(--space-md) var(--space-lg);
+  }
+  .card-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: var(--radius-tag);
+    background: var(--sandstone);
+    color: var(--ochre);
+    margin-bottom: var(--space-sm);
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    line-height: 1.25;
+    color: var(--bark);
+    margin-bottom: 4px;
+  }
+  .card-location {
+    font-size: 13px;
+    color: var(--shale);
+    margin-bottom: var(--space-md);
+  }
+  .card-stats {
+    display: flex;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-md);
+  }
+  .card-stat {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--dust);
+    margin-bottom: 2px;
+  }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--bark);
+  }
+  .card-score {
+    margin-top: var(--space-sm);
+  }
+  .score-bar-bg {
+    height: 6px;
+    background: var(--wire);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--eucalyptus), var(--canopy));
+    transition: width 500ms ease;
+  }
+  .score-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+  .score-label {
+    font-size: 11px;
+    color: var(--dust);
+  }
+  .score-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--eucalyptus);
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: var(--space-md);
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: var(--radius-tag);
+    background: var(--lichen);
+    color: var(--canopy);
+  }
+
+  /* ── Scoring Breakdown ── */
+  .score-breakdown {
+    background: var(--paper);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--fence);
+    padding: var(--space-lg);
+  }
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--wire);
+  }
+  .score-row:last-child {
+    border-bottom: none;
+  }
+  .score-criterion {
+    width: 140px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--bark);
+    flex-shrink: 0;
+  }
+  .score-bar-container {
+    flex: 1;
+    height: 8px;
+    background: var(--wire);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .score-bar-inner {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--eucalyptus);
+    transition: width 600ms ease;
+  }
+  .score-number {
+    width: 40px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--bark);
+  }
+  .score-weight {
+    width: 40px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--dust);
+  }
+  .score-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-md);
+    margin-top: var(--space-sm);
+    border-top: 2px solid var(--fence);
+  }
+  .score-total-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bark);
+  }
+  .score-total-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--eucalyptus);
+  }
+
+  /* ── Feedback Buttons ── */
+  .feedback-row {
+    display: flex;
+    gap: var(--space-md);
+  }
+  .feedback-btn {
+    flex: 1;
+    padding: 14px var(--space-lg);
+    border-radius: var(--radius-btn);
+    border: 2px solid var(--fence);
+    background: var(--paper);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--shale);
+    cursor: pointer;
+    transition: all 200ms ease;
+    font-family: 'Inter', sans-serif;
+  }
+  .feedback-btn:hover {
+    border-color: var(--eucalyptus);
+    color: var(--eucalyptus);
+    background: var(--lichen);
+  }
+  .feedback-btn.selected-interested {
+    border-color: var(--creek);
+    background: #E6F4ED;
+    color: var(--creek);
+  }
+  .feedback-btn.selected-maybe {
+    border-color: var(--dry-grass);
+    background: #FEF9E7;
+    color: var(--dry-grass);
+  }
+  .feedback-btn.selected-pass {
+    border-color: var(--ironbark);
+    background: #FCEAE8;
+    color: var(--ironbark);
+  }
+  .feedback-note {
+    margin-top: var(--space-md);
+  }
+  .feedback-textarea {
+    width: 100%;
+    padding: 12px var(--space-md);
+    border: 1px solid var(--fence);
+    border-radius: var(--radius-btn);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--bark);
+    background: var(--paper);
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 200ms ease;
+  }
+  .feedback-textarea:focus {
+    outline: none;
+    border-color: var(--eucalyptus);
+  }
+  .feedback-textarea::placeholder {
+    color: var(--dust);
+  }
+
+  /* ── Status Bar ── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--paper);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--fence);
+  }
+  .status-text {
+    font-size: 13px;
+    color: var(--shale);
+  }
+  .status-text strong {
+    color: var(--bark);
+    font-weight: 600;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--creek);
+    display: inline-block;
+    margin-right: 8px;
+  }
+
+  /* ── Notification / New Property Alert ── */
+  .notification {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--sandstone);
+    border-radius: var(--radius-card);
+    border: 1px solid #E8D4B8;
+  }
+  .notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--ochre);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+  }
+  .notification-body {
+    flex: 1;
+  }
+  .notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bark);
+    margin-bottom: 2px;
+  }
+  .notification-text {
+    font-size: 13px;
+    color: var(--shale);
+  }
+  .notification-time {
+    font-size: 11px;
+    color: var(--dust);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Filter Chips ── */
+  .filter-row {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+  .filter-chip {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--fence);
+    background: var(--paper);
+    color: var(--shale);
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+  .filter-chip:hover {
+    border-color: var(--eucalyptus);
+    color: var(--eucalyptus);
+  }
+  .filter-chip.active {
+    background: var(--eucalyptus);
+    border-color: var(--eucalyptus);
+    color: white;
+  }
+  .filter-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    margin-left: 4px;
+    opacity: 0.7;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+    background: var(--paper);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--fence);
+  }
+  .empty-icon {
+    color: var(--dust);
+    margin-bottom: var(--space-md);
+  }
+  .empty-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--bark);
+    margin-bottom: var(--space-sm);
+  }
+  .empty-text {
+    font-size: 14px;
+    color: var(--shale);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  /* ── Two-col layout for components ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .palette-grid { grid-template-columns: repeat(3, 1fr); }
+    .card-grid { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .feedback-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Hero with landscape -->
+  <div style="position: relative; border-radius: var(--radius-card); overflow: hidden; margin-bottom: var(--space-3xl); height: 340px;">
+    <img src="assets/hero-landscape.png" alt="Rolling NSW hills" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(43,37,35,0.7) 0%, rgba(43,37,35,0.2) 50%, transparent 100%);"></div>
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: var(--space-xl) var(--space-lg);">
+      <img src="assets/logo-mark.png" alt="Bolt Hole logo" style="height: 52px; margin-bottom: var(--space-sm); filter: brightness(0) invert(1); opacity: 0.9;">
+      <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Property search for George Miltenyi</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="wordmark">Bolt Hole</div>
+    <div class="nav-pills">
+      <button class="nav-pill active">Feed</button>
+      <button class="nav-pill">Map</button>
+    </div>
+  </div>
+
+  <!-- ═══ PALETTE ═══ -->
+  <div class="section">
+    <div class="section-label">Colour Palette</div>
+
+    <div class="palette-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #F4F1EC;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Limestone</div>
+          <div class="swatch-hex">#F4F1EC</div>
+          <div class="swatch-role">Background</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #2B2523;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Bark</div>
+          <div class="swatch-hex">#2B2523</div>
+          <div class="swatch-role">Primary text</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #4A7C6B;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Eucalyptus</div>
+          <div class="swatch-hex">#4A7C6B</div>
+          <div class="swatch-role">Primary accent</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #C17817;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ochre</div>
+          <div class="swatch-hex">#C17817</div>
+          <div class="swatch-role">Warm accent</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #2D5A4A;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Canopy</div>
+          <div class="swatch-hex">#2D5A4A</div>
+          <div class="swatch-role">Hover / emphasis</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: var(--space-md);"></div>
+
+    <div class="palette-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #6B635B;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Shale</div>
+          <div class="swatch-hex">#6B635B</div>
+          <div class="swatch-role">Secondary text</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #E8F0EC;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Lichen</div>
+          <div class="swatch-hex">#E8F0EC</div>
+          <div class="swatch-role">Subtle highlight</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #3D8B6E;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Creek</div>
+          <div class="swatch-hex">#3D8B6E</div>
+          <div class="swatch-role">Positive / strong</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #B8960F;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Dry Grass</div>
+          <div class="swatch-hex">#B8960F</div>
+          <div class="swatch-role">Caution</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #A8453E;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Ironbark</div>
+          <div class="swatch-hex">#A8453E</div>
+          <div class="swatch-role">Negative / risk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TYPOGRAPHY ═══ -->
+  <div class="section">
+    <div class="section-label">Typography</div>
+
+    <div class="type-sample">
+      <div class="type-meta">DM Serif Display · 40px · Display</div>
+      <div class="type-display">Murrumbidgee Valley Retreat</div>
+    </div>
+    <div class="type-sample">
+      <div class="type-meta">Inter 600 · 24px · Heading</div>
+      <div class="type-heading">Scoring Breakdown</div>
+    </div>
+    <div class="type-sample">
+      <div class="type-meta">Inter 500 · 18px · Subheading</div>
+      <div class="type-subheading">Property Overview</div>
+    </div>
+    <div class="type-sample">
+      <div class="type-meta">Inter 400 · 15px · Body</div>
+      <div class="type-body">A secluded 120-acre property on the banks of the Murrumbidgee River. Rolling hills, established tree cover, and a modest three-bedroom homestead with wide verandahs. Sealed road access for the first 8km, then 4km of maintained gravel to the front gate. No visible neighbours.</div>
+    </div>
+    <div class="type-sample">
+      <div class="type-meta">Inter 400 · 13px · Caption</div>
+      <div class="type-caption">Hilltops LGA · Listed 3 March 2026 · 3h 48m from Sydney</div>
+    </div>
+    <div class="type-sample">
+      <div class="type-meta">JetBrains Mono 400 · 13px · Data</div>
+      <div class="type-mono">$1,150,000 · 120 acres · Score: 82/100</div>
+    </div>
+  </div>
+
+  <!-- ═══ STATUS BAR ═══ -->
+  <div class="section">
+    <div class="section-label">Status Bar</div>
+    <div class="status-bar">
+      <div class="status-text"><span class="status-dot"></span>Monitoring <strong>13 LGAs</strong> across 2 corridors</div>
+      <div class="status-text">Last checked: 10 March 2026, 3:30 pm</div>
+    </div>
+  </div>
+
+  <!-- ═══ NOTIFICATION ═══ -->
+  <div class="section">
+    <div class="section-label">New Property Notification</div>
+    <div class="notification">
+      <div class="notification-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="notification-body">
+        <div class="notification-title">New property matches your criteria</div>
+        <div class="notification-text">142 acres in Oberon LGA — river frontage, existing house, scored 78/100</div>
+      </div>
+      <div class="notification-time">2h ago</div>
+    </div>
+  </div>
+
+  <!-- ═══ FILTER CHIPS ═══ -->
+  <div class="section">
+    <div class="section-label">Feed Filters</div>
+    <div class="filter-row">
+      <div class="filter-chip active">All<span class="filter-count">12</span></div>
+      <div class="filter-chip">New<span class="filter-count">3</span></div>
+      <div class="filter-chip">Interested<span class="filter-count">4</span></div>
+      <div class="filter-chip">Maybe<span class="filter-count">2</span></div>
+      <div class="filter-chip">Passed<span class="filter-count">3</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ PROPERTY CARDS ═══ -->
+  <div class="section">
+    <div class="section-label">Property Cards</div>
+    <div class="card-grid">
+
+      <!-- Card 1 -->
+      <div class="property-card">
+        <img src="assets/sample-property.png" alt="Rural homestead" class="card-image">
+        <div class="card-body">
+          <div class="card-badge">New</div>
+          <div class="card-title">Abercrombie River Road</div>
+          <div class="card-location">Oberon LGA · Central Tablelands</div>
+          <div class="card-stats">
+            <div class="card-stat">
+              <div class="stat-label">Price</div>
+              <div class="stat-value">$1.15M</div>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Land</div>
+              <div class="stat-value">142 ac</div>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Drive</div>
+              <div class="stat-value">3h 12m</div>
+            </div>
+          </div>
+          <div class="card-score">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" style="width: 82%;"></div>
+            </div>
+            <div class="score-meta">
+              <span class="score-label">Match score</span>
+              <span class="score-value">82 / 100</span>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">River frontage</span>
+            <span class="tag">Views</span>
+            <span class="tag">Existing house</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="property-card">
+        <img src="assets/hero-landscape.png" alt="Valley landscape" class="card-image">
+        <div class="card-body">
+          <div class="card-title">Canyonleigh Valley</div>
+          <div class="card-location">Wingecarribee LGA · Southern Highlands</div>
+          <div class="card-stats">
+            <div class="card-stat">
+              <div class="stat-label">Price</div>
+              <div class="stat-value">$1.85M</div>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Land</div>
+              <div class="stat-value">88 ac</div>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Drive</div>
+              <div class="stat-value">2h 05m</div>
+            </div>
+          </div>
+          <div class="card-score">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" style="width: 71%;"></div>
+            </div>
+            <div class="score-meta">
+              <span class="score-label">Match score</span>
+              <span class="score-value">71 / 100</span>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">Creek frontage</span>
+            <span class="tag">National park</span>
+            <span class="tag">End of road</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ SCORING BREAKDOWN ═══ -->
+  <div class="section">
+    <div class="section-label">Scoring Breakdown</div>
+    <div class="score-breakdown">
+      <div class="score-row">
+        <div class="score-criterion">Water</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 90%;"></div></div>
+        <div class="score-number">23</div>
+        <div class="score-weight">/25</div>
+      </div>
+      <div class="score-row">
+        <div class="score-criterion">Terrain</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 85%;"></div></div>
+        <div class="score-number">17</div>
+        <div class="score-weight">/20</div>
+      </div>
+      <div class="score-row">
+        <div class="score-criterion">Seclusion</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 80%;"></div></div>
+        <div class="score-number">12</div>
+        <div class="score-weight">/15</div>
+      </div>
+      <div class="score-row">
+        <div class="score-criterion">House</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 67%;"></div></div>
+        <div class="score-number">10</div>
+        <div class="score-weight">/15</div>
+      </div>
+      <div class="score-row">
+        <div class="score-criterion">Drive time</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 90%;"></div></div>
+        <div class="score-number">9</div>
+        <div class="score-weight">/10</div>
+      </div>
+      <div class="score-row">
+        <div class="score-criterion">National park</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 60%;"></div></div>
+        <div class="score-number">3</div>
+        <div class="score-weight">/5</div>
+      </div>
+      <div class="score-row">
+        <div class="score-criterion">Carbon eligible</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 80%;"></div></div>
+        <div class="score-number">4</div>
+        <div class="score-weight">/5</div>
+      </div>
+      <div class="score-row">
+        <div class="score-criterion">Convenience</div>
+        <div class="score-bar-container"><div class="score-bar-inner" style="width: 80%;"></div></div>
+        <div class="score-number">4</div>
+        <div class="score-weight">/5</div>
+      </div>
+      <div class="score-total">
+        <div class="score-total-label">Total score</div>
+        <div class="score-total-value">82</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FEEDBACK ═══ -->
+  <div class="section">
+    <div class="section-label">Feedback Mechanism</div>
+    <div style="background: var(--paper); border-radius: var(--radius-card); border: 1px solid var(--fence); padding: var(--space-lg);">
+      <div style="font-size: 14px; font-weight: 600; margin-bottom: var(--space-md); color: var(--bark);">What do you think?</div>
+      <div class="feedback-row">
+        <button class="feedback-btn selected-interested">Interested</button>
+        <button class="feedback-btn">Maybe</button>
+        <button class="feedback-btn">Pass</button>
+      </div>
+      <div class="feedback-note">
+        <textarea class="feedback-textarea" placeholder="Any notes on this property? What caught your eye, or what's not right..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ EMPTY STATE ═══ -->
+  <div class="section">
+    <div class="section-label">Empty State</div>
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/><line x1="2" y1="21" x2="22" y2="21"/></svg>
+      </div>
+      <div class="empty-title">No new properties</div>
+      <div class="empty-text">Nothing new matches your criteria right now. The search runs daily across 13 LGAs — you'll be notified when something comes up.</div>
+    </div>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <div style="text-align: center; padding: var(--space-2xl) 0 var(--space-lg); border-top: 1px solid var(--fence); margin-top: var(--space-2xl);">
+    <div class="wordmark" style="font-size: 18px; margin-bottom: var(--space-xs);">Bolt Hole</div>
+    <div style="font-size: 12px; color: var(--dust);">Property search for George Miltenyi</div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolt Hole — What We've Built</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --limestone: #f5f0e8;
+            --bark: #1e293b;
+            --eucalyptus: #4A7C6B;
+            --slate: #64748b;
+            --light-border: #e2e8f0;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--limestone);
+            color: var(--bark);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Navigation ────────────────────────── */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(245, 240, 232, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--light-border);
+        }
+        .nav-inner {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .nav-inner::-webkit-scrollbar { display: none; }
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 14px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--slate);
+            text-decoration: none;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+            min-height: 48px;
+        }
+        .nav-link:hover, .nav-link:focus-visible {
+            color: var(--bark);
+        }
+        .nav-link.active {
+            color: var(--eucalyptus);
+            border-bottom-color: var(--eucalyptus);
+            font-weight: 600;
+        }
+        .nav-link:focus-visible {
+            outline: 2px solid var(--eucalyptus);
+            outline-offset: -2px;
+            border-radius: 4px;
+        }
+
+        .page {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 24px 64px;
+        }
+
+        /* ── Header ─────────────────────────── */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--light-border);
+        }
+        .brand {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            color: var(--slate);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        h1 {
+            font-family: 'DM Serif Display', Georgia, serif;
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--bark);
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: var(--slate);
+        }
+
+        /* ── Sections ───────────────────────── */
+        .section {
+            margin-bottom: 36px;
+        }
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--eucalyptus);
+            margin-bottom: 12px;
+        }
+        h2 {
+            font-family: 'DM Serif Display', Georgia, serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--bark);
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 16px;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+        p:last-child { margin-bottom: 0; }
+
+        /* ── Cards ──────────────────────────── */
+        .card {
+            background: var(--white);
+            border: 1px solid var(--light-border);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--bark);
+            margin-bottom: 6px;
+        }
+        .card-body {
+            font-size: 15px;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        /* ── Stats row ──────────────────────── */
+        .stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .stat {
+            background: var(--white);
+            border: 1px solid var(--light-border);
+            border-radius: 10px;
+            padding: 20px;
+            flex: 1;
+            min-width: 140px;
+            text-align: center;
+        }
+        .stat-value {
+            font-family: 'DM Serif Display', Georgia, serif;
+            font-size: 28px;
+            color: var(--eucalyptus);
+            margin-bottom: 2px;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--slate);
+            font-weight: 500;
+        }
+
+        /* ── Criteria list ──────────────────── */
+        .criteria-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .criteria-item {
+            font-size: 15px;
+            color: #334155;
+            padding: 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .criteria-item .check {
+            color: var(--eucalyptus);
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* ── Pipeline steps ─────────────────── */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .pipe-step {
+            background: var(--white);
+            border: 1px solid var(--light-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--bark);
+            text-align: center;
+        }
+        .pipe-step small {
+            display: block;
+            font-size: 12px;
+            color: var(--slate);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .pipe-arrow {
+            font-size: 18px;
+            color: var(--bark);
+            padding: 0 8px;
+        }
+
+        /* ── Status badge ───────────────────── */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .badge-done {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-ready {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* ── Dividers ───────────────────────── */
+        .divider {
+            border: none;
+            border-top: 1px solid var(--light-border);
+            margin: 36px 0;
+        }
+
+        /* ── Footer ─────────────────────────── */
+        .footer {
+            text-align: center;
+            font-size: 13px;
+            color: var(--slate);
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--light-border);
+        }
+
+        /* ── Delivery list ──────────────────── */
+        .delivery-list {
+            list-style: none;
+            padding: 0;
+        }
+        .delivery-list li {
+            font-size: 15px;
+            color: #334155;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1ede5;
+            display: flex;
+            gap: 12px;
+        }
+        .delivery-list li:last-child { border-bottom: none; }
+        .delivery-num {
+            font-weight: 600;
+            color: var(--eucalyptus);
+            flex-shrink: 0;
+            width: 20px;
+        }
+
+        /* ── Page links ─────────────────────── */
+        .page-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--white);
+            border: 1px solid var(--light-border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: var(--bark);
+            transition: border-color 0.15s, box-shadow 0.15s;
+            min-height: 56px;
+            cursor: pointer;
+        }
+        .page-link:hover {
+            border-color: var(--eucalyptus);
+            box-shadow: 0 2px 8px rgba(74, 124, 107, 0.1);
+        }
+        .page-link:focus-visible {
+            outline: 2px solid var(--eucalyptus);
+            outline-offset: 2px;
+        }
+        .page-link-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .page-link-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .page-link-desc {
+            font-size: 13px;
+            color: var(--slate);
+        }
+        .page-link-arrow {
+            font-size: 18px;
+            color: var(--slate);
+            flex-shrink: 0;
+        }
+
+        /* ── Responsive ─────────────────────── */
+        @media (max-width: 480px) {
+            .page { padding: 32px 16px 48px; }
+            h1 { font-size: 26px; }
+            .criteria-grid { grid-template-columns: 1fr; }
+            .stats { flex-direction: column; }
+            .pipeline {
+                flex-direction: column;
+                gap: 0;
+            }
+            .pipe-arrow {
+                transform: rotate(90deg);
+                padding: 4px 0;
+            }
+            .pipe-step { width: 100%; }
+            .nav-inner { padding: 0 16px; }
+            .nav-link { padding: 12px 12px; font-size: 13px; }
+        }
+
+        @media print {
+            body { background: white; }
+            .page { padding: 24px; max-width: 100%; }
+            .nav { display: none; }
+            .card, .stat { break-inside: avoid; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav" role="navigation" aria-label="Main">
+    <div class="nav-inner">
+        <a href="/bolt-hole/bolt-hole-overview.html" class="nav-link active">Overview</a>
+        <a href="/bolt-hole/dashboard.html" class="nav-link">Market Map</a>
+        <a href="/bolt-hole/" class="nav-link">Shortlist</a>
+        <a href="/bolt-hole/system-map.html" class="nav-link">How It Works</a>
+    </div>
+</nav>
+
+<div class="page">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="brand">Bolt Hole Search</div>
+        <h1>Your Weekly Property Shortlist</h1>
+        <div class="subtitle">Prepared for George Miltenyi &middot; March 2026</div>
+        <div style="font-size:12px;color:var(--slate);margin-top:8px;">Last updated: 11 Mar 2026</div>
+    </div>
+
+    <!-- Lead with outcome -->
+    <div class="section">
+        <div class="section-label">The Short Version</div>
+        <p>Every week, a shortlist of rural properties lands in your inbox &mdash; scored against your brief, filtered to your criteria, ready to browse on your phone from wherever you are. Tap your reactions, and next week's results get sharper.</p>
+        <p>On its latest run, the system found <strong>163 properties</strong> across four sources that meet your criteria. Top match: 78% fit. From here, it runs automatically &mdash; you just read the email.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value">330+</div>
+            <div class="stat-label">Listings scanned</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">163</div>
+            <div class="stat-label">Pass all filters</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">78%</div>
+            <div class="stat-label">Best match score</div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Your brief -->
+    <div class="section">
+        <div class="section-label">Your Brief</div>
+        <h2>What we're searching for</h2>
+        <p>A personal bolt hole &mdash; rural retreat, roughly 4 hours from Sydney, under $2M. Hilly country with water, seclusion, and an existing house. Not a working farm. Low maintenance, somewhere to disappear to.</p>
+        <p>The Jugiong property set the benchmark: river frontage, hilltop position, end of road, modest house. That's what everything is scored against.</p>
+
+        <div class="criteria-grid" style="margin-top: 16px;">
+            <div class="criteria-item"><span class="check">&#10003;</span> Under $2M</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> 30&ndash;200 acres</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Within 4hrs of Sydney</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Existing house</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Rural zoning</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Target corridors only</div>
+        </div>
+
+        <p style="margin-top: 16px; font-size: 14px; color: var(--slate);">Scoring ranks by: water (25pts), terrain (20pts), seclusion (15pts), house quality (15pts), drive time (10pts), park proximity (5pts), carbon eligibility (5pts), and convenience (5pts). Your feedback adjusts these weights over time.</p>
+    </div>
+
+    <hr class="divider">
+
+    <!-- What you'll receive -->
+    <div class="section">
+        <div class="section-label">What You'll Receive</div>
+        <h2>Weekly to your inbox</h2>
+
+        <ol class="delivery-list">
+            <li>
+                <span class="delivery-num">1</span>
+                <span>A <strong>short email</strong> each week with property count, top 3 previews, and a button to open the full shortlist.</span>
+            </li>
+            <li>
+                <span class="delivery-num">2</span>
+                <span>An <strong>interactive shortlist</strong> with every property that meets criteria &mdash; photos, scores, map, drive times, and a <strong>value badge</strong> showing whether it's good value, fair, or premium for its corridor (based on $/acre vs. historical sales). Designed for your phone.</span>
+            </li>
+            <li>
+                <span class="delivery-num">3</span>
+                <span><strong>One-tap feedback</strong> on each property: Love it, Interesting, or Not for me. Your reactions sharpen the scoring.</span>
+            </li>
+            <li>
+                <span class="delivery-num">4</span>
+                <span><strong>Favourites and notes</strong> &mdash; star properties you want to revisit, add comments. Everything saves to a private sheet that stays between us.</span>
+            </li>
+        </ol>
+
+        <p style="margin-top: 16px; font-size: 15px; font-weight: 600; color: var(--bark);">Each property card includes:</p>
+        <div class="criteria-grid" style="margin-top: 8px; margin-bottom: 16px;">
+            <div class="criteria-item"><span class="check">&#10003;</span> Photo</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Price</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Match score (out of 100)</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Value badge (Good Value / Fair / Premium)</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Price per acre vs. corridor median</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Land size (acres)</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Bedrooms &amp; bathrooms</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Drive time from Sydney</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Full description</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Feature tags (river, dam, views, etc.)</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Score breakdown (8 factors)</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Map pin with location</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Link to original listing</div>
+            <div class="criteria-item"><span class="check">&#10003;</span> Feedback buttons &amp; notes</div>
+        </div>
+
+        <p>No logins, no apps to install. The email is the whole experience &mdash; everything you need is right there. The pages linked below are there if you want to dig deeper, but you never have to.</p>
+    </div>
+
+    <hr class="divider">
+
+    <!-- How it works (simplified) -->
+    <div class="section">
+        <div class="section-label">Under the Hood</div>
+        <h2>How the system works</h2>
+
+        <div class="pipeline">
+            <div class="pipe-step">Search<small>5 sources</small></div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">Filter<small>6 hard gates</small></div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">Score<small>8 factors</small></div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">Deliver<small>weekly email</small></div>
+        </div>
+
+        <p style="font-size: 15px;">Pulls live listings from Domain, Farmbuy, Elders, and Southern Tablelands Realty across 26 postcodes. Email alerts from REA, commercialrealestate.com.au, Nutrien Harcourts, and AuctionsPlus catch anything the scrapers miss. Off-market channels (Listing Loop, Property Whispers) cover the 15&ndash;25% of rural sales that never hit public portals. Everything gets deduplicated, filtered against your criteria, scored, and delivered as a ranked shortlist.</p>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Search corridors -->
+    <div class="section">
+        <div class="section-label">Search Area</div>
+        <h2>Where we're looking</h2>
+
+        <div class="card">
+            <div class="card-title" style="color: var(--eucalyptus);">Sweet Spot &mdash; best value, most choice</div>
+            <div class="card-body">
+                <strong>Snowy Monaro</strong> &mdash; alpine foothills, cool-climate country around Cooma and Berridale.<br>
+                <strong>Oberon</strong> &mdash; high plateau, cold winters, pine forests and open grazing land.<br>
+                <strong>Mid Western</strong> &mdash; rolling farmland around Mudgee, wine country adjacent.<br>
+                <strong>Hilltops</strong> &mdash; cherry orchards, historic villages, Murrumbidgee river country. Home of the Jugiong reference property.<br>
+                <span style="color: var(--slate); display: block; margin-top: 8px;">Median under $900K &mdash; your $2M goes a long way.</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Good Value</div>
+            <div class="card-body">
+                <strong>Upper Lachlan</strong> &mdash; Crookwell, Gunning. Exposed tablelands, reliable rainfall.<br>
+                <strong>Queanbeyan-Palerang</strong> &mdash; Braidwood corridor. Artists, farmers, beautiful escarpment country.<br>
+                <strong>Lithgow</strong> &middot; <strong>Goulburn Mulwaree</strong> &middot; <strong>Bathurst</strong><br>
+                <span style="color: var(--slate); display: block; margin-top: 8px;">$900K&ndash;$1.1M median &mdash; solid options in budget.</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Tighter Markets</div>
+            <div class="card-body">
+                <strong>Yass Valley</strong> &middot; <strong>Wingecarribee</strong> (Southern Highlands) &middot; <strong>Wollondilly</strong><br>
+                <strong>Berry / Kangaroo Valley</strong> (Shoalhaven) &mdash; lush escarpment country, river frontage, dramatic valleys. 2 hrs from Sydney.<br>
+                <span style="color: var(--slate); display: block; margin-top: 8px;">Premium locations, fewer listings. In budget but less choice. Berry/KV median is $2.2M &mdash; only 46% under $2M.</span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Current status -->
+    <div class="section">
+        <div class="section-label">Status</div>
+        <h2>Where things are at</h2>
+
+        <div class="card">
+            <div class="status-row">
+                <span class="badge badge-done">DONE</span>
+                <span class="card-title">Market research &amp; corridor analysis</span>
+            </div>
+            <div class="card-body">1,296 historical sales analysed across 15 corridors. Price reality established, corridors ranked by value and availability.</div>
+        </div>
+
+        <div class="card">
+            <div class="status-row">
+                <span class="badge badge-done">DONE</span>
+                <span class="card-title">Search pipeline built &amp; running</span>
+            </div>
+            <div class="card-body">Four active sources (Domain, Farmbuy, Elders, STR) producing 330+ listings per run, 163 passing all gates. Scored, ranked, and published to the live shortlist.</div>
+        </div>
+
+        <div class="card">
+            <div class="status-row">
+                <span class="badge badge-done">DONE</span>
+                <span class="card-title">Shortlist page live</span>
+            </div>
+            <div class="card-body">Interactive shortlist with map, photos, scores, feedback buttons, and favourites. Published and accessible from any device.</div>
+        </div>
+
+        <div class="card">
+            <div class="status-row">
+                <span class="badge badge-ready">WIRING UP</span>
+                <span class="card-title">Weekly email delivery</span>
+            </div>
+            <div class="card-body">Email template and feedback capture are built. Connecting Gmail delivery and scheduling now &mdash; first automated email coming shortly.</div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- What happens next -->
+    <div class="section">
+        <div class="section-label">Next Steps</div>
+        <h2>What happens from here</h2>
+        <p>Your first weekly email arrives soon. Open it, browse the shortlist on your phone, tap your reactions. That's all you need to do.</p>
+        <p>Your feedback is the most valuable input. Every "Love it" and "Not for me" teaches the scoring what you're actually drawn to, beyond what the brief says on paper. The results sharpen week by week.</p>
+        <p>When something catches your eye, I'll get you the agent's details, run due diligence on the property, and handle inspection logistics from here. You find the right place &mdash; I'll sort the rest.</p>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Explore pages -->
+    <div class="section">
+        <div class="section-label">Explore</div>
+        <h2>See the detail</h2>
+
+        <div class="page-links">
+            <a href="/bolt-hole/dashboard.html" class="page-link">
+                <div class="page-link-text">
+                    <span class="page-link-title">Market Map</span>
+                    <span class="page-link-desc">1,296 historical sales across all corridors &mdash; interactive map with price data</span>
+                </div>
+                <span class="page-link-arrow">&rarr;</span>
+            </a>
+            <a href="/bolt-hole/" class="page-link">
+                <div class="page-link-text">
+                    <span class="page-link-title">Current Shortlist</span>
+                    <span class="page-link-desc">163 properties scored and ranked &mdash; photos, map, feedback buttons</span>
+                </div>
+                <span class="page-link-arrow">&rarr;</span>
+            </a>
+            <a href="/bolt-hole/system-map.html" class="page-link">
+                <div class="page-link-text">
+                    <span class="page-link-title">System Diagram</span>
+                    <span class="page-link-desc">Visual pipeline &mdash; how data flows from listing sites to your inbox</span>
+                </div>
+                <span class="page-link-arrow">&rarr;</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div style="margin-bottom: 6px;">Prepared by Karl Howard &middot; Reforged</div>
+        <div>March 2026 &middot; Work in progress</div>
+    </div>
+
+</div>
+
+</body>
+</html>

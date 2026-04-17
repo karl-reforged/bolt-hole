@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bolt Hole — How It Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --limestone: #f5f0e8;
+        --bark: #1e293b;
+        --eucalyptus: #4A7C6B;
+        --slate: #64748b;
+        --light-border: #e2e8f0;
+        --white: #ffffff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--limestone);
+        color: var(--bark);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* -- Navigation -------------------------------- */
+    .nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(245, 240, 232, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--light-border);
+    }
+    .nav-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        gap: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .nav-inner::-webkit-scrollbar { display: none; }
+    .nav-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 14px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--slate);
+        text-decoration: none;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition: color 0.15s, border-color 0.15s;
+        min-height: 48px;
+    }
+    .nav-link:hover, .nav-link:focus-visible { color: var(--bark); }
+    .nav-link.active {
+        color: var(--eucalyptus);
+        border-bottom-color: var(--eucalyptus);
+        font-weight: 600;
+    }
+    .nav-link:focus-visible {
+        outline: 2px solid var(--eucalyptus);
+        outline-offset: -2px;
+        border-radius: 4px;
+    }
+
+    .page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+    }
+
+    /* -- Header ------------------------------------ */
+    .header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding-bottom: 32px;
+        border-bottom: 1px solid var(--light-border);
+    }
+    .brand {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 2.5px;
+        color: var(--slate);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+    h1 {
+        font-family: 'DM Serif Display', Georgia, serif;
+        font-size: 32px;
+        font-weight: 400;
+        color: var(--bark);
+        margin-bottom: 8px;
+    }
+    .subtitle {
+        font-size: 16px;
+        color: var(--slate);
+    }
+
+    /* -- Section labels ----------------------------- */
+    .section {
+        margin-bottom: 36px;
+    }
+    .section-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--eucalyptus);
+        margin-bottom: 12px;
+    }
+    h2 {
+        font-family: 'DM Serif Display', Georgia, serif;
+        font-size: 22px;
+        font-weight: 400;
+        color: var(--bark);
+        margin-bottom: 12px;
+    }
+    p {
+        font-size: 16px;
+        color: #334155;
+        margin-bottom: 12px;
+    }
+    p:last-child { margin-bottom: 0; }
+
+    /* -- Stats row ---------------------------------- */
+    .stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+    .stat {
+        background: var(--white);
+        border: 1px solid var(--light-border);
+        border-radius: 10px;
+        padding: 20px;
+        flex: 1;
+        min-width: 140px;
+        text-align: center;
+    }
+    .stat-value {
+        font-family: 'DM Serif Display', Georgia, serif;
+        font-size: 28px;
+        color: var(--eucalyptus);
+        margin-bottom: 2px;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: var(--slate);
+        font-weight: 500;
+    }
+
+    /* -- Dividers ----------------------------------- */
+    .divider {
+        border: none;
+        border-top: 1px solid var(--light-border);
+        margin: 36px 0;
+    }
+
+    /* -- Pipeline flow ------------------------------ */
+    .pipeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .pipeline-step {
+        display: flex;
+        gap: 20px;
+        align-items: stretch;
+    }
+
+    .pipeline-rail {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 40px;
+        flex-shrink: 0;
+    }
+
+    .pipeline-dot {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--eucalyptus);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .pipeline-line {
+        flex: 1;
+        width: 2px;
+        background: var(--light-border);
+        min-height: 16px;
+    }
+
+    .pipeline-card {
+        background: var(--white);
+        border: 1px solid var(--light-border);
+        border-radius: 10px;
+        padding: 20px 24px;
+        flex: 1;
+        margin-bottom: 0;
+        margin-top: 0;
+    }
+
+    .pipeline-card-title {
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--bark);
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pipeline-card-desc {
+        font-size: 15px;
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 10px;
+    }
+
+    .pipeline-card-stat {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: #f0fdf4;
+        color: #166534;
+        margin-right: 6px;
+        margin-bottom: 4px;
+    }
+
+    .pipeline-card-stat.muted {
+        background: #f1f5f9;
+        color: var(--slate);
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 16px;
+        margin-top: 8px;
+    }
+
+    .detail-item {
+        font-size: 14px;
+        color: #475569;
+        padding: 4px 0;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    .detail-item .dot {
+        color: var(--eucalyptus);
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .weight-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    .weight-bar-fill {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--eucalyptus);
+    }
+
+    .weight-bar-track {
+        flex: 1;
+        max-width: 160px;
+        height: 8px;
+        border-radius: 4px;
+        background: #e8e3da;
+    }
+
+    .weight-bar-label {
+        min-width: 90px;
+    }
+
+    .weight-bar-value {
+        font-weight: 600;
+        color: var(--bark);
+        min-width: 32px;
+        text-align: right;
+    }
+
+    /* -- Footer ------------------------------------- */
+    .footer {
+        text-align: center;
+        font-size: 13px;
+        color: var(--slate);
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid var(--light-border);
+    }
+
+    /* -- Responsive --------------------------------- */
+    @media (min-width: 700px) {
+        .detail-grid {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page { padding: 32px 16px 48px; }
+        h1 { font-size: 26px; }
+        .stats { flex-direction: column; }
+        .nav-inner { padding: 0 16px; }
+        .nav-link { padding: 12px 12px; font-size: 13px; }
+        .pipeline-step { gap: 12px; }
+        .pipeline-card { padding: 16px; }
+        .detail-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+        body { background: white; }
+        .page { padding: 24px; max-width: 100%; }
+        .nav { display: none; }
+        .pipeline-card, .stat { break-inside: avoid; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; }
+    }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav" role="navigation" aria-label="Main">
+    <div class="nav-inner">
+        <a href="/bolt-hole/bolt-hole-overview.html" class="nav-link">Overview</a>
+        <a href="/bolt-hole/dashboard.html" class="nav-link">Market Map</a>
+        <a href="/bolt-hole/" class="nav-link">Shortlist</a>
+        <a href="/bolt-hole/system-map.html" class="nav-link active">How It Works</a>
+    </div>
+</nav>
+
+<div class="page">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="brand">Bolt Hole Search</div>
+        <h1>How the Pipeline Works</h1>
+        <div class="subtitle">From listing sites to your inbox &mdash; every step explained</div>
+        <div style="font-size:12px;color:var(--slate);margin-top:8px;">System status as of 17 Mar 2026</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value">330+</div>
+            <div class="stat-label">Listings scanned</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">163</div>
+            <div class="stat-label">Pass all gates</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">69&ndash;78%</div>
+            <div class="stat-label">Score range</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">Weekly</div>
+            <div class="stat-label">Email delivery</div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Pipeline -->
+    <div class="section">
+        <div class="section-label">The Pipeline</div>
+        <h2>Six steps, listing to inbox</h2>
+        <p style="margin-bottom: 24px;">Every week the system pulls fresh listings, filters them against your brief, scores the survivors, and delivers a ranked shortlist straight to your email. Here's how each stage works.</p>
+    </div>
+
+    <div class="pipeline">
+
+        <!-- Step 1: Sources -->
+        <div class="pipeline-step">
+            <div class="pipeline-rail">
+                <div class="pipeline-dot">1</div>
+                <div class="pipeline-line"></div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipeline-card-title">Sources</div>
+                <div class="pipeline-card-desc">Pull listings from multiple property sites across 26 postcodes in the Central and Southern Tablelands. Cross-referencing sources catches properties that only appear on one platform.</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="dot">&bull;</span> Domain.com.au (web scraper)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> REA / realestate.com.au (via Apify)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Elders Real Estate (web scraper)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Southern Tablelands Realty (web scraper)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Farmbuy.com (web scraper)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> CRE.com.au email alerts</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Nutrien Harcourts alerts</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> AuctionsPlus (registered)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Listing Loop (off-market)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Property Whispers (off-market)</div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <span class="pipeline-card-stat">5 active scrapers</span>
+                    <span class="pipeline-card-stat">26 postcodes</span>
+                    <span class="pipeline-card-stat">10 channels</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Normalize -->
+        <div class="pipeline-step">
+            <div class="pipeline-rail">
+                <div class="pipeline-dot">2</div>
+                <div class="pipeline-line"></div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipeline-card-title">Normalize</div>
+                <div class="pipeline-card-desc">Every source uses different formats. This step converts them all into a common structure &mdash; address, price, acreage, bedrooms, coordinates, photos, URL &mdash; and deduplicates across sources so the same property isn't counted twice.</div>
+                <div style="margin-top: 12px;">
+                    <span class="pipeline-card-stat muted">Common format</span>
+                    <span class="pipeline-card-stat muted">Deduplicated</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Gate Filter -->
+        <div class="pipeline-step">
+            <div class="pipeline-rail">
+                <div class="pipeline-dot">3</div>
+                <div class="pipeline-line"></div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipeline-card-title">Gate Filter</div>
+                <div class="pipeline-card-desc">Hard pass/fail criteria. A listing must clear every gate or it's silently discarded. No partial credit &mdash; these are the non-negotiables from your brief.</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="dot">&bull;</span> Geography (13 target LGAs)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Budget ($100K&ndash;$2M)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Land size (30&ndash;200 acres)</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Existing house</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Rural zoning</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Drive time (&le;4 hours)</div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <span class="pipeline-card-stat">163 pass</span>
+                    <span class="pipeline-card-stat muted">49% pass rate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Enrich -->
+        <div class="pipeline-step">
+            <div class="pipeline-rail">
+                <div class="pipeline-dot">4</div>
+                <div class="pipeline-line"></div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipeline-card-title">Enrich</div>
+                <div class="pipeline-card-desc">Search pages only show basic data. For every property that passes the gates, the system fetches the full listing page to pull the complete description, headline, and agent details. This is what makes accurate scoring possible.</div>
+                <div style="margin-top: 12px;">
+                    <span class="pipeline-card-stat">163/163 enriched</span>
+                    <span class="pipeline-card-stat muted">Full descriptions</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Score -->
+        <div class="pipeline-step">
+            <div class="pipeline-rail">
+                <div class="pipeline-dot">5</div>
+                <div class="pipeline-line"></div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipeline-card-title">Score &amp; Rank</div>
+                <div class="pipeline-card-desc">Each property is scored out of 100 against eight weighted factors derived from your brief. Keywords in the description, drive time calculations, and spatial data all feed into the score. Your feedback adjusts the weights over time.</div>
+
+                <div style="margin-top: 14px;">
+                    <div class="weight-bar">
+                        <span class="weight-bar-label">Water</span>
+                        <div class="weight-bar-track"><div class="weight-bar-fill" style="width:100%;"></div></div>
+                        <span class="weight-bar-value">25</span>
+                    </div>
+                    <div class="weight-bar">
+                        <span class="weight-bar-label">Terrain</span>
+                        <div class="weight-bar-track"><div class="weight-bar-fill" style="width:80%;"></div></div>
+                        <span class="weight-bar-value">20</span>
+                    </div>
+                    <div class="weight-bar">
+                        <span class="weight-bar-label">Drive time</span>
+                        <div class="weight-bar-track"><div class="weight-bar-fill" style="width:80%;"></div></div>
+                        <span class="weight-bar-value">20</span>
+                    </div>
+                    <div class="weight-bar">
+                        <span class="weight-bar-label">Seclusion</span>
+                        <div class="weight-bar-track"><div class="weight-bar-fill" style="width:60%;"></div></div>
+                        <span class="weight-bar-value">15</span>
+                    </div>
+                    <div class="weight-bar">
+                        <span class="weight-bar-label">House quality</span>
+                        <div class="weight-bar-track"><div class="weight-bar-fill" style="width:60%;"></div></div>
+                        <span class="weight-bar-value">15</span>
+                    </div>
+                    <div class="weight-bar">
+                        <span class="weight-bar-label">Park proximity</span>
+                        <div class="weight-bar-track"><div class="weight-bar-fill" style="width:20%;"></div></div>
+                        <span class="weight-bar-value">5</span>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:8px;">Weights updated 13 Mar per George &amp; Mary. Carbon and convenience set to 0.</div>
+
+                <div style="margin-top: 12px;">
+                    <span class="pipeline-card-stat">69&ndash;78% scores</span>
+                    <span class="pipeline-card-stat muted">100-point scale</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6: Deliver -->
+        <div class="pipeline-step">
+            <div class="pipeline-rail">
+                <div class="pipeline-dot">6</div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipeline-card-title">Deliver</div>
+                <div class="pipeline-card-desc">The ranked shortlist goes straight to your inbox every week. Mobile-friendly property cards with photos, score bars, drive time badges, and tags. An interactive shortlist page lets you browse the full set. One-tap feedback on each property feeds back into the scoring.</div>
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="dot">&bull;</span> Weekly email summary</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> Interactive shortlist page</div>
+                    <div class="detail-item"><span class="dot">&bull;</span> One-tap feedback capture</div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <span class="pipeline-card-stat">Weekly email</span>
+                    <span class="pipeline-card-stat">Shortlist page</span>
+                    <span class="pipeline-card-stat">Feedback loop</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <hr class="divider">
+
+    <!-- Feedback loop -->
+    <div class="section">
+        <div class="section-label">Feedback Loop</div>
+        <h2>Results sharpen over time</h2>
+        <p>Every reaction you tap &mdash; Love it, Interesting, Not for me &mdash; gets logged. Over time, the system learns what you actually care about beyond what the brief says on paper. If you keep loving properties with creek frontage and ignoring ones near towns, the weights shift to match.</p>
+        <p style="font-size: 14px; color: var(--slate);">Feedback is captured via one-click links in the email, logged to a private Google Sheet. No apps, no logins, no friction.</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div style="margin-bottom: 6px;">Prepared by Karl Howard &middot; Reforged</div>
+        <div>March 2026 &middot; Work in progress</div>
+    </div>
+
+</div>
+
+</body>
+</html>
