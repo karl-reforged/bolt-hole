@@ -13,6 +13,7 @@ __pycache__/
 # Screenshots & working artifacts
 screenshots/
 *.png
+!docs/**/*.png
 
 # Playwright cache
 .playwright-mcp/
