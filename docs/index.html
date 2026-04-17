@@ -55,6 +55,41 @@
         .summary .count { font-size: 15px; color: var(--bark); font-weight: 500; }
         .summary .top { font-size: 13px; color: var(--slate); margin-top: 4px; }
 
+        /* ── Sort bar ──────────────────────────── */
+        .sort-bar {
+            display: flex; align-items: center; gap: 6px;
+            padding: 10px 16px; margin-bottom: 16px;
+            overflow-x: auto; scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .sort-bar::-webkit-scrollbar { display: none; }
+        .sort-label {
+            font-size: 11px; font-weight: 600; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap; margin-right: 4px;
+        }
+        .sort-btn {
+            font-family: Inter, -apple-system, sans-serif;
+            font-size: 12px; font-weight: 500; padding: 6px 14px;
+            border-radius: 20px; border: 1px solid var(--light-border);
+            background: #fff; color: var(--slate); cursor: pointer;
+            white-space: nowrap; transition: all 0.15s;
+        }
+        .sort-btn:hover { border-color: var(--eucalyptus); color: var(--bark); }
+        .sort-btn.active {
+            background: var(--eucalyptus); color: #fff;
+            border-color: var(--eucalyptus);
+        }
+
+        /* ── NEW badge ─────────────────────────── */
+        .new-badge {
+            display: inline-block; font-size: 10px; font-weight: 700;
+            padding: 2px 7px; border-radius: 4px;
+            background: #dbeafe; color: #1d4ed8;
+            letter-spacing: 0.5px; margin-right: 6px;
+            vertical-align: middle;
+        }
+
         /* ── Map ────────────────────────────────── */
         .map-container {
             background: #fff; border: 1px solid var(--light-border);
@@ -278,13 +313,22 @@
             <div class="top">Top match: &#x27;Chatham Valley&#x27; - Your Private Rural Retreat On The Duckmal (85%)</div>
         </div>
 
+        <div class="sort-bar">
+            <span class="sort-label">Sort by</span>
+            <button class="sort-btn active" data-sort="score" onclick="sortCards('score')">Score</button>
+            <button class="sort-btn" data-sort="price" onclick="sortCards('price')">Price</button>
+            <button class="sort-btn" data-sort="acres" onclick="sortCards('acres')">Acres</button>
+            <button class="sort-btn" data-sort="drive" onclick="sortCards('drive')">Drive</button>
+            <button class="sort-btn" data-sort="new" onclick="sortCards('new')">New (50)</button>
+        </div>
+
         <div class="map-container">
             <div class="map-label">Where they are</div>
             <div id="shortlist-map"></div>
         </div>
 
         
-        <div class="card" id="card-0" data-idx="0" data-property-id="2020730886">
+        <div class="card" id="card-0" data-idx="0" data-property-id="2020730886" data-score="85.0" data-price="0" data-acres="105.8" data-drive="203" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/uOSQeQMRd-X7V3gBsba_ufh0KVE=/660x440/filters:format(jpeg):quality(80)/2020730886_1_1_260402_034641-w2000-h1333" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -356,7 +400,7 @@ As you meander up the tree lined driveway, you will feel the privacy that this p
             </div>
         </div>
 
-        <div class="card" id="card-1" data-idx="1" data-property-id="2020298974">
+        <div class="card" id="card-1" data-idx="1" data-property-id="2020298974" data-score="82.5" data-price="1475000" data-acres="100.0" data-drive="134" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/he0NAWsyrujX2_0k-qaEW0O7LUs=/660x440/filters:format(jpeg):quality(80)/2020298974_1_1_250926_022602-w2000-h1500" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -428,7 +472,7 @@ The cedar-clad residence, built approximately 35 yea...</div>
             </div>
         </div>
 
-        <div class="card" id="card-2" data-idx="2" data-property-id="2020363906">
+        <div class="card" id="card-2" data-idx="2" data-property-id="2020363906" data-score="82.5" data-price="1650000" data-acres="100.0" data-drive="129" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/tXBJ5FhYJaD8u5RXbUI5X3nvwzY=/660x440/filters:format(jpeg):quality(80)/2017765079_11_1_220428_023939-w4002-h3000" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -499,7 +543,7 @@ The cedar-clad residence, built approximately 35 yea...</div>
             </div>
         </div>
 
-        <div class="card" id="card-3" data-idx="3" data-property-id="2020759502">
+        <div class="card" id="card-3" data-idx="3" data-property-id="2020759502" data-score="77.5" data-price="1250000" data-acres="69.9" data-drive="202" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/DoPOb_O3CZNDOKHpbkInVi1acwg=/660x440/filters:format(jpeg):quality(80)/2020759502_1_1_260414_055155-w3840-h2880" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -571,7 +615,7 @@ Privately set amongst established trees and hedging, and accessed via a beautifu
             </div>
         </div>
 
-        <div class="card" id="card-4" data-idx="4" data-property-id="2020699809">
+        <div class="card" id="card-4" data-idx="4" data-property-id="2020699809" data-score="77.5" data-price="1250000" data-acres="108.2" data-drive="176" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/8qJmsAVUoIxAQeCIGxX61Jl_1_A=/660x440/filters:format(jpeg):quality(80)/2020699809_1_1_260321_124516-w3840-h2880" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -645,7 +689,7 @@ Offering an ideal balance of productivity and lifestyle, the property is private
             </div>
         </div>
 
-        <div class="card" id="card-5" data-idx="5" data-property-id="2019783254">
+        <div class="card" id="card-5" data-idx="5" data-property-id="2019783254" data-score="77.5" data-price="1295000" data-acres="158.7" data-drive="170" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/KdN0xaGefOMrS6iVp64AkVz-7EM=/660x440/filters:format(jpeg):quality(80)/2019783254_1_1_250210_070858-w1620-h1080" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -717,7 +761,7 @@ Mountain biking, bushwalking, four wheel driving, birdwatching all at your doors
             </div>
         </div>
 
-        <div class="card" id="card-6" data-idx="6" data-property-id="2019593640">
+        <div class="card" id="card-6" data-idx="6" data-property-id="2019593640" data-score="76.0" data-price="1300000" data-acres="103.0" data-drive="194" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/PAmKWdEbXwA0VFjQ_dEPfs5T1SA=/660x440/filters:format(jpeg):quality(80)/2019593640_1_1_241028_034515-w4893-h3070" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -790,7 +834,7 @@ Nestled in the serene landscapes of Sodwalls, Brindabella offers an idyllic retr
             </div>
         </div>
 
-        <div class="card" id="card-7" data-idx="7" data-property-id="2018417701">
+        <div class="card" id="card-7" data-idx="7" data-property-id="2018417701" data-score="75.5" data-price="995000" data-acres="106.9" data-drive="128" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/6Y4v70EUdnaOMnJG7Mi8fwZ92Rc=/660x440/filters:format(jpeg):quality(80)/2018417701_5_1_230316_100536-w1200-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -863,13 +907,13 @@ The property offers a large 15.5m x...</div>
             </div>
         </div>
 
-        <div class="card" id="card-8" data-idx="8" data-property-id="2020633042">
+        <div class="card" id="card-8" data-idx="8" data-property-id="2020633042" data-score="73.5" data-price="0" data-acres="98.8" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/OCc6dEYmPZ1JMfSFYrGSHPrCack=/660x440/filters:format(jpeg):quality(80)/2020633042_1_1_260224_111130-w4032-h3024" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">CONTACT AGENT</span>
-                        <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(8)" title="Tap to see score breakdown">74% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(8)" title="Tap to see score breakdown">74% match</button>
                     </div>
                     <button class="fav-btn" id="fav-8" onclick="toggleFavourite(8, '2020633042')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -935,7 +979,7 @@ With around 750 metres of Shoalhaven River frontage, you&#x27;ll enjoy private s
             </div>
         </div>
 
-        <div class="card" id="card-9" data-idx="9" data-property-id="2019935090">
+        <div class="card" id="card-9" data-idx="9" data-property-id="2019935090" data-score="73.0" data-price="1200000" data-acres="139.2" data-drive="223" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/eO550Dn3q957LHWExZRKgZkt-n8=/660x440/filters:format(jpeg):quality(80)/2019935090_1_1_250416_050751-w2000-h1498" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1006,7 +1050,7 @@ With around 750 metres of Shoalhaven River frontage, you&#x27;ll enjoy private s
             </div>
         </div>
 
-        <div class="card" id="card-10" data-idx="10" data-property-id="2019682398">
+        <div class="card" id="card-10" data-idx="10" data-property-id="2019682398" data-score="72.5" data-price="1800000" data-acres="32.7" data-drive="139" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/BSi5mCL81XcFjBO3DIrksb9PNZ0=/660x440/filters:format(jpeg):quality(80)/2019682398_2_1_241209_012829-w5272-h2962" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1084,13 +1128,13 @@ Land &amp; Location:
             </div>
         </div>
 
-        <div class="card" id="card-11" data-idx="11" data-property-id="2020444348">
+        <div class="card" id="card-11" data-idx="11" data-property-id="2020444348" data-score="72.0" data-price="649000" data-acres="96.1" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/3hCj85H26MH55Z2FMjYqQLFbpFg=/660x440/filters:format(jpeg):quality(80)/2020444348_1_1_251124_030201-w1020-h764" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$649,000</span>
-                        <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(11)" title="Tap to see score breakdown">72% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(11)" title="Tap to see score breakdown">72% match</button>
                     </div>
                     <button class="fav-btn" id="fav-11" onclick="toggleFavourite(11, '2020444348')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -1170,7 +1214,7 @@ Exceptional &amp; Magical 3 hours from Liverpool
             </div>
         </div>
 
-        <div class="card" id="card-12" data-idx="12" data-property-id="2020247682">
+        <div class="card" id="card-12" data-idx="12" data-property-id="2020247682" data-score="70.0" data-price="1950000" data-acres="54.0" data-drive="140" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/b2h5i5G-GGpZznR-r44xWGjkuuk=/660x440/filters:format(jpeg):quality(80)/2020247682_1_1_250904_062909-w9999-h6666" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1241,7 +1285,7 @@ Exceptional &amp; Magical 3 hours from Liverpool
             </div>
         </div>
 
-        <div class="card" id="card-13" data-idx="13" data-property-id="2020421794">
+        <div class="card" id="card-13" data-idx="13" data-property-id="2020421794" data-score="70.0" data-price="950000" data-acres="30.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/ARGAPlp9s9g9VDnUJV3yc0jHJOg=/660x440/filters:format(jpeg):quality(80)/2020421794_1_1_251113_044730-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1313,13 +1357,13 @@ This comfortable two bedroom home is ideal as a weekend retreat or permanent res
             </div>
         </div>
 
-        <div class="card" id="card-14" data-idx="14" data-property-id="2020734601">
+        <div class="card" id="card-14" data-idx="14" data-property-id="2020734601" data-score="70.0" data-price="575000" data-acres="93.9" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Ms_1AVgd7TOplfE9C4Kd-7vYUho=/660x440/filters:format(jpeg):quality(80)/2020734601_1_1_260405_115758-w2486-h1592" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$575,000</span>
-                        <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(14)" title="Tap to see score breakdown">70% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(14)" title="Tap to see score breakdown">70% match</button>
                     </div>
                     <button class="fav-btn" id="fav-14" onclick="toggleFavourite(14, '2020734601')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -1385,7 +1429,7 @@ Set amongst rolling hills and breathtaking natural surrounds, the property captu
             </div>
         </div>
 
-        <div class="card" id="card-15" data-idx="15" data-property-id="2020755872">
+        <div class="card" id="card-15" data-idx="15" data-property-id="2020755872" data-score="69.5" data-price="1300000" data-acres="100.2" data-drive="160" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/lmV0JkBajzwOdG2bI8JKe-3NA1Y=/660x440/filters:format(jpeg):quality(80)/2020755872_1_1_260413_050749-w2492-h1400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1458,7 +1502,7 @@ Comprising approximately 40.56 hectares (1...</div>
             </div>
         </div>
 
-        <div class="card" id="card-16" data-idx="16" data-property-id="2020746034">
+        <div class="card" id="card-16" data-idx="16" data-property-id="2020746034" data-score="69.5" data-price="1395000" data-acres="40.0" data-drive="172" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/LgP_GZIRmwMiJV-Kg28IHmeUeqQ=/660x440/filters:format(jpeg):quality(80)/2020746034_1_1_260409_015039-w2048-h1535" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1529,7 +1573,7 @@ Comprising approximately 40.56 hectares (1...</div>
             </div>
         </div>
 
-        <div class="card" id="card-17" data-idx="17" data-property-id="2020423196">
+        <div class="card" id="card-17" data-idx="17" data-property-id="2020423196" data-score="69.5" data-price="1260000" data-acres="98.8" data-drive="177" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/2RWQHlypoc0qkXl8LrPpx2EtLyI=/660x440/filters:format(jpeg):quality(80)/2020423196_31_1_251113_054055-w1200-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1607,7 +1651,7 @@ Key Features
             </div>
         </div>
 
-        <div class="card" id="card-18" data-idx="18" data-property-id="2020421058">
+        <div class="card" id="card-18" data-idx="18" data-property-id="2020421058" data-score="68.0" data-price="950000" data-acres="90.0" data-drive="226" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/UwMyCff5J0xyigmXRk6uMgaV9zA=/660x440/filters:format(jpeg):quality(80)/2020421058_24_1_260130_052950-w1754-h1240" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1682,7 +1726,7 @@ Wake to birdsong drifti...</div>
             </div>
         </div>
 
-        <div class="card" id="card-19" data-idx="19" data-property-id="2020765077">
+        <div class="card" id="card-19" data-idx="19" data-property-id="2020765077" data-score="68.0" data-price="1995000" data-acres="145.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/bS5lDqOHlDy0wjZaBliOkiNYGdY=/660x440/filters:format(jpeg):quality(80)/2020765077_1_1_260415_081515-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1755,7 +1799,7 @@ Combining peace and privacy with a flexible dual-residence layout, ideally suite
             </div>
         </div>
 
-        <div class="card" id="card-20" data-idx="20" data-property-id="2019761475">
+        <div class="card" id="card-20" data-idx="20" data-property-id="2019761475" data-score="67.5" data-price="950000" data-acres="33.6" data-drive="150" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/8Gxz44X2zwsDcSpj-5FYgkhR55g=/660x440/filters:format(jpeg):quality(80)/2019761475_1_1_250131_031032-w1620-h1080" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1827,7 +1871,7 @@ Fully fenced boundaries, some new fencing, a mature stand of Radiata Pines, a le
             </div>
         </div>
 
-        <div class="card" id="card-21" data-idx="21" data-property-id="2020532191">
+        <div class="card" id="card-21" data-idx="21" data-property-id="2020532191" data-score="67.5" data-price="1695000" data-acres="138.4" data-drive="153" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/KIrQlhkQJk39hhNGWtNztEF23hg=/660x440/filters:format(jpeg):quality(80)/2020532191_7_1_260115_103058-w2000-h1500" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1899,7 +1943,7 @@ Thoughtfully fenced into four paddocks and serviced b...</div>
             </div>
         </div>
 
-        <div class="card" id="card-22" data-idx="22" data-property-id="2020714457">
+        <div class="card" id="card-22" data-idx="22" data-property-id="2020714457" data-score="67.5" data-price="1800000" data-acres="98.8" data-drive="178" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/4Hsz6WlX-nO7jq2N7CAFMl_j9Wc=/660x440/filters:format(jpeg):quality(80)/2020714457_1_1_260409_061428-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -1972,7 +2016,7 @@ The kitchen is central to...</div>
             </div>
         </div>
 
-        <div class="card" id="card-23" data-idx="23" data-property-id="2020763831">
+        <div class="card" id="card-23" data-idx="23" data-property-id="2020763831" data-score="67.0" data-price="0" data-acres="37.8" data-drive="151" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/W7LEQ4KJJv9y8grC4s38nHRfW9k=/660x440/filters:format(jpeg):quality(80)/2020763831_1_1_260415_053538-w4134-h3101" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2044,7 +2088,7 @@ Positioned in an elevated location, the property captures sweeping panoramic vie
             </div>
         </div>
 
-        <div class="card" id="card-24" data-idx="24" data-property-id="2020476283">
+        <div class="card" id="card-24" data-idx="24" data-property-id="2020476283" data-score="67.0" data-price="1395000" data-acres="41.2" data-drive="172" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/kmjHqsKuvEUlsf1TJFmOcnxr89s=/660x440/filters:format(jpeg):quality(80)/2020476283_17_1_251208_101147-w1920-h1279" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2116,7 +2160,7 @@ Positioned in an elevated location, the property captures sweeping panoramic vie
             </div>
         </div>
 
-        <div class="card" id="card-25" data-idx="25" data-property-id="2020365489">
+        <div class="card" id="card-25" data-idx="25" data-property-id="2020365489" data-score="67.0" data-price="1950000" data-acres="160.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/PO8nB6WB98u4qzci7ZMmewSyJPw=/660x440/filters:format(jpeg):quality(80)/2020365489_1_1_251022_110504-w2000-h1503" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2187,7 +2231,7 @@ Positioned in an elevated location, the property captures sweeping panoramic vie
             </div>
         </div>
 
-        <div class="card" id="card-26" data-idx="26" data-property-id="2017877723">
+        <div class="card" id="card-26" data-idx="26" data-property-id="2017877723" data-score="66.0" data-price="0" data-acres="38.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/JMyYkjrA4RaLV2DzdNJTgUXQwhg=/660x440/filters:format(jpeg):quality(80)/2017877723_2_1_220912_122311-w1024-h767" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2260,7 +2304,7 @@ Whether you&#x27;re dreaming o...</div>
             </div>
         </div>
 
-        <div class="card" id="card-27" data-idx="27" data-property-id="2020747444">
+        <div class="card" id="card-27" data-idx="27" data-property-id="2020747444" data-score="65.0" data-price="549000" data-acres="60.0" data-drive="166" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/bROaU37IrO3RPmBS5YAhcT-8RE0=/660x440/filters:format(jpeg):quality(80)/2020747444_1_1_260409_042529-w1920-h1366" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2332,13 +2376,13 @@ Boasting privacy, the parcel offers a blend of open pasture and areas with estab
             </div>
         </div>
 
-        <div class="card" id="card-28" data-idx="28" data-property-id="2020770615">
+        <div class="card" id="card-28" data-idx="28" data-property-id="2020770615" data-score="65.0" data-price="0" data-acres="100.0" data-drive="178" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/gqDqIvegcnrfsZ7K6rpAzOR4kck=/660x440/filters:format(jpeg):quality(80)/2020770615_1_1_260417_021557-w8192-h5464" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">Auction</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(28)" title="Tap to see score breakdown">65% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(28)" title="Tap to see score breakdown">65% match</button>
                     </div>
                     <button class="fav-btn" id="fav-28" onclick="toggleFavourite(28, '2020770615')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -2412,7 +2456,7 @@ Boasting privacy, the parcel offers a blend of open pasture and areas with estab
             </div>
         </div>
 
-        <div class="card" id="card-29" data-idx="29" data-property-id="2020274325">
+        <div class="card" id="card-29" data-idx="29" data-property-id="2020274325" data-score="65.0" data-price="1190000" data-acres="101.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/t4d6sfpA2pyKVP2--9lq7TnqEfY=/660x440/filters:format(jpeg):quality(80)/2020274325_1_1_250916_114925-w1200-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2487,7 +2531,7 @@ What You&#x27;ll Love
             </div>
         </div>
 
-        <div class="card" id="card-30" data-idx="30" data-property-id="2019785596">
+        <div class="card" id="card-30" data-idx="30" data-property-id="2019785596" data-score="65.0" data-price="1380000" data-acres="192.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/P6x8kk4cEvXJJiyfJdJeapAEgjQ=/660x440/filters:format(jpeg):quality(80)/2019785596_1_1_250211_052744-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2561,7 +2605,7 @@ Grazing Land:
             </div>
         </div>
 
-        <div class="card" id="card-31" data-idx="31" data-property-id="2020477514">
+        <div class="card" id="card-31" data-idx="31" data-property-id="2020477514" data-score="64.5" data-price="950000" data-acres="34.0" data-drive="238" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/zBU8n3afJIjv25ZeBmw-SF5c0PM=/660x440/filters:format(jpeg):quality(80)/2020477514_1_1_251209_035205-w1536-h1024" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2634,7 +2678,7 @@ Some of the many features of Teasdale include:
             </div>
         </div>
 
-        <div class="card" id="card-32" data-idx="32" data-property-id="2019957443">
+        <div class="card" id="card-32" data-idx="32" data-property-id="2019957443" data-score="64.5" data-price="0" data-acres="98.9" data-drive="125" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Vtg9T43jVCVuJ7p948e1pIqT4vY=/660x440/filters:format(jpeg):quality(80)/2019957443_13_1_250429_085212-w4032-h2269" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2706,7 +2750,7 @@ Positioned peacefully in one of the most highly sought after rural locales of th
             </div>
         </div>
 
-        <div class="card" id="card-33" data-idx="33" data-property-id="2020738302">
+        <div class="card" id="card-33" data-idx="33" data-property-id="2020738302" data-score="64.0" data-price="0" data-acres="32.0" data-drive="185" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/UJ4CiRHlGf1WK25rwAYn-KI_uf4=/660x440/filters:format(jpeg):quality(80)/2020738302_1_1_260407_044105-w4000-h3000" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2778,7 +2822,7 @@ Set on approximately 32 acres, this appealing property features a well-maintaine
             </div>
         </div>
 
-        <div class="card" id="card-34" data-idx="34" data-property-id="2020481588">
+        <div class="card" id="card-34" data-idx="34" data-property-id="2020481588" data-score="63.0" data-price="650000" data-acres="98.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/c0Yi3Jb66PwFe2Z5qwJAORMho5A=/660x440/filters:format(jpeg):quality(80)/2020481588_1_1_251210_103404-w1200-h800" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -2857,13 +2901,13 @@ Property Highlights:
             </div>
         </div>
 
-        <div class="card" id="card-35" data-idx="35" data-property-id="2020468881">
+        <div class="card" id="card-35" data-idx="35" data-property-id="2020468881" data-score="62.5" data-price="620000" data-acres="99.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/UuI2UNbxwZ5wx4WOT7aOjgG8bRA=/660x440/filters:format(jpeg):quality(80)/2020468881_1_1_251203_112840-w4032-h2268" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$620,000</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(35)" title="Tap to see score breakdown">62% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(35)" title="Tap to see score breakdown">62% match</button>
                     </div>
                     <button class="fav-btn" id="fav-35" onclick="toggleFavourite(35, '2020468881')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -2929,7 +2973,7 @@ Set in a picturesque valley surrounded by rolling hills, the property offers a b
             </div>
         </div>
 
-        <div class="card" id="card-36" data-idx="36" data-property-id="2020533943">
+        <div class="card" id="card-36" data-idx="36" data-property-id="2020533943" data-score="62.5" data-price="1630000" data-acres="40.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/cxvH-cEZ3UypoY0sI5rKwvALzcs=/660x440/filters:format(jpeg):quality(80)/2020533943_1_1_260116_054003-w2048-h1534" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3000,7 +3044,7 @@ Set in a picturesque valley surrounded by rolling hills, the property offers a b
             </div>
         </div>
 
-        <div class="card" id="card-37" data-idx="37" data-property-id="2019517226">
+        <div class="card" id="card-37" data-idx="37" data-property-id="2019517226" data-score="62.5" data-price="0" data-acres="108.7" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/0XPzaxWRt3sR_sZjn1XR9N-3SqE=/660x440/filters:format(jpeg):quality(80)/2019517226_1_1_240925_051049-w4134-h2756" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3072,7 +3116,7 @@ Immerse yourself in a rich blend of historical charm, Australian country and luc
             </div>
         </div>
 
-        <div class="card" id="card-38" data-idx="38" data-property-id="2020033500">
+        <div class="card" id="card-38" data-idx="38" data-property-id="2020033500" data-score="62.0" data-price="590000" data-acres="156.3" data-drive="223" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/gxVI4Bce3gOBKIcmVjK-GFE7Ex8=/660x440/filters:format(jpeg):quality(80)/2020033500_1_1_250602_015450-w4096-h3072" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3145,13 +3189,13 @@ Immerse yourself in a rich blend of historical charm, Australian country and luc
             </div>
         </div>
 
-        <div class="card" id="card-39" data-idx="39" data-property-id="2020605650">
+        <div class="card" id="card-39" data-idx="39" data-property-id="2020605650" data-score="62.0" data-price="325000" data-acres="41.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Ip2Ezm9AknTBNrZm2ad97uBVSZ8=/660x440/filters:format(jpeg):quality(80)/2020605650_1_1_260214_090313-w451-h339" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$325,000</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(39)" title="Tap to see score breakdown">62% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(39)" title="Tap to see score breakdown">62% match</button>
                     </div>
                     <button class="fav-btn" id="fav-39" onclick="toggleFavourite(39, '2020605650')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -3219,7 +3263,7 @@ The property features a steel shed expertly converted into a v...</div>
             </div>
         </div>
 
-        <div class="card" id="card-40" data-idx="40" data-property-id="2020433208">
+        <div class="card" id="card-40" data-idx="40" data-property-id="2020433208" data-score="61.0" data-price="600000" data-acres="40.0" data-drive="208" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Hq3EjmVTZDBx1wDvt-uSmKKNY2w=/660x440/filters:format(jpeg):quality(80)/2020433208_1_1_251118_091730-w1799-h1200" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3291,13 +3335,13 @@ The established property captures the essenc...</div>
             </div>
         </div>
 
-        <div class="card" id="card-41" data-idx="41" data-property-id="2020013658">
+        <div class="card" id="card-41" data-idx="41" data-property-id="2020013658" data-score="60.0" data-price="769000" data-acres="182.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/RCxeydU8RHZIPmkimun_puiF5d8=/660x440/filters:format(jpeg):quality(80)/2020013658_1_1_250522_113407-w3000-h2247" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$769,000</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(41)" title="Tap to see score breakdown">60% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(41)" title="Tap to see score breakdown">60% match</button>
                     </div>
                     <button class="fav-btn" id="fav-41" onclick="toggleFavourite(41, '2020013658')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -3364,7 +3408,7 @@ Designed for relaxed living, the home includes a massive cov...</div>
             </div>
         </div>
 
-        <div class="card" id="card-42" data-idx="42" data-property-id="2020568664">
+        <div class="card" id="card-42" data-idx="42" data-property-id="2020568664" data-score="59.5" data-price="1100000" data-acres="121.0" data-drive="173" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/lf9v1aszvaqFA74TqgrjKkRFWx8=/660x440/filters:format(jpeg):quality(80)/2020568664_1_1_260201_104939-w2048-h1366" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3436,7 +3480,7 @@ Enjoy the be...</div>
             </div>
         </div>
 
-        <div class="card" id="card-43" data-idx="43" data-property-id="2017597831">
+        <div class="card" id="card-43" data-idx="43" data-property-id="2017597831" data-score="59.0" data-price="1750000" data-acres="146.3" data-drive="229" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/0wp3nub9YVsXqeMq4ZphvYcJqmI=/660x440/filters:format(jpeg):quality(80)/2017597831_1_1_220216_123037-w2000-h1333" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3508,7 +3552,7 @@ Fenced into 4 main paddocks, the country features basalt soil with some excellen
             </div>
         </div>
 
-        <div class="card" id="card-44" data-idx="44" data-property-id="2020498929">
+        <div class="card" id="card-44" data-idx="44" data-property-id="2020498929" data-score="59.0" data-price="895000" data-acres="75.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/lsq-5rV7cdA927w9AEqmgfY5Evs=/660x440/filters:format(jpeg):quality(80)/2020498929_15_1_251223_125919-w1200-h899" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3582,7 +3626,7 @@ Council has already determined an approved building site, taking in attractiv...
             </div>
         </div>
 
-        <div class="card" id="card-45" data-idx="45" data-property-id="2020561128">
+        <div class="card" id="card-45" data-idx="45" data-property-id="2020561128" data-score="58.5" data-price="975000" data-acres="181.0" data-drive="220" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/EjLCmPMZvQifv2gdo8x6R0vD0TU=/660x440/filters:format(jpeg):quality(80)/2020561128_1_1_260129_121428-w4000-h2667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3653,7 +3697,7 @@ Council has already determined an approved building site, taking in attractiv...
             </div>
         </div>
 
-        <div class="card" id="card-46" data-idx="46" data-property-id="2020661294">
+        <div class="card" id="card-46" data-idx="46" data-property-id="2020661294" data-score="58.5" data-price="0" data-acres="30.0" data-drive="217" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/t6OJaLoNas_XwW8VbcLkT87onPw=/660x440/filters:format(jpeg):quality(80)/2020514833_26_1_260108_010633-w1024-h768" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3724,7 +3768,7 @@ Council has already determined an approved building site, taking in attractiv...
             </div>
         </div>
 
-        <div class="card" id="card-47" data-idx="47" data-property-id="2020321837">
+        <div class="card" id="card-47" data-idx="47" data-property-id="2020321837" data-score="58.5" data-price="895000" data-acres="137.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/pIGd1_eX1xQMoEMD97GW2ijGPkk=/660x440/filters:format(jpeg):quality(80)/2020321837_1_1_251007_122805-w2048-h1535" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3798,7 +3842,7 @@ Key Features:
             </div>
         </div>
 
-        <div class="card" id="card-48" data-idx="48" data-property-id="2020715171">
+        <div class="card" id="card-48" data-idx="48" data-property-id="2020715171" data-score="58.5" data-price="1599000" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/pwexJCmEhmkwSwyPOUTTdRGBCYY=/660x440/filters:format(jpeg):quality(80)/2020715171_1_1_260331_122029-w1600-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3870,7 +3914,7 @@ The architect deigned, solid brick, solar passive family home maximises comfort 
             </div>
         </div>
 
-        <div class="card" id="card-49" data-idx="49" data-property-id="2020204709">
+        <div class="card" id="card-49" data-idx="49" data-property-id="2020204709" data-score="58.5" data-price="849000" data-acres="54.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/EaLjae3Iavt0xSyjV7qH-oSSwjQ=/660x440/filters:format(jpeg):quality(80)/2020204709_1_1_250818_061203-w7200-h5184" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -3942,7 +3986,7 @@ Escape to your own piece of heaven, a breathtaking 58-acre property (22.19ha) wi
             </div>
         </div>
 
-        <div class="card" id="card-50" data-idx="50" data-property-id="2020345948">
+        <div class="card" id="card-50" data-idx="50" data-property-id="2020345948" data-score="57.5" data-price="1849000" data-acres="197.7" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/HtD9qU2TBkEkWvHsSR8QmdN48UQ=/660x440/filters:format(jpeg):quality(80)/2020345948_1_1_251015_050201-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4015,7 +4059,7 @@ This timeless 1940s homestead exudes warmth and character, gorgeous, pressed pla
             </div>
         </div>
 
-        <div class="card" id="card-51" data-idx="51" data-property-id="2020409290">
+        <div class="card" id="card-51" data-idx="51" data-property-id="2020409290" data-score="57.5" data-price="800000" data-acres="98.9" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/gYw_jsVWVuV0BJNS07Ol7zEGzu0=/660x440/filters:format(jpeg):quality(80)/2020409290_1_1_251110_013531-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4090,7 +4134,7 @@ Features:
             </div>
         </div>
 
-        <div class="card" id="card-52" data-idx="52" data-property-id="2020651165">
+        <div class="card" id="card-52" data-idx="52" data-property-id="2020651165" data-score="57.0" data-price="1135000" data-acres="112.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/lQXn3O7OhJxfGTJkrU4XYEj0CCY=/660x440/filters:format(jpeg):quality(80)/2020651165_1_1_260410_035549-w4347-h2827" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4161,7 +4205,7 @@ Features:
             </div>
         </div>
 
-        <div class="card" id="card-53" data-idx="53" data-property-id="2019586135">
+        <div class="card" id="card-53" data-idx="53" data-property-id="2019586135" data-score="56.5" data-price="0" data-acres="127.9" data-drive="137" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/a2WSqz8dc9gi-oDaxdC9UyhS7nk=/660x440/filters:format(jpeg):quality(80)/2019586135_1_1_241024_125609-w1920-h1439" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4233,7 +4277,7 @@ Surrounded by pristine native bushland this block is a versatile property, offer
             </div>
         </div>
 
-        <div class="card" id="card-54" data-idx="54" data-property-id="2020617077">
+        <div class="card" id="card-54" data-idx="54" data-property-id="2020617077" data-score="56.0" data-price="1289000" data-acres="197.7" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/p5Wt1yRCMZ5gk3HdOXASGx11LGY=/660x440/filters:format(jpeg):quality(80)/2020617077_1_1_260218_080921-w5280-h3956" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4307,13 +4351,13 @@ The property is defined by its s...</div>
             </div>
         </div>
 
-        <div class="card" id="card-55" data-idx="55" data-property-id="2018371753">
+        <div class="card" id="card-55" data-idx="55" data-property-id="2018371753" data-score="56.0" data-price="500000" data-acres="101.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/32pkBtRyrBf7cgnJ-GDh-cfFINs=/660x440/filters:format(jpeg):quality(80)/2018371753_13_1_230222_063004-w4000-h2250" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$500,000</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(55)" title="Tap to see score breakdown">56% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(55)" title="Tap to see score breakdown">56% match</button>
                     </div>
                     <button class="fav-btn" id="fav-55" onclick="toggleFavourite(55, '2018371753')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -4385,7 +4429,7 @@ KEY PROPERTY FEATURES
             </div>
         </div>
 
-        <div class="card" id="card-56" data-idx="56" data-property-id="2018852916">
+        <div class="card" id="card-56" data-idx="56" data-property-id="2018852916" data-score="55.5" data-price="1395000" data-acres="188.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/eTs8DfsCha7AuCAwS4ny2N-SNtQ=/660x440/filters:format(jpeg):quality(80)/2018852916_1_1_231023_102402-w1600-h1198" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4458,7 +4502,7 @@ If you are looking for an ideal property which offers a diverse lifestyle such b
             </div>
         </div>
 
-        <div class="card" id="card-57" data-idx="57" data-property-id="2020711680">
+        <div class="card" id="card-57" data-idx="57" data-property-id="2020711680" data-score="55.5" data-price="0" data-acres="63.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/patTBqlnjplx812Kq5k6eqLNFUw=/660x440/filters:format(jpeg):quality(80)/2020711680_45_1_260326_120107-w3000-h2247" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4532,13 +4576,13 @@ Set on approx. 65 acres of be...</div>
             </div>
         </div>
 
-        <div class="card" id="card-58" data-idx="58" data-property-id="2020299631">
+        <div class="card" id="card-58" data-idx="58" data-property-id="2020299631" data-score="55.5" data-price="1600000" data-acres="118.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/LspN9SdGsCoKoMWni4vU35RkK6E=/660x440/filters:format(jpeg):quality(80)/2020299631_1_1_251001_011509-w5184-h3456" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,600,000</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(58)" title="Tap to see score breakdown">56% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(58)" title="Tap to see score breakdown">56% match</button>
                     </div>
                     <button class="fav-btn" id="fav-58" onclick="toggleFavourite(58, '2020299631')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -4604,7 +4648,7 @@ For buyers seeking return on investment, this property delivers on multiple leve
             </div>
         </div>
 
-        <div class="card" id="card-59" data-idx="59" data-property-id="2020292385">
+        <div class="card" id="card-59" data-idx="59" data-property-id="2020292385" data-score="55.5" data-price="1199000" data-acres="120.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/va5K5052hFZAQEHtKhlC_oiZwT0=/660x440/filters:format(jpeg):quality(80)/2019058869_20_1_240216_043259-w2000-h1114" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4676,7 +4720,7 @@ Having its own building entitlement provides a great opportunity for further con
             </div>
         </div>
 
-        <div class="card" id="card-60" data-idx="60" data-property-id="elders-300P130769">
+        <div class="card" id="card-60" data-idx="60" data-property-id="elders-300P130769" data-score="55.5" data-price="1300000" data-acres="188.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://elders-re-vre-cdn.imgix.net/300P130769/image-1.jpg?w=660&amp;h=440&amp;fit=crop" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4747,7 +4791,7 @@ Having its own building entitlement provides a great opportunity for further con
             </div>
         </div>
 
-        <div class="card" id="card-61" data-idx="61" data-property-id="2020688813">
+        <div class="card" id="card-61" data-idx="61" data-property-id="2020688813" data-score="55.0" data-price="1450000" data-acres="184.6" data-drive="174" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/7bxLYcB8Pjg6XCPk5IrCAm4x1BY=/660x440/filters:format(jpeg):quality(80)/2020688813_1_1_260317_101530-w3715-h2477" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4820,7 +4864,7 @@ Insid...</div>
             </div>
         </div>
 
-        <div class="card" id="card-62" data-idx="62" data-property-id="2020015110">
+        <div class="card" id="card-62" data-idx="62" data-property-id="2020015110" data-score="55.0" data-price="890000" data-acres="110.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/ppYrPjnHu-ZciACbZMnWRVTSdzg=/660x440/filters:format(jpeg):quality(80)/2020015110_9_1_250630_075255-w1600-h1200" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4894,7 +4938,7 @@ An absolutely ide...</div>
             </div>
         </div>
 
-        <div class="card" id="card-63" data-idx="63" data-property-id="2020580919">
+        <div class="card" id="card-63" data-idx="63" data-property-id="2020580919" data-score="55.0" data-price="1420000" data-acres="50.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Z3OfnDr38lDqm79ujk-41x9t-HY=/660x440/filters:format(jpeg):quality(80)/2020580919_1_1_260205_121520-w4134-h2756" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -4966,13 +5010,13 @@ Set on approximately 50 acres of fertile, well-balanced land with sweeping front
             </div>
         </div>
 
-        <div class="card" id="card-64" data-idx="64" data-property-id="2020388533">
+        <div class="card" id="card-64" data-idx="64" data-property-id="2020388533" data-score="55.0" data-price="1350000" data-acres="36.3" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/wa6PC6Y3GKmLIY7zlfbPytZfwKU=/660x440/filters:format(jpeg):quality(80)/2020388533_3_1_251031_050143-w1920-h1440" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,350,000</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(64)" title="Tap to see score breakdown">55% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(64)" title="Tap to see score breakdown">55% match</button>
                     </div>
                     <button class="fav-btn" id="fav-64" onclick="toggleFavourite(64, '2020388533')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -5038,7 +5082,7 @@ Sprawling 6 Bedroom plus office family home with a generous floor plan perfec...
             </div>
         </div>
 
-        <div class="card" id="card-65" data-idx="65" data-property-id="2019146612">
+        <div class="card" id="card-65" data-idx="65" data-property-id="2019146612" data-score="55.0" data-price="1495000" data-acres="132.9" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/HE7EGSW-6UJAvFJh89rkGizz2Oo=/660x440/filters:format(jpeg):quality(80)/2019146612_27_1_260123_052411-w4032-h2688" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5109,13 +5153,13 @@ Sprawling 6 Bedroom plus office family home with a generous floor plan perfec...
             </div>
         </div>
 
-        <div class="card" id="card-66" data-idx="66" data-property-id="2020755860">
+        <div class="card" id="card-66" data-idx="66" data-property-id="2020755860" data-score="55.0" data-price="235000" data-acres="110.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/yYUxMwZJcDzFJ_tuaeBV1tuaNPI=/660x440/filters:format(jpeg):quality(80)/2020755860_1_1_260413_050547-w2048-h1536" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$235,000</span>
-                        <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(66)" title="Tap to see score breakdown">55% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(66)" title="Tap to see score breakdown">55% match</button>
                     </div>
                     <button class="fav-btn" id="fav-66" onclick="toggleFavourite(66, '2020755860')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -5188,7 +5232,7 @@ This exp...</div>
             </div>
         </div>
 
-        <div class="card" id="card-67" data-idx="67" data-property-id="rea-700403884">
+        <div class="card" id="card-67" data-idx="67" data-property-id="rea-700403884" data-score="55.0" data-price="1995000" data-acres="0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://i3.au.reastatic.net/800x600-fit,format=webp/71210658c60e7c5dd10da6faba05da9fbfde73eebf4b3d268f6f7d598a2c9f46/image.jpg" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5261,7 +5305,7 @@ Set on nearly 20 acre...</div>
             </div>
         </div>
 
-        <div class="card" id="card-68" data-idx="68" data-property-id="2018646580">
+        <div class="card" id="card-68" data-idx="68" data-property-id="2018646580" data-score="54.5" data-price="0" data-acres="145.8" data-drive="231" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/QjRDrrbbbe8nRJwjTDg3NNOcOfg=/660x440/filters:format(jpeg):quality(80)/2018646580_25_1_240130_103801-w4000-h2250" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5334,7 +5378,7 @@ Locati...</div>
             </div>
         </div>
 
-        <div class="card" id="card-69" data-idx="69" data-property-id="2018716560">
+        <div class="card" id="card-69" data-idx="69" data-property-id="2018716560" data-score="54.5" data-price="1750000" data-acres="146.3" data-drive="229" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/7alhUmy7CiHV9vRPMgfWmIv_ec8=/660x440/filters:format(jpeg):quality(80)/2018716560_1_1_230821_015206-w800-h600" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5410,7 +5454,7 @@ Approx. 59.2 ha or Approx. 146 Acres
             </div>
         </div>
 
-        <div class="card" id="card-70" data-idx="70" data-property-id="2020684685">
+        <div class="card" id="card-70" data-idx="70" data-property-id="2020684685" data-score="53.5" data-price="1200000" data-acres="37.0" data-drive="232" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/1NsBEQs90vLVbutbvruE5Q7m4Ro=/660x440/filters:format(jpeg):quality(80)/2020684685_1_1_260316_062313-w2048-h1366" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5482,7 +5526,7 @@ Freshly renovated throughout, the home features fresh new paint, new carpet, vin
             </div>
         </div>
 
-        <div class="card" id="card-71" data-idx="71" data-property-id="2020151938">
+        <div class="card" id="card-71" data-idx="71" data-property-id="2020151938" data-score="53.5" data-price="1850000" data-acres="150.0" data-drive="232" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/d7IHEhv0NQOGAigclQEjm6sV8rk=/660x440/filters:format(jpeg):quality(80)/2020151938_14_1_260410_022332-w1920-h1280" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5554,7 +5598,7 @@ True to its name, which means &quot;lookout&quot; or &quot;observing a mountain,
             </div>
         </div>
 
-        <div class="card" id="card-72" data-idx="72" data-property-id="2020005139">
+        <div class="card" id="card-72" data-idx="72" data-property-id="2020005139" data-score="53.0" data-price="0" data-acres="87.0" data-drive="211" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/3EuqGrnanNMUGbvLAyYpTP_w_r8=/660x440/filters:format(jpeg):quality(80)/2020005139_1_1_250520_030808-w3834-h2876" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5625,7 +5669,7 @@ True to its name, which means &quot;lookout&quot; or &quot;observing a mountain,
             </div>
         </div>
 
-        <div class="card" id="card-73" data-idx="73" data-property-id="2020563540">
+        <div class="card" id="card-73" data-idx="73" data-property-id="2020563540" data-score="53.0" data-price="0" data-acres="52.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/x163S1qg7QcL-EEzQhf2qIIxb2Q=/660x440/filters:format(jpeg):quality(80)/2020563540_1_1_260129_060518-w5272-h3948" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5697,7 +5741,7 @@ The property boasts the ideal balance between location and privacy. It is just 1
             </div>
         </div>
 
-        <div class="card" id="card-74" data-idx="74" data-property-id="2017968510">
+        <div class="card" id="card-74" data-idx="74" data-property-id="2017968510" data-score="52.5" data-price="0" data-acres="103.8" data-drive="111" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/H74t1EI6ErQTvASIbrWFTjzt9tY=/660x440/filters:format(jpeg):quality(80)/2017968510_2_1_220731_110627-w4000-h3000" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5771,7 +5815,7 @@ Located in the enviable Southern Highlands, 18* kilometres from Moss Vale, 10* k
             </div>
         </div>
 
-        <div class="card" id="card-75" data-idx="75" data-property-id="2020484373">
+        <div class="card" id="card-75" data-idx="75" data-property-id="2020484373" data-score="52.5" data-price="1450000" data-acres="46.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/rSrFXUCkFquq6Dzseh-2sxp15oY=/660x440/filters:format(jpeg):quality(80)/2020484373_1_1_251212_013227-w2492-h1400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -5843,13 +5887,13 @@ Step inside to a warm and inviting open-plan living, dining, kitchen and family 
             </div>
         </div>
 
-        <div class="card" id="card-76" data-idx="76" data-property-id="2018867315">
+        <div class="card" id="card-76" data-idx="76" data-property-id="2018867315" data-score="52.5" data-price="1195000" data-acres="33.2" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/m5PWVfNELER5qCwshzJ7QP9lGCE=/660x440/filters:format(jpeg):quality(80)/2018867315_1_1_231030_042816-w1600-h1198" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,195,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(76)" title="Tap to see score breakdown">52% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(76)" title="Tap to see score breakdown">52% match</button>
                     </div>
                     <button class="fav-btn" id="fav-76" onclick="toggleFavourite(76, '2018867315')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -5916,13 +5960,13 @@ Featu...</div>
             </div>
         </div>
 
-        <div class="card" id="card-77" data-idx="77" data-property-id="2020396849">
+        <div class="card" id="card-77" data-idx="77" data-property-id="2020396849" data-score="52.5" data-price="1550000" data-acres="39.6" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/k3N4_IEjD1q7BZrHxVU_fLsXpp4=/660x440/filters:format(jpeg):quality(80)/2020396849_1_1_251104_115950-w6000-h4000" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,550,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(77)" title="Tap to see score breakdown">52% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(77)" title="Tap to see score breakdown">52% match</button>
                     </div>
                     <button class="fav-btn" id="fav-77" onclick="toggleFavourite(77, '2020396849')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -5988,7 +6032,7 @@ The main residence features three generou...</div>
             </div>
         </div>
 
-        <div class="card" id="card-78" data-idx="78" data-property-id="2020079869">
+        <div class="card" id="card-78" data-idx="78" data-property-id="2020079869" data-score="52.5" data-price="700000" data-acres="119.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/nN4qwQdzAv87CtXYAPTVcv07gxA=/660x440/filters:format(jpeg):quality(80)/2020079869_1_1_250623_042757-w2048-h1534" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6059,7 +6103,7 @@ The main residence features three generou...</div>
             </div>
         </div>
 
-        <div class="card" id="card-79" data-idx="79" data-property-id="2020506171">
+        <div class="card" id="card-79" data-idx="79" data-property-id="2020506171" data-score="52.5" data-price="620000" data-acres="98.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/dCuZ_EaNAKPgW_iGzBefZ7f5kr0=/660x440/filters:format(jpeg):quality(80)/2020506171_1_1_260103_114931-w1200-h899" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6132,13 +6176,13 @@ The property has a dwelling entitlement and currently has a shed and 20 foot con
             </div>
         </div>
 
-        <div class="card" id="card-80" data-idx="80" data-property-id="2020462236">
+        <div class="card" id="card-80" data-idx="80" data-property-id="2020462236" data-score="52.5" data-price="945000" data-acres="56.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/317tOyKCeDOygeGzy7RM1uczA14=/660x440/filters:format(jpeg):quality(80)/2020462236_3_1_251201_081724-w1098-h824" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$945,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(80)" title="Tap to see score breakdown">52% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(80)" title="Tap to see score breakdown">52% match</button>
                     </div>
                     <button class="fav-btn" id="fav-80" onclick="toggleFavourite(80, '2020462236')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -6203,13 +6247,13 @@ The property has a dwelling entitlement and currently has a shed and 20 foot con
             </div>
         </div>
 
-        <div class="card" id="card-81" data-idx="81" data-property-id="2017371446">
+        <div class="card" id="card-81" data-idx="81" data-property-id="2017371446" data-score="52.5" data-price="0" data-acres="103.8" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/rdzkMNsdCIjECERktp1SAwOC9Ds=/660x440/filters:format(jpeg):quality(80)/2017371446_1_1_211031_111422-w1440-h1080" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">PRICE ON APPLICATION</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(81)" title="Tap to see score breakdown">52% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(81)" title="Tap to see score breakdown">52% match</button>
                     </div>
                     <button class="fav-btn" id="fav-81" onclick="toggleFavourite(81, '2017371446')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -6275,7 +6319,7 @@ Located along Creewah road it has 4 fenced paddocks, grazi...</div>
             </div>
         </div>
 
-        <div class="card" id="card-82" data-idx="82" data-property-id="2019525412">
+        <div class="card" id="card-82" data-idx="82" data-property-id="2019525412" data-score="52.0" data-price="1100000" data-acres="42.2" data-drive="139" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/QaMh5jHKWSgTX3PsD8AZTB5iMrA=/660x440/filters:format(jpeg):quality(80)/2019525412_3_1_240929_114433-w8160-h4590" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6349,13 +6393,13 @@ Features include:
             </div>
         </div>
 
-        <div class="card" id="card-83" data-idx="83" data-property-id="2020368773">
+        <div class="card" id="card-83" data-idx="83" data-property-id="2020368773" data-score="52.0" data-price="0" data-acres="40.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/btOpcomfv5midW2KLPhrE-0Vj24=/660x440/filters:format(jpeg):quality(80)/2020368773_2_1_260214_091919-w1440-h1080" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">By negotiation</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(83)" title="Tap to see score breakdown">52% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(83)" title="Tap to see score breakdown">52% match</button>
                     </div>
                     <button class="fav-btn" id="fav-83" onclick="toggleFavourite(83, '2020368773')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -6424,7 +6468,7 @@ The Cottage -
             </div>
         </div>
 
-        <div class="card" id="card-84" data-idx="84" data-property-id="2020271118">
+        <div class="card" id="card-84" data-idx="84" data-property-id="2020271118" data-score="52.0" data-price="1100000" data-acres="149.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/3qHIsFkCO_c3MDcqTu93f32_7bI=/660x440/filters:format(jpeg):quality(80)/2020271118_1_1_250915_114432-w2048-h1536" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6496,7 +6540,7 @@ Whether you&#x27;re chasing a tree c...</div>
             </div>
         </div>
 
-        <div class="card" id="card-85" data-idx="85" data-property-id="2020748712">
+        <div class="card" id="card-85" data-idx="85" data-property-id="2020748712" data-score="52.0" data-price="950000" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/9pQfC_u4srpz-sHHsz0wwBwap8I=/660x440/filters:format(jpeg):quality(80)/2020748712_1_1_260409_065739-w2492-h1400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6568,7 +6612,7 @@ With a dwelling entitlement in place, the opportunity to create your own home he
             </div>
         </div>
 
-        <div class="card" id="card-86" data-idx="86" data-property-id="2020730933">
+        <div class="card" id="card-86" data-idx="86" data-property-id="2020730933" data-score="51.5" data-price="0" data-acres="31.3" data-drive="185" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/_ErbfWgN3P4t2saLpAjba_-I_Yo=/660x440/filters:format(jpeg):quality(80)/2020730933_1_1_260402_035453-w2000-h1498" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6640,7 +6684,7 @@ With a dwelling entitlement in place, the opportunity to create your own home he
             </div>
         </div>
 
-        <div class="card" id="card-87" data-idx="87" data-property-id="2020742926">
+        <div class="card" id="card-87" data-idx="87" data-property-id="2020742926" data-score="51.5" data-price="1150000" data-acres="170.5" data-drive="183" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/9XcRjdV67yPAuR09ifmDNzWQnQc=/660x440/filters:format(jpeg):quality(80)/2020742926_1_1_260408_051026-w1200-h800" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6712,7 +6756,7 @@ Set across predominantly level to gently undulating country, the property offers
             </div>
         </div>
 
-        <div class="card" id="card-88" data-idx="88" data-property-id="2020617988">
+        <div class="card" id="card-88" data-idx="88" data-property-id="2020617988" data-score="51.0" data-price="1550000" data-acres="104.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/jEhZcRiVfnbqNZ0pj4LnMPuI5IY=/660x440/filters:format(jpeg):quality(80)/2020617988_1_1_260218_113409-w8192-h5464" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6784,7 +6828,7 @@ The comfortable four-bedroom home is well positioned to take in the...</div>
             </div>
         </div>
 
-        <div class="card" id="card-89" data-idx="89" data-property-id="2019522609">
+        <div class="card" id="card-89" data-idx="89" data-property-id="2019522609" data-score="51.0" data-price="685000" data-acres="82.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/HzbKa7G5Cpqnq_fW4l8_uzf9p_w=/660x440/filters:format(jpeg):quality(80)/2019522609_5_1_240927_122700-w2488-h1400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6855,13 +6899,13 @@ The comfortable four-bedroom home is well positioned to take in the...</div>
             </div>
         </div>
 
-        <div class="card" id="card-90" data-idx="90" data-property-id="2020622407">
+        <div class="card" id="card-90" data-idx="90" data-property-id="2020622407" data-score="51.0" data-price="1395000" data-acres="115.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/7qFItDSL642Op-MqsQzfEWSMYKw=/660x440/filters:format(jpeg):quality(80)/2020622407_1_1_260220_015531-w5280-h3956" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,395,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(90)" title="Tap to see score breakdown">51% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(90)" title="Tap to see score breakdown">51% match</button>
                     </div>
                     <button class="fav-btn" id="fav-90" onclick="toggleFavourite(90, '2020622407')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -6927,7 +6971,7 @@ With a permanent creek, quality infrastructure, and a beautifully finished new h
             </div>
         </div>
 
-        <div class="card" id="card-91" data-idx="91" data-property-id="2019913217">
+        <div class="card" id="card-91" data-idx="91" data-property-id="2019913217" data-score="51.0" data-price="299000" data-acres="101.3" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/pXPWtmhlAa2As0cT_p1t_9jIJqU=/660x440/filters:format(jpeg):quality(80)/2019913217_6_1_250406_114340-w3840-h2160" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -6998,7 +7042,7 @@ With a permanent creek, quality infrastructure, and a beautifully finished new h
             </div>
         </div>
 
-        <div class="card" id="card-92" data-idx="92" data-property-id="2019909856">
+        <div class="card" id="card-92" data-idx="92" data-property-id="2019909856" data-score="51.0" data-price="695000" data-acres="150.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/N0QbSurehWfyye1H8M6UfZNC8k4=/660x440/filters:format(jpeg):quality(80)/2019909856_1_1_250403_101645-w2048-h1366" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7071,7 +7115,7 @@ The block has been in the one family and farmed since the 1930&#x27;s and its lo
             </div>
         </div>
 
-        <div class="card" id="card-93" data-idx="93" data-property-id="2020482330">
+        <div class="card" id="card-93" data-idx="93" data-property-id="2020482330" data-score="50.0" data-price="580000" data-acres="39.5" data-drive="181" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/AyLMWHBtWDzLM917_beliO-8KF4=/660x440/filters:format(jpeg):quality(80)/2018529138_1_1_230512_021629-w5272-h3948" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7147,7 +7191,7 @@ The block has been in the one family and farmed since the 1930&#x27;s and its lo
             </div>
         </div>
 
-        <div class="card" id="card-94" data-idx="94" data-property-id="2020404065">
+        <div class="card" id="card-94" data-idx="94" data-property-id="2020404065" data-score="50.0" data-price="1595000" data-acres="105.7" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/PjqpaqQG6YeI2T2-Xsb77xiGIu4=/660x440/filters:format(jpeg):quality(80)/2020404065_1_1_251106_063747-w3500-h1969" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7222,13 +7266,13 @@ The Residence - Near new, Effortless Living
             </div>
         </div>
 
-        <div class="card" id="card-95" data-idx="95" data-property-id="2018967437">
+        <div class="card" id="card-95" data-idx="95" data-property-id="2018967437" data-score="50.0" data-price="500000" data-acres="100.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/CaBeI7bLjh5lUXt_FGqui_-TwF4=/660x440/filters:format(jpeg):quality(80)/2018967437_1_1_231221_100148-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$500,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(95)" title="Tap to see score breakdown">50% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(95)" title="Tap to see score breakdown">50% match</button>
                     </div>
                     <button class="fav-btn" id="fav-95" onclick="toggleFavourite(95, '2018967437')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -7298,13 +7342,13 @@ Features:
             </div>
         </div>
 
-        <div class="card" id="card-96" data-idx="96" data-property-id="2020690868">
+        <div class="card" id="card-96" data-idx="96" data-property-id="2020690868" data-score="50.0" data-price="205000" data-acres="60.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/oPOmAekRn7i1tG9nnGbSCpLKGAs=/660x440/filters:format(jpeg):quality(80)/2020690868_1_1_260413_044544-w2048-h1536" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$205,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(96)" title="Tap to see score breakdown">50% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(96)" title="Tap to see score breakdown">50% match</button>
                     </div>
                     <button class="fav-btn" id="fav-96" onclick="toggleFavourite(96, '2020690868')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -7376,7 +7420,7 @@ Welcome to lot 31. A property of 60 Acres of mixed use Freehold farmland with Ea
             </div>
         </div>
 
-        <div class="card" id="card-97" data-idx="97" data-property-id="2020364106">
+        <div class="card" id="card-97" data-idx="97" data-property-id="2020364106" data-score="49.5" data-price="925000" data-acres="31.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Dsb7jOyz4L5odcpbIJsJ9yNRV8s=/660x440/filters:format(jpeg):quality(80)/2020364106_1_1_251208_050016-w1200-h899" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7448,7 +7492,7 @@ The 2014 Hi-Tech transportable home captures stunning eastern views the perfect 
             </div>
         </div>
 
-        <div class="card" id="card-98" data-idx="98" data-property-id="2019834695">
+        <div class="card" id="card-98" data-idx="98" data-property-id="2019834695" data-score="49.5" data-price="790000" data-acres="98.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/ebnEf7hkOo03qR3HFpcZyi2q6SY=/660x440/filters:format(jpeg):quality(80)/2019834695_17_1_250304_120856-w2005-h1338" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7519,7 +7563,7 @@ The 2014 Hi-Tech transportable home captures stunning eastern views the perfect 
             </div>
         </div>
 
-        <div class="card" id="card-99" data-idx="99" data-property-id="2020634526">
+        <div class="card" id="card-99" data-idx="99" data-property-id="2020634526" data-score="47.5" data-price="960000" data-acres="115.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/By_C3-G8PFxBJGa-cF57O2ZRzaM=/660x440/filters:format(jpeg):quality(80)/2020634526_1_1_260225_034140-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7594,13 +7638,13 @@ Features
             </div>
         </div>
 
-        <div class="card" id="card-100" data-idx="100" data-property-id="2020023601">
+        <div class="card" id="card-100" data-idx="100" data-property-id="2020023601" data-score="47.5" data-price="1190000" data-acres="40.2" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/T06PKrJZbhmLrU2w1yGVscQ_FlA=/660x440/filters:format(jpeg):quality(80)/2020023601_2_1_250825_023624-w1200-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,190,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(100)" title="Tap to see score breakdown">48% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(100)" title="Tap to see score breakdown">48% match</button>
                     </div>
                     <button class="fav-btn" id="fav-100" onclick="toggleFavourite(100, '2020023601')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -7669,13 +7713,13 @@ The property features:
             </div>
         </div>
 
-        <div class="card" id="card-101" data-idx="101" data-property-id="2020674194">
+        <div class="card" id="card-101" data-idx="101" data-property-id="2020674194" data-score="47.5" data-price="1250000" data-acres="33.4" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/cY2YPAuDu0cs6kKYCV1vi9Uvp8E=/660x440/filters:format(jpeg):quality(80)/2020674194_1_1_260311_104940-w1920-h1365" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,250,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(101)" title="Tap to see score breakdown">48% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(101)" title="Tap to see score breakdown">48% match</button>
                     </div>
                     <button class="fav-btn" id="fav-101" onclick="toggleFavourite(101, '2020674194')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -7741,13 +7785,13 @@ Stand-Alone (off grid) Solar power system (10 kwh daily) with battery storage, A
             </div>
         </div>
 
-        <div class="card" id="card-102" data-idx="102" data-property-id="2020441510">
+        <div class="card" id="card-102" data-idx="102" data-property-id="2020441510" data-score="47.5" data-price="1475000" data-acres="69.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/lt_lW3Vs7dZmNgvwbIiJxQ7MKN0=/660x440/filters:format(jpeg):quality(80)/2020441510_1_1_251120_112514-w1920-h1440" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,475,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(102)" title="Tap to see score breakdown">48% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(102)" title="Tap to see score breakdown">48% match</button>
                     </div>
                     <button class="fav-btn" id="fav-102" onclick="toggleFavourite(102, '2020441510')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -7812,7 +7856,7 @@ Stand-Alone (off grid) Solar power system (10 kwh daily) with battery storage, A
             </div>
         </div>
 
-        <div class="card" id="card-103" data-idx="103" data-property-id="2020610995">
+        <div class="card" id="card-103" data-idx="103" data-property-id="2020610995" data-score="47.5" data-price="1725000" data-acres="30.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/ndd0VylNHZMxa2doLwvxpMaO0kY=/660x440/filters:format(jpeg):quality(80)/2020610995_1_1_260217_011951-w2560-h1707" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7883,7 +7927,7 @@ Stand-Alone (off grid) Solar power system (10 kwh daily) with battery storage, A
             </div>
         </div>
 
-        <div class="card" id="card-104" data-idx="104" data-property-id="2020631481">
+        <div class="card" id="card-104" data-idx="104" data-property-id="2020631481" data-score="47.5" data-price="850000" data-acres="108.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/DZ4jfHk8Im-V-i4N-pGBjUD_tcI=/660x440/filters:format(jpeg):quality(80)/2020631481_1_1_260224_045445-w5272-h3948" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -7956,13 +8000,13 @@ A creek wind...</div>
             </div>
         </div>
 
-        <div class="card" id="card-105" data-idx="105" data-property-id="2020315786">
+        <div class="card" id="card-105" data-idx="105" data-property-id="2020315786" data-score="47.5" data-price="0" data-acres="35.7" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/KiEVrKe4vRHyLz_DQ3MQI08M0qo=/660x440/filters:format(jpeg):quality(80)/2020315786_1_1_251002_110837-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">For Sale Asking 360,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(105)" title="Tap to see score breakdown">48% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(105)" title="Tap to see score breakdown">48% match</button>
                     </div>
                     <button class="fav-btn" id="fav-105" onclick="toggleFavourite(105, '2020315786')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -8029,7 +8073,7 @@ A creek wind...</div>
             </div>
         </div>
 
-        <div class="card" id="card-106" data-idx="106" data-property-id="2020413674">
+        <div class="card" id="card-106" data-idx="106" data-property-id="2020413674" data-score="47.0" data-price="550000" data-acres="40.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/r6dH4cRZD7NIVPX9ltGOGDt7iKM=/660x440/filters:format(jpeg):quality(80)/2020413674_1_1_251111_053325-w640-h480" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8101,7 +8145,7 @@ Zoned RU2 Rural Landscape, this ...</div>
             </div>
         </div>
 
-        <div class="card" id="card-107" data-idx="107" data-property-id="2019672233">
+        <div class="card" id="card-107" data-idx="107" data-property-id="2019672233" data-score="47.0" data-price="2000000" data-acres="180.3" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/QZmW0CcmHZYO-IUXeY4YuTLzJP0=/660x440/filters:format(jpeg):quality(80)/2019672233_1_1_241202_084958-w2491-h1400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8173,7 +8217,7 @@ A trul...</div>
             </div>
         </div>
 
-        <div class="card" id="card-108" data-idx="108" data-property-id="2020408681">
+        <div class="card" id="card-108" data-idx="108" data-property-id="2020408681" data-score="47.0" data-price="0" data-acres="100.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/wJzzPWqYYNmFwVHnCzYvAt2vD3s=/660x440/filters:format(jpeg):quality(80)/2020408681_1_1_251109_112333-w5712-h4284" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8245,7 +8289,7 @@ Two 4 bed Homes on 100 Acres, OFF GRID, Privately Separated.</div>
             </div>
         </div>
 
-        <div class="card" id="card-109" data-idx="109" data-property-id="2019995902">
+        <div class="card" id="card-109" data-idx="109" data-property-id="2019995902" data-score="46.0" data-price="369000" data-acres="102.0" data-drive="221" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/JTLfHOvCV1i3PCXc9p1xv3aaBJk=/660x440/filters:format(jpeg):quality(80)/2019995902_1_1_250515_024008-w1754-h1240" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8318,7 +8362,7 @@ Two 4 bed Homes on 100 Acres, OFF GRID, Privately Separated.</div>
             </div>
         </div>
 
-        <div class="card" id="card-110" data-idx="110" data-property-id="2020667071">
+        <div class="card" id="card-110" data-idx="110" data-property-id="2020667071" data-score="46.0" data-price="0" data-acres="60.0" data-drive="240" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/jfv717BQyandY274WABJEv--U0w=/660x440/filters:format(jpeg):quality(80)/2020312018_2_1_251001_113540-w2000-h1333" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8390,7 +8434,7 @@ Properties of this scale and quality so close to the city are increasingly diffi
             </div>
         </div>
 
-        <div class="card" id="card-111" data-idx="111" data-property-id="2020722991">
+        <div class="card" id="card-111" data-idx="111" data-property-id="2020722991" data-score="46.0" data-price="995000" data-acres="72.0" data-drive="183" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/oZHpf_3CwkmtjzAdtSwUSEfmOGY=/660x440/filters:format(jpeg):quality(80)/2020722991_1_1_260331_023453-w1200-h899" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8470,7 +8514,7 @@ Convenient access to major regional centres
             </div>
         </div>
 
-        <div class="card" id="card-112" data-idx="112" data-property-id="2019979548">
+        <div class="card" id="card-112" data-idx="112" data-property-id="2019979548" data-score="45.0" data-price="0" data-acres="123.8" data-drive="172" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/DSJgHPEbpLNcuxds1kiHv8tYCJA=/660x440/filters:format(jpeg):quality(80)/2019979548_3_1_250508_015940-w3200-h2400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8542,7 +8586,7 @@ Offering absolute privacy this stunning property includes a combination of clear
             </div>
         </div>
 
-        <div class="card" id="card-113" data-idx="113" data-property-id="2020234652">
+        <div class="card" id="card-113" data-idx="113" data-property-id="2020234652" data-score="45.0" data-price="1450000" data-acres="102.4" data-drive="199" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/foaWg22FQkzkY61mmahqTPOtYuo=/660x440/filters:format(jpeg):quality(80)/2020234652_1_1_251018_035440-w1200-h899" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8613,7 +8657,7 @@ Offering absolute privacy this stunning property includes a combination of clear
             </div>
         </div>
 
-        <div class="card" id="card-114" data-idx="114" data-property-id="2020627180">
+        <div class="card" id="card-114" data-idx="114" data-property-id="2020627180" data-score="45.0" data-price="1890000" data-acres="54.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Q7qgohvkhn12r-xR3Q_b1wdlFiU=/660x440/filters:format(jpeg):quality(80)/2020627180_26_1_260309_052531-w5272-h3948" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8687,7 +8731,7 @@ Ensuring there is p...</div>
             </div>
         </div>
 
-        <div class="card" id="card-115" data-idx="115" data-property-id="2020162256">
+        <div class="card" id="card-115" data-idx="115" data-property-id="2020162256" data-score="45.0" data-price="0" data-acres="31.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/dZHNzyqaEBbNESz3EytBZ4ocr4g=/660x440/filters:format(jpeg):quality(80)/2020162256_11_1_250730_025949-w3000-h1999" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8760,7 +8804,7 @@ Located just 5km from Murrumbateman village and 25 minutes from Canberra&#x27;s 
             </div>
         </div>
 
-        <div class="card" id="card-116" data-idx="116" data-property-id="2020577934">
+        <div class="card" id="card-116" data-idx="116" data-property-id="2020577934" data-score="45.0" data-price="1800000" data-acres="85.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/nqc1UsFUPqHdDTPS7pYzpFehJTI=/660x440/filters:format(jpeg):quality(80)/2020577934_1_1_260204_040333-w2100-h1400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8833,13 +8877,13 @@ The home features:
             </div>
         </div>
 
-        <div class="card" id="card-117" data-idx="117" data-property-id="2020461210">
+        <div class="card" id="card-117" data-idx="117" data-property-id="2020461210" data-score="45.0" data-price="1749000" data-acres="153.2" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/nObIEn2qqByUkMRw3uhyP9Ww4Ho=/660x440/filters:format(jpeg):quality(80)/2020461210_3_1_251201_060652-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,749,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(117)" title="Tap to see score breakdown">45% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(117)" title="Tap to see score breakdown">45% match</button>
                     </div>
                     <button class="fav-btn" id="fav-117" onclick="toggleFavourite(117, '2020461210')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -8906,7 +8950,7 @@ Mount Dillon is mainly arable (9...</div>
             </div>
         </div>
 
-        <div class="card" id="card-118" data-idx="118" data-property-id="2020697588">
+        <div class="card" id="card-118" data-idx="118" data-property-id="2020697588" data-score="44.5" data-price="340000" data-acres="102.0" data-drive="214" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/qgUz7GrK6ub12gbQrjoovxUika4=/660x440/filters:format(jpeg):quality(80)/2020697588_1_1_260320_011742-w2048-h1536" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -8979,13 +9023,13 @@ Whether you&#x27;re searching for a weekend ret...</div>
             </div>
         </div>
 
-        <div class="card" id="card-119" data-idx="119" data-property-id="2019918476">
+        <div class="card" id="card-119" data-idx="119" data-property-id="2019918476" data-score="44.5" data-price="1275000" data-acres="156.9" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/yodTtPFgfEcyy4_0dl50ADIABV0=/660x440/filters:format(jpeg):quality(80)/2019918476_1_1_250408_084017-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,275,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(119)" title="Tap to see score breakdown">44% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(119)" title="Tap to see score breakdown">44% match</button>
                     </div>
                     <button class="fav-btn" id="fav-119" onclick="toggleFavourite(119, '2019918476')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -9053,13 +9097,13 @@ The sheer eleva...</div>
             </div>
         </div>
 
-        <div class="card" id="card-120" data-idx="120" data-property-id="2019489880">
+        <div class="card" id="card-120" data-idx="120" data-property-id="2019489880" data-score="44.0" data-price="575000" data-acres="145.8" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/dWLKi9Aoe5Wp0sT7I8aHaNUP0Is=/660x440/filters:format(jpeg):quality(80)/2019489880_5_1_240912_075808-w3840-h2876" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$575,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(120)" title="Tap to see score breakdown">44% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(120)" title="Tap to see score breakdown">44% match</button>
                     </div>
                     <button class="fav-btn" id="fav-120" onclick="toggleFavourite(120, '2019489880')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -9125,7 +9169,7 @@ The property includes expansive open grazing land with a mix of fertile red and 
             </div>
         </div>
 
-        <div class="card" id="card-121" data-idx="121" data-property-id="2020267516">
+        <div class="card" id="card-121" data-idx="121" data-property-id="2020267516" data-score="43.5" data-price="0" data-acres="70.0" data-drive="239" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/UeaBOns2Bf_m7sMikv9bk0Z76j4=/660x440/filters:format(jpeg):quality(80)/2020267516_1_1_250913_122455-w1442-h1080" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9202,7 +9246,7 @@ Located in a tightly held district highly regarded as a blue ribbon grazing &amp
             </div>
         </div>
 
-        <div class="card" id="card-122" data-idx="122" data-property-id="2019945555">
+        <div class="card" id="card-122" data-idx="122" data-property-id="2019945555" data-score="43.5" data-price="425000" data-acres="33.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/vM8CGZ8ESOoHnDT0EpPT8ok0LGY=/660x440/filters:format(jpeg):quality(80)/2019945555_1_1_250423_022031-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9279,7 +9323,7 @@ Key features include:
             </div>
         </div>
 
-        <div class="card" id="card-123" data-idx="123" data-property-id="2019563976">
+        <div class="card" id="card-123" data-idx="123" data-property-id="2019563976" data-score="43.5" data-price="1850000" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/lBrC3dipgA0GD7E2do0V_LVGYBg=/660x440/filters:format(jpeg):quality(80)/2019563976_9_1_241015_081426-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9351,7 +9395,7 @@ This 40.07-hectare property is ideal for cattle, sheep, or horses with four full
             </div>
         </div>
 
-        <div class="card" id="card-124" data-idx="124" data-property-id="2020574001">
+        <div class="card" id="card-124" data-idx="124" data-property-id="2020574001" data-score="43.5" data-price="680000" data-acres="101.3" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/FswOzc_H1vjNgJ4sjGiAMWlxE-g=/660x440/filters:format(jpeg):quality(80)/2020574001_1_1_260203_041530-w1024-h768" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9428,7 +9472,7 @@ Then t...</div>
             </div>
         </div>
 
-        <div class="card" id="card-125" data-idx="125" data-property-id="2020720796">
+        <div class="card" id="card-125" data-idx="125" data-property-id="2020720796" data-score="43.0" data-price="1250000" data-acres="49.4" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/KOgAUKNDUC4cMiJHb9_rTUsCYGw=/660x440/filters:format(jpeg):quality(80)/2020720796_1_1_260330_044911-w9504-h6336" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9502,7 +9546,7 @@ Set across 20 hectares (50 acres) of gently rolling countryside, this is a rare 
             </div>
         </div>
 
-        <div class="card" id="card-126" data-idx="126" data-property-id="2019034346">
+        <div class="card" id="card-126" data-idx="126" data-property-id="2019034346" data-score="42.5" data-price="375000" data-acres="40.0" data-drive="146" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/JUEwrhEADCfbKTuBkO26z64yPi4=/660x440/filters:format(jpeg):quality(80)/2019034346_1_1_240916_074516-w1242-h2208" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9577,7 +9621,7 @@ Whilst every care has been taken to veri...</div>
             </div>
         </div>
 
-        <div class="card" id="card-127" data-idx="127" data-property-id="2020356873">
+        <div class="card" id="card-127" data-idx="127" data-property-id="2020356873" data-score="42.5" data-price="1700000" data-acres="147.7" data-drive="134" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/T4uOEJ7zUEbXqyjIyu99NNkfi6U=/660x440/filters:format(jpeg):quality(80)/3ts5gcca5mqli_1_0_251016_122529-w2000-h1500" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9649,7 +9693,7 @@ This inviting single-level brick home showcases timeless character features thro
             </div>
         </div>
 
-        <div class="card" id="card-128" data-idx="128" data-property-id="2020293236">
+        <div class="card" id="card-128" data-idx="128" data-property-id="2020293236" data-score="42.5" data-price="1200000" data-acres="103.4" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Gx40uY1Owc5AUZOdT8pYlakuu8o=/660x440/filters:format(jpeg):quality(80)/2020293236_1_1_250924_054016-w3000-h2247" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9722,7 +9766,7 @@ The three-bedroom, two-bathroom home is move-in ready, with floating timber floo
             </div>
         </div>
 
-        <div class="card" id="card-129" data-idx="129" data-property-id="2019865323">
+        <div class="card" id="card-129" data-idx="129" data-property-id="2019865323" data-score="42.5" data-price="1499000" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/1GsardG1r6x8q8fRWD2xjwakgfY=/660x440/filters:format(jpeg):quality(80)/2019860312_1_1_250313_055102-w1600-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -9794,13 +9838,13 @@ The residence offers a family friendly layout, upon entry you will notice the la
             </div>
         </div>
 
-        <div class="card" id="card-130" data-idx="130" data-property-id="2020585674">
+        <div class="card" id="card-130" data-idx="130" data-property-id="2020585674" data-score="42.5" data-price="585000" data-acres="40.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/CwCpDFk3o7l9js2pnlZPi6NeEmU=/660x440/filters:format(jpeg):quality(80)/2020585674_1_1_260206_032837-w4876-h3251" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$585,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(130)" title="Tap to see score breakdown">42% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(130)" title="Tap to see score breakdown">42% match</button>
                     </div>
                     <button class="fav-btn" id="fav-130" onclick="toggleFavourite(130, '2020585674')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -9866,13 +9910,13 @@ Set amongst picturesque rural surrounds, this 16.17ha* (40 acre*) lifestyle prop
             </div>
         </div>
 
-        <div class="card" id="card-131" data-idx="131" data-property-id="2020405883">
+        <div class="card" id="card-131" data-idx="131" data-property-id="2020405883" data-score="42.5" data-price="2000000" data-acres="165.8" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/m8iSPdzWe6RP9aXXESKBoB1syp4=/660x440/filters:format(jpeg):quality(80)/2020405883_7_1_251107_031041-w4032-h2268" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$2,000,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(131)" title="Tap to see score breakdown">42% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(131)" title="Tap to see score breakdown">42% match</button>
                     </div>
                     <button class="fav-btn" id="fav-131" onclick="toggleFavourite(131, '2020405883')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -9937,7 +9981,7 @@ Set amongst picturesque rural surrounds, this 16.17ha* (40 acre*) lifestyle prop
             </div>
         </div>
 
-        <div class="card" id="card-132" data-idx="132" data-property-id="2020450945">
+        <div class="card" id="card-132" data-idx="132" data-property-id="2020450945" data-score="41.0" data-price="1550000" data-acres="50.0" data-drive="222" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/MqcATTvRs1dONE0wobVfxaNfwBc=/660x440/filters:format(jpeg):quality(80)/2020450945_22_1_260325_031946-w7117-h4490" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10010,7 +10054,7 @@ Constructed entirely of reinforced HYMIX concrete , the residence demonstrates a
             </div>
         </div>
 
-        <div class="card" id="card-133" data-idx="133" data-property-id="2020724221">
+        <div class="card" id="card-133" data-idx="133" data-property-id="2020724221" data-score="41.0" data-price="0" data-acres="40.0" data-drive="236" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/KJbaJmbEeju7gqOoMYTIz9TPXj0=/660x440/filters:format(jpeg):quality(80)/2020724221_1_1_260331_055748-w4032-h3024" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10082,13 +10126,13 @@ Property featur...</div>
             </div>
         </div>
 
-        <div class="card" id="card-134" data-idx="134" data-property-id="2019021395">
+        <div class="card" id="card-134" data-idx="134" data-property-id="2019021395" data-score="40.5" data-price="370000" data-acres="100.1" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/uc_-4tORPFClMJJqZaVrkAQw-iM=/660x440/filters:format(jpeg):quality(80)/2019021395_12_1_240131_060236-w1600-h1068" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$370,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(134)" title="Tap to see score breakdown">40% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(134)" title="Tap to see score breakdown">40% match</button>
                     </div>
                     <button class="fav-btn" id="fav-134" onclick="toggleFavourite(134, '2019021395')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -10156,7 +10200,7 @@ Offering native bushland, this is the perfect haven for those seeking space and 
             </div>
         </div>
 
-        <div class="card" id="card-135" data-idx="135" data-property-id="2020328363">
+        <div class="card" id="card-135" data-idx="135" data-property-id="2020328363" data-score="40.0" data-price="1349000" data-acres="43.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/BozNsmCYKBV4aIWdFH8YIF8uc70=/660x440/filters:format(jpeg):quality(80)/2020328363_1_1_251008_073551-w1920-h1079" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10229,7 +10273,7 @@ The main residence is a spacious four-bedroom, two-bathroom home, offering comfo
             </div>
         </div>
 
-        <div class="card" id="card-136" data-idx="136" data-property-id="2020045738">
+        <div class="card" id="card-136" data-idx="136" data-property-id="2020045738" data-score="40.0" data-price="715000" data-acres="57.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/GO1l50kxKA4D-JmQMGEu_AbDylY=/660x440/filters:format(jpeg):quality(80)/2020045738_1_1_250606_125800-w3000-h2247" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10302,13 +10346,13 @@ The property offers excellent flexibi...</div>
             </div>
         </div>
 
-        <div class="card" id="card-137" data-idx="137" data-property-id="2020749975">
+        <div class="card" id="card-137" data-idx="137" data-property-id="2020749975" data-score="40.0" data-price="1350000" data-acres="58.7" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/JsGZCK7u_uClckC3ufP81PKXFt0=/660x440/filters:format(jpeg):quality(80)/2020749975_1_1_260410_124535-w2253-h1500" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,350,000</span>
-                        <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(137)" title="Tap to see score breakdown">40% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(137)" title="Tap to see score breakdown">40% match</button>
                     </div>
                     <button class="fav-btn" id="fav-137" onclick="toggleFavourite(137, '2020749975')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -10374,7 +10418,7 @@ Designed with family living in mind, the home is generous in scale and thoughtfu
             </div>
         </div>
 
-        <div class="card" id="card-138" data-idx="138" data-property-id="2020382484">
+        <div class="card" id="card-138" data-idx="138" data-property-id="2020382484" data-score="39.5" data-price="1300000" data-acres="30.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/tUyQlwtaEnF6-S0a-fQLpAYkU-M=/660x440/filters:format(jpeg):quality(80)/2020382484_2_1_251029_112554-w2100-h1573" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10446,13 +10490,13 @@ Thoughtfully enhancing the homes...</div>
             </div>
         </div>
 
-        <div class="card" id="card-139" data-idx="139" data-property-id="2019927865">
+        <div class="card" id="card-139" data-idx="139" data-property-id="2019927865" data-score="39.5" data-price="690000" data-acres="110.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/MCqdJ0mxikNHzu8hYZ3Ovi6fGGU=/660x440/filters:format(jpeg):quality(80)/2019927865_14_1_250411_081727-w1440-h1079" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$690,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(139)" title="Tap to see score breakdown">40% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(139)" title="Tap to see score breakdown">40% match</button>
                     </div>
                     <button class="fav-btn" id="fav-139" onclick="toggleFavourite(139, '2019927865')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -10518,7 +10562,7 @@ This fantastic rural property offers space, comfort, and practicality in a peace
             </div>
         </div>
 
-        <div class="card" id="card-140" data-idx="140" data-property-id="2020581729">
+        <div class="card" id="card-140" data-idx="140" data-property-id="2020581729" data-score="39.5" data-price="1250000" data-acres="34.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/9X_PjLmkUoF9v6Txy2dZeFPEtj4=/660x440/filters:format(jpeg):quality(80)/2020581729_1_1_260205_022749-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10589,13 +10633,13 @@ This fantastic rural property offers space, comfort, and practicality in a peace
             </div>
         </div>
 
-        <div class="card" id="card-141" data-idx="141" data-property-id="elders-300P139511">
+        <div class="card" id="card-141" data-idx="141" data-property-id="elders-300P139511" data-score="39.5" data-price="1600000" data-acres="118.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://elders-re-vre-cdn.imgix.net/300P139511/image-1.jpg?w=660&amp;h=440&amp;fit=crop" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,600,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(141)" title="Tap to see score breakdown">40% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(141)" title="Tap to see score breakdown">40% match</button>
                     </div>
                     <button class="fav-btn" id="fav-141" onclick="toggleFavourite(141, 'elders-300P139511')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -10660,7 +10704,7 @@ This fantastic rural property offers space, comfort, and practicality in a peace
             </div>
         </div>
 
-        <div class="card" id="card-142" data-idx="142" data-property-id="2020613852">
+        <div class="card" id="card-142" data-idx="142" data-property-id="2020613852" data-score="38.5" data-price="585000" data-acres="81.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/cCAWSRHPjx30wDYG__dr1UCP_dQ=/660x440/filters:format(jpeg):quality(80)/2020613852_1_1_260217_111742-w2492-h1400" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10732,13 +10776,13 @@ With its incredible views, basalt soils, scattered native trees, and gentle undu
             </div>
         </div>
 
-        <div class="card" id="card-143" data-idx="143" data-property-id="2020682084">
+        <div class="card" id="card-143" data-idx="143" data-property-id="2020682084" data-score="38.5" data-price="1100000" data-acres="30.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/1NorComAgR-ho0Mmi4-NI0wHn5Q=/660x440/filters:format(jpeg):quality(80)/2020682084_3_1_260315_051516-w2250-h1500" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,100,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(143)" title="Tap to see score breakdown">38% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(143)" title="Tap to see score breakdown">38% match</button>
                     </div>
                     <button class="fav-btn" id="fav-143" onclick="toggleFavourite(143, '2020682084')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -10804,7 +10848,7 @@ Set on approximately 30 acres, the property features a mix of open, gently undul
             </div>
         </div>
 
-        <div class="card" id="card-144" data-idx="144" data-property-id="2019536211">
+        <div class="card" id="card-144" data-idx="144" data-property-id="2019536211" data-score="38.0" data-price="1390000" data-acres="79.5" data-drive="240" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/r7AJsoFRszTkvFyWe05o2fgE7tI=/660x440/filters:format(jpeg):quality(80)/2019536211_1_1_241003_012157-w2000-h1498" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10880,7 +10924,7 @@ Features include
             </div>
         </div>
 
-        <div class="card" id="card-145" data-idx="145" data-property-id="2019393986">
+        <div class="card" id="card-145" data-idx="145" data-property-id="2019393986" data-score="37.5" data-price="499000" data-acres="40.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/3bUO2Ekba2L1pg3mXtSvxvJdoiU=/660x440/filters:format(jpeg):quality(80)/2019393986_8_1_240731_010946-w3000-h2247" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -10952,7 +10996,7 @@ Perfect for a range of uses, whilst having an on site cabin + shipping container
             </div>
         </div>
 
-        <div class="card" id="card-146" data-idx="146" data-property-id="2019855039">
+        <div class="card" id="card-146" data-idx="146" data-property-id="2019855039" data-score="37.5" data-price="899000" data-acres="177.9" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/p0RVD_TKsnS6qGTVpsCfDIv43mo=/660x440/filters:format(jpeg):quality(80)/2019855039_1_1_250312_020233-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11025,7 +11069,7 @@ Fenced into six* paddocks, water is secured by six* dams ...</div>
             </div>
         </div>
 
-        <div class="card" id="card-147" data-idx="147" data-property-id="2020002544">
+        <div class="card" id="card-147" data-idx="147" data-property-id="2020002544" data-score="37.5" data-price="1239000" data-acres="54.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/CZvFmNpX9iwG0rxuWRVDWMNPAKI=/660x440/filters:format(jpeg):quality(80)/2020002544_1_1_250519_030200-w1800-h1199" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11104,7 +11148,7 @@ Call this the f...</div>
             </div>
         </div>
 
-        <div class="card" id="card-148" data-idx="148" data-property-id="2020346324">
+        <div class="card" id="card-148" data-idx="148" data-property-id="2020346324" data-score="37.5" data-price="0" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/CtmhFCBYnGdCsm4w_bspR-acd4I=/660x440/filters:format(jpeg):quality(80)/2020346324_1_1_251015_054657-w1200-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11175,7 +11219,7 @@ Call this the f...</div>
             </div>
         </div>
 
-        <div class="card" id="card-149" data-idx="149" data-property-id="elders-300P190699">
+        <div class="card" id="card-149" data-idx="149" data-property-id="elders-300P190699" data-score="37.5" data-price="550000" data-acres="80.6" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://elders-re-vre-cdn.imgix.net/300P190699/image-1.jpg?w=660&amp;h=440&amp;fit=crop" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11246,7 +11290,7 @@ Call this the f...</div>
             </div>
         </div>
 
-        <div class="card" id="card-150" data-idx="150" data-property-id="2020464022">
+        <div class="card" id="card-150" data-idx="150" data-property-id="2020464022" data-score="36.5" data-price="1550000" data-acres="98.8" data-drive="168" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/6vSl8LggxIzJ7_GNQx-DRx2qI7o=/660x440/filters:format(jpeg):quality(80)/2020464022_1_1_251202_052728-w1200-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11317,13 +11361,13 @@ Call this the f...</div>
             </div>
         </div>
 
-        <div class="card" id="card-151" data-idx="151" data-property-id="2020647561">
+        <div class="card" id="card-151" data-idx="151" data-property-id="2020647561" data-score="36.5" data-price="499000" data-acres="78.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/rwJ9I27aNSUTix8D-wGJaYkORUw=/660x440/filters:format(jpeg):quality(80)/2020647561_1_1_260313_124800-w1024-h768" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$499,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(151)" title="Tap to see score breakdown">36% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(151)" title="Tap to see score breakdown">36% match</button>
                     </div>
                     <button class="fav-btn" id="fav-151" onclick="toggleFavourite(151, '2020647561')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -11394,7 +11438,7 @@ Privatel...</div>
             </div>
         </div>
 
-        <div class="card" id="card-152" data-idx="152" data-property-id="2019414983">
+        <div class="card" id="card-152" data-idx="152" data-property-id="2019414983" data-score="35.0" data-price="0" data-acres="65.0" data-drive="117" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/YocgZkr4h6ItIgWZJwQ3grYw3bI=/660x440/filters:format(jpeg):quality(80)/2019414983_1_1_250520_030724-w1920-h1280" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11466,7 +11510,7 @@ C...</div>
             </div>
         </div>
 
-        <div class="card" id="card-153" data-idx="153" data-property-id="2020504381">
+        <div class="card" id="card-153" data-idx="153" data-property-id="2020504381" data-score="35.0" data-price="729000" data-acres="40.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/oRrQ2Ts_5zwZJymLsaSTsrUAOLk=/660x440/filters:format(jpeg):quality(80)/2020504381_1_1_251230_113722-w8155-h5427" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11545,7 +11589,7 @@ Features:
             </div>
         </div>
 
-        <div class="card" id="card-154" data-idx="154" data-property-id="2020598868">
+        <div class="card" id="card-154" data-idx="154" data-property-id="2020598868" data-score="35.0" data-price="1250000" data-acres="47.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/FAU1SgZnlahBux2UojdipX6IeMk=/660x440/filters:format(jpeg):quality(80)/2020598868_1_1_260211_113141-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11617,13 +11661,13 @@ With its stunning &quot;intact stained-glass windows, deco...</div>
             </div>
         </div>
 
-        <div class="card" id="card-155" data-idx="155" data-property-id="2020129073">
+        <div class="card" id="card-155" data-idx="155" data-property-id="2020129073" data-score="35.0" data-price="499000" data-acres="150.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/J0osaf0zXo85C9oXISKhXxR6j8I=/660x440/filters:format(jpeg):quality(80)/2020129073_1_1_250715_014215-w1600-h1067" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$499,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(155)" title="Tap to see score breakdown">35% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(155)" title="Tap to see score breakdown">35% match</button>
                     </div>
                     <button class="fav-btn" id="fav-155" onclick="toggleFavourite(155, '2020129073')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -11690,13 +11734,13 @@ Nestled on approximately 150 acres* (60.7 ha*) of natural bushland, this propert
             </div>
         </div>
 
-        <div class="card" id="card-156" data-idx="156" data-property-id="2020769994">
+        <div class="card" id="card-156" data-idx="156" data-property-id="2020769994" data-score="35.0" data-price="0" data-acres="104.1" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/TKmi42j-ZvDn1uYV_qlSWDG5kU0=/660x440/filters:format(jpeg):quality(80)/2020769994_1_1_260417_121834-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">Contact Agent for Buyers Guide</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(156)" title="Tap to see score breakdown">35% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(156)" title="Tap to see score breakdown">35% match</button>
                     </div>
                     <button class="fav-btn" id="fav-156" onclick="toggleFavourite(156, '2020769994')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -11763,13 +11807,13 @@ The solid brick veneer home is designed for family living, featuring three bedro
             </div>
         </div>
 
-        <div class="card" id="card-157" data-idx="157" data-property-id="2019591715">
+        <div class="card" id="card-157" data-idx="157" data-property-id="2019591715" data-score="35.0" data-price="1590000" data-acres="58.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/OWZwOFuynP-BMgvuQnwyvnJOWw0=/660x440/filters:format(jpeg):quality(80)/2019591715_5_1_241026_032230-w8256-h5504" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,590,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(157)" title="Tap to see score breakdown">35% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(157)" title="Tap to see score breakdown">35% match</button>
                     </div>
                     <button class="fav-btn" id="fav-157" onclick="toggleFavourite(157, '2019591715')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -11837,7 +11881,7 @@ Main ho...</div>
             </div>
         </div>
 
-        <div class="card" id="card-158" data-idx="158" data-property-id="rea-700404060">
+        <div class="card" id="card-158" data-idx="158" data-property-id="rea-700404060" data-score="35.0" data-price="799000" data-acres="0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://i3.au.reastatic.net/800x600-fit,format=webp/631bf70d5f05b5ed133c5381e8088d84846c7b929244a6aace67e910053717d1/image.jpg" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -11910,13 +11954,13 @@ Set on approximately 11 acres along Sunny Corner Road, this property presents a 
             </div>
         </div>
 
-        <div class="card" id="card-159" data-idx="159" data-property-id="2018897599">
+        <div class="card" id="card-159" data-idx="159" data-property-id="2018897599" data-score="34.5" data-price="850000" data-acres="141.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/-9Fk9HS-uV02etfScLFbxmeoEqs=/660x440/filters:format(jpeg):quality(80)/2017514240_17_1_220110_043526-w4032-h3024" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$850,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(159)" title="Tap to see score breakdown">34% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(159)" title="Tap to see score breakdown">34% match</button>
                     </div>
                     <button class="fav-btn" id="fav-159" onclick="toggleFavourite(159, '2018897599')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -11983,13 +12027,13 @@ Already producing high quality cattle, 552 is a picturesque grazing block having
             </div>
         </div>
 
-        <div class="card" id="card-160" data-idx="160" data-property-id="2018833437">
+        <div class="card" id="card-160" data-idx="160" data-property-id="2018833437" data-score="33.5" data-price="1000000" data-acres="71.4" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/-jxMl7gdD66B9OSwzCFlQUd04-I=/660x440/filters:format(jpeg):quality(80)/2018833437_2_1_231013_051959-w1920-h1280" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,000,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(160)" title="Tap to see score breakdown">34% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(160)" title="Tap to see score breakdown">34% match</button>
                     </div>
                     <button class="fav-btn" id="fav-160" onclick="toggleFavourite(160, '2018833437')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -12061,13 +12105,13 @@ Underground power to the gate
             </div>
         </div>
 
-        <div class="card" id="card-161" data-idx="161" data-property-id="2020701619">
+        <div class="card" id="card-161" data-idx="161" data-property-id="2020701619" data-score="32.5" data-price="600000" data-acres="33.8" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/ae9QILj5UmHN26OU9hK2UIImcvg=/660x440/filters:format(jpeg):quality(80)/2020701619_1_1_260323_020937-w1200-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$600,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(161)" title="Tap to see score breakdown">32% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(161)" title="Tap to see score breakdown">32% match</button>
                     </div>
                     <button class="fav-btn" id="fav-161" onclick="toggleFavourite(161, '2020701619')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -12135,7 +12179,7 @@ Property Features:
             </div>
         </div>
 
-        <div class="card" id="card-162" data-idx="162" data-property-id="2020038574">
+        <div class="card" id="card-162" data-idx="162" data-property-id="2020038574" data-score="32.0" data-price="425000" data-acres="30.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/l_R1W6wkUmwRovoEbEpmq4Zutkk=/660x440/filters:format(jpeg):quality(80)/2020038574_1_1_250603_112555-w1920-h1440" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -12206,13 +12250,13 @@ Property Features:
             </div>
         </div>
 
-        <div class="card" id="card-163" data-idx="163" data-property-id="2020602607">
+        <div class="card" id="card-163" data-idx="163" data-property-id="2020602607" data-score="32.0" data-price="1620000" data-acres="192.5" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/AujDjoKD_sGoET5HpbHsXp_fe4I=/660x440/filters:format(jpeg):quality(80)/2020602607_7_1_260212_114325-w6144-h4096" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,620,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(163)" title="Tap to see score breakdown">32% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(163)" title="Tap to see score breakdown">32% match</button>
                     </div>
                     <button class="fav-btn" id="fav-163" onclick="toggleFavourite(163, '2020602607')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -12280,7 +12324,7 @@ PRODUCTIVE MIXED-FARMING COUNTR...</div>
             </div>
         </div>
 
-        <div class="card" id="card-164" data-idx="164" data-property-id="2020633576">
+        <div class="card" id="card-164" data-idx="164" data-property-id="2020633576" data-score="31.5" data-price="0" data-acres="120.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/MEN8ECDZUqLhKOMZ4T2t3V47xxA=/660x440/filters:format(jpeg):quality(80)/2020633576_1_1_260225_125101-w1200-h899" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -12353,13 +12397,13 @@ Offering views to the west and south from numerous locations on the property. Ta
             </div>
         </div>
 
-        <div class="card" id="card-165" data-idx="165" data-property-id="2020724131">
+        <div class="card" id="card-165" data-idx="165" data-property-id="2020724131" data-score="30.0" data-price="390000" data-acres="40.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/0_tN7jciKKz63caFBcI0XtLMLVg=/660x440/filters:format(jpeg):quality(80)/2020724131_1_1_260331_054520-w2048-h1150" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$390,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(165)" title="Tap to see score breakdown">30% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(165)" title="Tap to see score breakdown">30% match</button>
                     </div>
                     <button class="fav-btn" id="fav-165" onclick="toggleFavourite(165, '2020724131')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -12425,7 +12469,7 @@ Boasting a spacious living area, a well-appointed kitchen, and a garage plus add
             </div>
         </div>
 
-        <div class="card" id="card-166" data-idx="166" data-property-id="2018673055">
+        <div class="card" id="card-166" data-idx="166" data-property-id="2018673055" data-score="28.5" data-price="495000" data-acres="40.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/75q9WtkTl46KdP6TlalFc4TJpi8=/660x440/filters:format(jpeg):quality(80)/2018673055_1_1_230728_063214-w2000-h1500" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -12501,7 +12545,7 @@ Boasting a spacious living area, a well-appointed kitchen, and a garage plus add
             </div>
         </div>
 
-        <div class="card" id="card-167" data-idx="167" data-property-id="2020614293">
+        <div class="card" id="card-167" data-idx="167" data-property-id="2020614293" data-score="27.5" data-price="660000" data-acres="99.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/6YWW3XMrnixfBRIpl77w5MMQ-XA=/660x440/filters:format(jpeg):quality(80)/2020614293_1_1_260218_125113-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -12577,7 +12621,7 @@ Boasting a spacious living area, a well-appointed kitchen, and a garage plus add
             </div>
         </div>
 
-        <div class="card" id="card-168" data-idx="168" data-property-id="2020448452">
+        <div class="card" id="card-168" data-idx="168" data-property-id="2020448452" data-score="27.5" data-price="375000" data-acres="40.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/XpLyoKdMqBJl9bZURpfTVZ3p6vM=/660x440/filters:format(jpeg):quality(80)/2020448452_3_1_251125_034753-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -12649,13 +12693,13 @@ A substantial dam and quality shedding support a wide range of leisure pursuits,
             </div>
         </div>
 
-        <div class="card" id="card-169" data-idx="169" data-property-id="2019195449">
+        <div class="card" id="card-169" data-idx="169" data-property-id="2019195449" data-score="27.5" data-price="1100000" data-acres="135.9" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/2IsIXz2V8mEK2gWUmyMOnhV1ado=/660x440/filters:format(jpeg):quality(80)/2019195449_1_1_250804_022420-w5472-h3648" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,100,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(169)" title="Tap to see score breakdown">28% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(169)" title="Tap to see score breakdown">28% match</button>
                     </div>
                     <button class="fav-btn" id="fav-169" onclick="toggleFavourite(169, '2019195449')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -12723,7 +12767,7 @@ Consisting of approximately 55ha* (135 acres*) of granite based soils. Construct
             </div>
         </div>
 
-        <div class="card" id="card-170" data-idx="170" data-property-id="2019838536">
+        <div class="card" id="card-170" data-idx="170" data-property-id="2019838536" data-score="27.5" data-price="885000" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/0rWiezGTgRsqs9cXMk4LHUkXeoA=/660x440/filters:format(jpeg):quality(80)/2019838536_22_1_250305_013859-w2048-h1534" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -12802,13 +12846,13 @@ Features include:
             </div>
         </div>
 
-        <div class="card" id="card-171" data-idx="171" data-property-id="2020719325">
+        <div class="card" id="card-171" data-idx="171" data-property-id="2020719325" data-score="27.5" data-price="495000" data-acres="59.3" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/-_IerEiRShh8347hacYd-TVpG6o=/660x440/filters:format(jpeg):quality(80)/2020719325_1_1_260329_110326-w6144-h4096" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$495,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(171)" title="Tap to see score breakdown">28% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(171)" title="Tap to see score breakdown">28% match</button>
                     </div>
                     <button class="fav-btn" id="fav-171" onclick="toggleFavourite(171, '2020719325')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -12873,7 +12917,7 @@ Features include:
             </div>
         </div>
 
-        <div class="card" id="card-172" data-idx="172" data-property-id="elders-300P187142">
+        <div class="card" id="card-172" data-idx="172" data-property-id="elders-300P187142" data-score="27.5" data-price="709000" data-acres="31.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://elders-re-vre-cdn.imgix.net/300P187142/image-1.jpg?w=660&amp;h=440&amp;fit=crop" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -12944,13 +12988,13 @@ Features include:
             </div>
         </div>
 
-        <div class="card" id="card-173" data-idx="173" data-property-id="2019668534">
+        <div class="card" id="card-173" data-idx="173" data-property-id="2019668534" data-score="27.0" data-price="640000" data-acres="107.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/oMQ3VukIWJkPlELB17zTt3OY0mw=/660x440/filters:format(jpeg):quality(80)/2019668534_4_1_241204_040002-w5272-h3515" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$640,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(173)" title="Tap to see score breakdown">27% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(173)" title="Tap to see score breakdown">27% match</button>
                     </div>
                     <button class="fav-btn" id="fav-173" onclick="toggleFavourite(173, '2019668534')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -13016,7 +13060,7 @@ Escape to the country with this unique off-grid three-bedroom, one-bathroom shed
             </div>
         </div>
 
-        <div class="card" id="card-174" data-idx="174" data-property-id="2020544155">
+        <div class="card" id="card-174" data-idx="174" data-property-id="2020544155" data-score="27.0" data-price="1950000" data-acres="30.5" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/labc481mEw8eOW-9t_o2NbCkoQQ=/660x440/filters:format(jpeg):quality(80)/2020544155_3_1_260121_063946-w1920-h1280" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13087,7 +13131,7 @@ Escape to the country with this unique off-grid three-bedroom, one-bathroom shed
             </div>
         </div>
 
-        <div class="card" id="card-175" data-idx="175" data-property-id="2019221920">
+        <div class="card" id="card-175" data-idx="175" data-property-id="2019221920" data-score="25.0" data-price="0" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/PcaE7PFUyNFM5_4HNzFUgAHqXUk=/660x440/filters:format(jpeg):quality(80)/2019221920_1_1_240503_055033-w2481-h3508" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13159,7 +13203,7 @@ Imagine waking up to breathtaking views that stretch across the Goulburn region.
             </div>
         </div>
 
-        <div class="card" id="card-176" data-idx="176" data-property-id="2020662560">
+        <div class="card" id="card-176" data-idx="176" data-property-id="2020662560" data-score="25.0" data-price="1300000" data-acres="145.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/4SIXKbIBdVR7bu6w_ugLV7Zi8jE=/660x440/filters:format(jpeg):quality(80)/2020662560_2_1_260306_062523-w2808-h1872" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13232,13 +13276,13 @@ The comfortable three-bedroom home features warm timbre floorboards and a we...<
             </div>
         </div>
 
-        <div class="card" id="card-177" data-idx="177" data-property-id="2020631066">
+        <div class="card" id="card-177" data-idx="177" data-property-id="2020631066" data-score="24.5" data-price="469000" data-acres="197.7" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/K0mRJla0YHR5-uQEjZ6kTgSwPps=/660x440/filters:format(jpeg):quality(80)/2020631066_1_1_260224_034629-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$469,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(177)" title="Tap to see score breakdown">24% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(177)" title="Tap to see score breakdown">24% match</button>
                     </div>
                     <button class="fav-btn" id="fav-177" onclick="toggleFavourite(177, '2020631066')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -13304,13 +13348,13 @@ Reasonably flat and easy to manage, the property features ample shade trees, a c
             </div>
         </div>
 
-        <div class="card" id="card-178" data-idx="178" data-property-id="2020759126">
+        <div class="card" id="card-178" data-idx="178" data-property-id="2020759126" data-score="22.5" data-price="270000" data-acres="173.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/uJDHUXMPCU1UAke_o0Pdh-bmPfo=/660x440/filters:format(jpeg):quality(80)/2020759126_1_1_260414_051129-w3375-h2250" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$270,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(178)" title="Tap to see score breakdown">22% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(178)" title="Tap to see score breakdown">22% match</button>
                     </div>
                     <button class="fav-btn" id="fav-178" onclick="toggleFavourite(178, '2020759126')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -13376,7 +13420,7 @@ Fronting the tar sealed Springfield Road, with mains power running through the p
             </div>
         </div>
 
-        <div class="card" id="card-179" data-idx="179" data-property-id="2019598529">
+        <div class="card" id="card-179" data-idx="179" data-property-id="2019598529" data-score="20.0" data-price="1100000" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/3K5mS9rQCorKqc6XsvEzvE8HlmQ=/660x440/filters:format(jpeg):quality(80)/2019598529_1_1_241029_110258-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13453,7 +13497,7 @@ Features include:
             </div>
         </div>
 
-        <div class="card" id="card-180" data-idx="180" data-property-id="2019845266">
+        <div class="card" id="card-180" data-idx="180" data-property-id="2019845266" data-score="20.0" data-price="1620000" data-acres="197.7" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/T2_PehDBqN3Ts3Vz9hNMjKKASgU=/660x440/filters:format(jpeg):quality(80)/2019845266_1_1_250307_054612-w5272-h3515" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13524,7 +13568,7 @@ Features include:
             </div>
         </div>
 
-        <div class="card" id="card-181" data-idx="181" data-property-id="2018937748">
+        <div class="card" id="card-181" data-idx="181" data-property-id="2018937748" data-score="20.0" data-price="990000" data-acres="79.1" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/0rzOndJcpMT-7hrJ2TXjYWJvIfo=/660x440/filters:format(jpeg):quality(80)/2018937748_1_1_251030_100824-w2500-h1667" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13601,7 +13645,7 @@ Features include:
             </div>
         </div>
 
-        <div class="card" id="card-182" data-idx="182" data-property-id="2019907491">
+        <div class="card" id="card-182" data-idx="182" data-property-id="2019907491" data-score="19.0" data-price="1050000" data-acres="98.8" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/X9UEw2nzFfVnPCmxzjdpFJmyu2E=/660x440/filters:format(jpeg):quality(80)/2019795358_1_1_250214_044338-w4000-h2250" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13674,13 +13718,13 @@ Designed as the ultimate escape with 4 self-contained pods and the master pod be
             </div>
         </div>
 
-        <div class="card" id="card-183" data-idx="183" data-property-id="2020668144">
+        <div class="card" id="card-183" data-idx="183" data-property-id="2020668144" data-score="16.5" data-price="230000" data-acres="62.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/m5fKnljeJ5RwjYfkWTU7woBjut0=/660x440/filters:format(jpeg):quality(80)/2020668144_1_1_260310_034146-w3456-h2304" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$230,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(183)" title="Tap to see score breakdown">16% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(183)" title="Tap to see score breakdown">16% match</button>
                     </div>
                     <button class="fav-btn" id="fav-183" onclick="toggleFavourite(183, '2020668144')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -13746,13 +13790,13 @@ Well established, with 2 cabins for accommodation, both with bathrooms and kitch
             </div>
         </div>
 
-        <div class="card" id="card-184" data-idx="184" data-property-id="2019252905">
+        <div class="card" id="card-184" data-idx="184" data-property-id="2019252905" data-score="16.0" data-price="275000" data-acres="112.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/Q3JbagQAkfGHVDLhgLJVJz4D31Y=/660x440/filters:format(jpeg):quality(80)/2019252905_1_1_250708_115455-w1440-h1080" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$275,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(184)" title="Tap to see score breakdown">16% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(184)" title="Tap to see score breakdown">16% match</button>
                     </div>
                     <button class="fav-btn" id="fav-184" onclick="toggleFavourite(184, '2019252905')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -13823,7 +13867,7 @@ Well established, with 2 cabins for accommodation, both with bathrooms and kitch
             </div>
         </div>
 
-        <div class="card" id="card-185" data-idx="185" data-property-id="2019884953">
+        <div class="card" id="card-185" data-idx="185" data-property-id="2019884953" data-score="13.5" data-price="380000" data-acres="33.6" data-drive="222" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/jMUWO2_wfGEBRLOgJKn8H1aBNAA=/660x440/filters:format(jpeg):quality(80)/2019884953_1_1_250325_022133-w4096-h2729" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -13896,7 +13940,7 @@ Discover a piece of history with this expansive 33.6-acre property located in th
             </div>
         </div>
 
-        <div class="card" id="card-186" data-idx="186" data-property-id="cre_2440_64earthfirstroad">
+        <div class="card" id="card-186" data-idx="186" data-property-id="cre_2440_64earthfirstroad" data-score="12.5" data-price="450000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -13967,7 +14011,7 @@ Discover a piece of history with this expansive 33.6-acre property located in th
             </div>
         </div>
 
-        <div class="card" id="card-187" data-idx="187" data-property-id="cre_2460_2324armidaleroad">
+        <div class="card" id="card-187" data-idx="187" data-property-id="cre_2460_2324armidaleroad" data-score="12.5" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14038,7 +14082,7 @@ Discover a piece of history with this expansive 33.6-acre property located in th
             </div>
         </div>
 
-        <div class="card" id="card-188" data-idx="188" data-property-id="cre_2640_217splitterscreek">
+        <div class="card" id="card-188" data-idx="188" data-property-id="cre_2640_217splitterscreek" data-score="12.5" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14109,7 +14153,7 @@ Discover a piece of history with this expansive 33.6-acre property located in th
             </div>
         </div>
 
-        <div class="card" id="card-189" data-idx="189" data-property-id="2020292865">
+        <div class="card" id="card-189" data-idx="189" data-property-id="2020292865" data-score="12.0" data-price="595000" data-acres="100.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/m_epsUf051mYi-wgPyjoW4N11kE=/660x440/filters:format(jpeg):quality(80)/2020292865_1_1_250924_045627-w1600-h900" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -14181,7 +14225,7 @@ PRD Real Estate is excited to introduce the &quot;Mayfield Estate&quot; subdivis
             </div>
         </div>
 
-        <div class="card" id="card-190" data-idx="190" data-property-id="cre_2335_1468maitlandvaler">
+        <div class="card" id="card-190" data-idx="190" data-property-id="cre_2335_1468maitlandvaler" data-score="10.0" data-price="1450000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14252,7 +14296,7 @@ PRD Real Estate is excited to introduce the &quot;Mayfield Estate&quot; subdivis
             </div>
         </div>
 
-        <div class="card" id="card-191" data-idx="191" data-property-id="cre_2630_175tumbledownroad">
+        <div class="card" id="card-191" data-idx="191" data-property-id="cre_2630_175tumbledownroad" data-score="10.0" data-price="235000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14323,7 +14367,7 @@ PRD Real Estate is excited to introduce the &quot;Mayfield Estate&quot; subdivis
             </div>
         </div>
 
-        <div class="card" id="card-192" data-idx="192" data-property-id="ll_a5b97780-4da3-41a7-bed7-b7b7fcb63c3e">
+        <div class="card" id="card-192" data-idx="192" data-property-id="ll_a5b97780-4da3-41a7-bed7-b7b7fcb63c3e" data-score="9.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://ltsjak.stripocdn.email/content/guids/CABINET_837dc1d79e3a5eca5eb1609bfe9fd374/images/41521605538834349.png" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -14394,13 +14438,13 @@ PRD Real Estate is excited to introduce the &quot;Mayfield Estate&quot; subdivis
             </div>
         </div>
 
-        <div class="card" id="card-193" data-idx="193" data-property-id="2020724274">
+        <div class="card" id="card-193" data-idx="193" data-property-id="2020724274" data-score="7.5" data-price="1500000" data-acres="30.0" data-drive="9999" data-new="1">
             <div class="card-photo"><img src="https://rimh2.domainstatic.com.au/nnSZdPuWw7c9Uz-ashY0E_ChEiQ=/660x440/filters:format(jpeg):quality(80)/2020724274_1_1_260331_060345-w1920-h1440" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">$1,500,000</span>
-                        <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(193)" title="Tap to see score breakdown">8% match</button>
+                        <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(193)" title="Tap to see score breakdown">8% match</button>
                     </div>
                     <button class="fav-btn" id="fav-193" onclick="toggleFavourite(193, '2020724274')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -14469,7 +14513,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-194" data-idx="194" data-property-id="cre_2795_181bentinckstreet">
+        <div class="card" id="card-194" data-idx="194" data-property-id="cre_2795_181bentinckstreet" data-score="7.5" data-price="490000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14540,7 +14584,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-195" data-idx="195" data-property-id="416649">
+        <div class="card" id="card-195" data-idx="195" data-property-id="416649" data-score="0.0" data-price="875000" data-acres="150.0" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://farmbuycdn.clodflare.pushcreative.com.au/416649/512_416649p-8xhl-4mtwyyi7044d0x06.jpg" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -14611,7 +14655,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-196" data-idx="196" data-property-id="416513">
+        <div class="card" id="card-196" data-idx="196" data-property-id="416513" data-score="0.0" data-price="1175000" data-acres="108.2" data-drive="9999" data-new="0">
             <div class="card-photo"><img src="https://farmbuycdn.clodflare.pushcreative.com.au/416513/512_416513p-8xdt-77tgx1sa6kpz5ipm.JPG" alt="" loading="lazy" /></div>
             <div class="card-body">
                 <div class="card-top-row">
@@ -14682,7 +14726,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-197" data-idx="197" data-property-id="cre_2312_13carefreeroad">
+        <div class="card" id="card-197" data-idx="197" data-property-id="cre_2312_13carefreeroad" data-score="0.0" data-price="1850000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14753,7 +14797,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-198" data-idx="198" data-property-id="cre_2350_7479midwesternhig">
+        <div class="card" id="card-198" data-idx="198" data-property-id="cre_2350_7479midwesternhig" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14824,7 +14868,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-199" data-idx="199" data-property-id="cre_2258_145palmdaleroad">
+        <div class="card" id="card-199" data-idx="199" data-property-id="cre_2258_145palmdaleroad" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14895,7 +14939,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-200" data-idx="200" data-property-id="cre_2344_1872oldwintonroad">
+        <div class="card" id="card-200" data-idx="200" data-property-id="cre_2344_1872oldwintonroad" data-score="0.0" data-price="1820000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -14966,7 +15010,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-201" data-idx="201" data-property-id="cre_2441_103kawanalane">
+        <div class="card" id="card-201" data-idx="201" data-property-id="cre_2441_103kawanalane" data-score="0.0" data-price="1450000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15037,7 +15081,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-202" data-idx="202" data-property-id="cre_2850_528gundowdaroad">
+        <div class="card" id="card-202" data-idx="202" data-property-id="cre_2850_528gundowdaroad" data-score="0.0" data-price="680000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15108,7 +15152,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-203" data-idx="203" data-property-id="cre_2850_318beragooroad">
+        <div class="card" id="card-203" data-idx="203" data-property-id="cre_2850_318beragooroad" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15179,7 +15223,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-204" data-idx="204" data-property-id="cre_2430_200coopernookfores">
+        <div class="card" id="card-204" data-idx="204" data-property-id="cre_2430_200coopernookfores" data-score="0.0" data-price="910000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15250,7 +15294,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-205" data-idx="205" data-property-id="cre_2420_1712stroudhillroa">
+        <div class="card" id="card-205" data-idx="205" data-property-id="cre_2420_1712stroudhillroa" data-score="0.0" data-price="1650000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15321,7 +15365,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-206" data-idx="206" data-property-id="cre_2583_2770woodhouseleero">
+        <div class="card" id="card-206" data-idx="206" data-property-id="cre_2583_2770woodhouseleero" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15392,7 +15436,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-207" data-idx="207" data-property-id="cre_2795_000part2336crudin">
+        <div class="card" id="card-207" data-idx="207" data-property-id="cre_2795_000part2336crudin" data-score="0.0" data-price="700000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15463,7 +15507,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-208" data-idx="208" data-property-id="cre_2680_000expressionofin">
+        <div class="card" id="card-208" data-idx="208" data-property-id="cre_2680_000expressionofin" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15534,7 +15578,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-209" data-idx="209" data-property-id="cre_2370_1672redrangeroad">
+        <div class="card" id="card-209" data-idx="209" data-property-id="cre_2370_1672redrangeroad" data-score="0.0" data-price="685000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15605,7 +15649,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-210" data-idx="210" data-property-id="cre_2849_28505genowlanroad">
+        <div class="card" id="card-210" data-idx="210" data-property-id="cre_2849_28505genowlanroad" data-score="0.0" data-price="1800000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15676,7 +15720,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-211" data-idx="211" data-property-id="cre_2422_912wallanbahroad">
+        <div class="card" id="card-211" data-idx="211" data-property-id="cre_2422_912wallanbahroad" data-score="0.0" data-price="950000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15747,7 +15791,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-212" data-idx="212" data-property-id="cre_2380_10221kamilaroihigh">
+        <div class="card" id="card-212" data-idx="212" data-property-id="cre_2380_10221kamilaroihigh" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15818,7 +15862,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-213" data-idx="213" data-property-id="cre_2430_373upperlansdowne">
+        <div class="card" id="card-213" data-idx="213" data-property-id="cre_2430_373upperlansdowne" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15889,7 +15933,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-214" data-idx="214" data-property-id="cre_2330_581glendonbrookroa">
+        <div class="card" id="card-214" data-idx="214" data-property-id="cre_2330_581glendonbrookroa" data-score="0.0" data-price="1625000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -15960,7 +16004,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-215" data-idx="215" data-property-id="cre_2321_000commercialaucti">
+        <div class="card" id="card-215" data-idx="215" data-property-id="cre_2321_000commercialaucti" data-score="0.0" data-price="100000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16031,7 +16075,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-216" data-idx="216" data-property-id="cre_2850_">
+        <div class="card" id="card-216" data-idx="216" data-property-id="cre_2850_" data-score="0.0" data-price="1300000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16102,7 +16146,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-217" data-idx="217" data-property-id="cre_2323_144leibertslane">
+        <div class="card" id="card-217" data-idx="217" data-property-id="cre_2323_144leibertslane" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16173,7 +16217,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-218" data-idx="218" data-property-id="cre_2440_115woolshedgullyr">
+        <div class="card" id="card-218" data-idx="218" data-property-id="cre_2440_115woolshedgullyr" data-score="0.0" data-price="800000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16244,7 +16288,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-219" data-idx="219" data-property-id="cre_2658_1127grubbenroad">
+        <div class="card" id="card-219" data-idx="219" data-property-id="cre_2658_1127grubbenroad" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16315,7 +16359,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-220" data-idx="220" data-property-id="cre_2450_289mardellsroad">
+        <div class="card" id="card-220" data-idx="220" data-property-id="cre_2450_289mardellsroad" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16386,7 +16430,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-221" data-idx="221" data-property-id="cre_2360_100lamontslane">
+        <div class="card" id="card-221" data-idx="221" data-property-id="cre_2360_100lamontslane" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16457,7 +16501,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-222" data-idx="222" data-property-id="cre_2666_80derricksroad">
+        <div class="card" id="card-222" data-idx="222" data-property-id="cre_2666_80derricksroad" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16528,7 +16572,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-223" data-idx="223" data-property-id="cre_2583_453reidsflatroad">
+        <div class="card" id="card-223" data-idx="223" data-property-id="cre_2583_453reidsflatroad" data-score="0.0" data-price="675000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16599,7 +16643,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-224" data-idx="224" data-property-id="cre_2480_424bangalowroad">
+        <div class="card" id="card-224" data-idx="224" data-property-id="cre_2480_424bangalowroad" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16670,7 +16714,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-225" data-idx="225" data-property-id="cre_2830_2628federationstr">
+        <div class="card" id="card-225" data-idx="225" data-property-id="cre_2830_2628federationstr" data-score="0.0" data-price="825000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16741,7 +16785,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-226" data-idx="226" data-property-id="cre_2850_98rockywaterholer">
+        <div class="card" id="card-226" data-idx="226" data-property-id="cre_2850_98rockywaterholer" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16812,7 +16856,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-227" data-idx="227" data-property-id="cre_2471_50haughwoodroad">
+        <div class="card" id="card-227" data-idx="227" data-property-id="cre_2471_50haughwoodroad" data-score="0.0" data-price="0" data-acres="123.55258150763802" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16883,7 +16927,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-228" data-idx="228" data-property-id="cre_2484_24thapril1000urli">
+        <div class="card" id="card-228" data-idx="228" data-property-id="cre_2484_24thapril1000urli" data-score="0.0" data-price="0" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -16954,7 +16998,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-229" data-idx="229" data-property-id="cre_2440_328spoonersavenue">
+        <div class="card" id="card-229" data-idx="229" data-property-id="cre_2440_328spoonersavenue" data-score="0.0" data-price="989000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -17025,7 +17069,7 @@ Main Shed:
             </div>
         </div>
 
-        <div class="card" id="card-230" data-idx="230" data-property-id="cre_2390_9834newellhighway">
+        <div class="card" id="card-230" data-idx="230" data-property-id="cre_2390_9834newellhighway" data-score="0.0" data-price="1300000" data-acres="0" data-drive="9999" data-new="0">
             
             <div class="card-body">
                 <div class="card-top-row">
@@ -17113,6 +17157,29 @@ Main Shed:
     </div>
 
     <script>
+    function sortCards(by) {
+        const container = document.querySelector('.container');
+        const cards = Array.from(container.querySelectorAll('.card'));
+        const sortFns = {
+            score: (a, b) => parseFloat(b.dataset.score) - parseFloat(a.dataset.score),
+            price: (a, b) => {
+                const ap = parseFloat(a.dataset.price) || Infinity;
+                const bp = parseFloat(b.dataset.price) || Infinity;
+                return ap - bp;
+            },
+            acres: (a, b) => parseFloat(b.dataset.acres) - parseFloat(a.dataset.acres),
+            drive: (a, b) => parseFloat(a.dataset.drive) - parseFloat(b.dataset.drive),
+            new: (a, b) => {
+                const diff = parseInt(b.dataset.new) - parseInt(a.dataset.new);
+                return diff !== 0 ? diff : parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+            },
+        };
+        cards.sort(sortFns[by] || sortFns.score);
+        const footer = container.querySelector('.footer');
+        cards.forEach(c => container.insertBefore(c, footer));
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === by));
+    }
+
     const FEEDBACK_URL = "";
     const TOTAL = 231;
     const state = {

@@ -143,6 +143,21 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     total_shown = len(props)
     sources_count = len({p.get("source") for p in properties if p.get("source")})
 
+    # Detect new listings by comparing against previous run
+    new_ids = set()
+    prev_files = sorted(RESULTS_DIR.glob("search_*.json"), reverse=True)
+    if len(prev_files) >= 2:
+        try:
+            with open(prev_files[1]) as f:
+                prev_data = json.load(f)
+            prev_ids = {p.get("source_id") or p.get("id") for p in prev_data.get("properties", [])}
+            for p in props:
+                pid = p.get("source_id") or p.get("id")
+                if pid and pid not in prev_ids:
+                    new_ids.add(pid)
+        except Exception:
+            pass
+
     # ── Build cards HTML ──────────────────────────────────────────────────
     cards_html = []
     for i, p in enumerate(props):
@@ -226,13 +241,13 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             </div>'''
 
         cards_html.append(f'''
-        <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}">
+        <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{1 if prop_id in new_ids else 0}">
             {photo_html}
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">{price_str}</span>
-                        <button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
+                        {"<span class='new-badge'>NEW</span>" if prop_id in new_ids else ""}<button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
                     </div>
                     <button class="fav-btn" id="fav-{i}" onclick="toggleFavourite({i}, '{prop_id}')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -277,6 +292,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     top_match = ""
     if best:
         top_match = f'Top match: {_escape(best.get("headline", "")[:60])} ({best["score"]["pct"]:.0f}%)'
+
+    new_count = len(new_ids)
 
     feedback_url_js = _escape(FEEDBACK_URL) if FEEDBACK_URL else ""
 
@@ -352,6 +369,41 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
         .summary .count {{ font-size: 15px; color: var(--bark); font-weight: 500; }}
         .summary .top {{ font-size: 13px; color: var(--slate); margin-top: 4px; }}
+
+        /* ── Sort bar ──────────────────────────── */
+        .sort-bar {{
+            display: flex; align-items: center; gap: 6px;
+            padding: 10px 16px; margin-bottom: 16px;
+            overflow-x: auto; scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }}
+        .sort-bar::-webkit-scrollbar {{ display: none; }}
+        .sort-label {{
+            font-size: 11px; font-weight: 600; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap; margin-right: 4px;
+        }}
+        .sort-btn {{
+            font-family: Inter, -apple-system, sans-serif;
+            font-size: 12px; font-weight: 500; padding: 6px 14px;
+            border-radius: 20px; border: 1px solid var(--light-border);
+            background: #fff; color: var(--slate); cursor: pointer;
+            white-space: nowrap; transition: all 0.15s;
+        }}
+        .sort-btn:hover {{ border-color: var(--eucalyptus); color: var(--bark); }}
+        .sort-btn.active {{
+            background: var(--eucalyptus); color: #fff;
+            border-color: var(--eucalyptus);
+        }}
+
+        /* ── NEW badge ─────────────────────────── */
+        .new-badge {{
+            display: inline-block; font-size: 10px; font-weight: 700;
+            padding: 2px 7px; border-radius: 4px;
+            background: #dbeafe; color: #1d4ed8;
+            letter-spacing: 0.5px; margin-right: 6px;
+            vertical-align: middle;
+        }}
 
         /* ── Map ────────────────────────────────── */
         .map-container {{
@@ -576,6 +628,15 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <div class="top">{top_match}</div>
         </div>
 
+        <div class="sort-bar">
+            <span class="sort-label">Sort by</span>
+            <button class="sort-btn active" data-sort="score" onclick="sortCards('score')">Score</button>
+            <button class="sort-btn" data-sort="price" onclick="sortCards('price')">Price</button>
+            <button class="sort-btn" data-sort="acres" onclick="sortCards('acres')">Acres</button>
+            <button class="sort-btn" data-sort="drive" onclick="sortCards('drive')">Drive</button>
+            <button class="sort-btn" data-sort="new" onclick="sortCards('new')">New ({new_count})</button>
+        </div>
+
         <div class="map-container">
             <div class="map-label">Where they are</div>
             <div id="shortlist-map"></div>
@@ -600,6 +661,29 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     </div>
 
     <script>
+    function sortCards(by) {{
+        const container = document.querySelector('.container');
+        const cards = Array.from(container.querySelectorAll('.card'));
+        const sortFns = {{
+            score: (a, b) => parseFloat(b.dataset.score) - parseFloat(a.dataset.score),
+            price: (a, b) => {{
+                const ap = parseFloat(a.dataset.price) || Infinity;
+                const bp = parseFloat(b.dataset.price) || Infinity;
+                return ap - bp;
+            }},
+            acres: (a, b) => parseFloat(b.dataset.acres) - parseFloat(a.dataset.acres),
+            drive: (a, b) => parseFloat(a.dataset.drive) - parseFloat(b.dataset.drive),
+            new: (a, b) => {{
+                const diff = parseInt(b.dataset.new) - parseInt(a.dataset.new);
+                return diff !== 0 ? diff : parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+            }},
+        }};
+        cards.sort(sortFns[by] || sortFns.score);
+        const footer = container.querySelector('.footer');
+        cards.forEach(c => container.insertBefore(c, footer));
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === by));
+    }}
+
     const FEEDBACK_URL = "{feedback_url_js}";
     const TOTAL = {total_shown};
     const state = {{
