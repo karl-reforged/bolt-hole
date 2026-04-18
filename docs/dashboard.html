@@ -540,6 +540,12 @@ function renderCorridorCard(name, s) {
   const desc = corridorDescriptions[name];
   const placeLine = desc ? desc.region : '';
 
+  // Compute quartiles from records (summaries don't include p25/p75)
+  const prices = DATA.records.filter(r => r.c === name).map(r => r.p).sort((a,b) => a-b);
+  const pn = prices.length;
+  const p25 = pn > 3 ? prices[Math.floor(pn * 0.25)] : s.min;
+  const p75 = pn > 3 ? prices[Math.floor(pn * 0.75)] : s.max;
+
   return '<div class="corridor-card" data-council="'+name+'" style="border-left-color:'+tierColors[s.tier]+'" onclick="selectCorridor(\''+name.replace(/'/g, "\\'")+'\')">' +
     '<div class="corridor-header">' +
       '<span class="corridor-name">'+name+'</span>' +
@@ -547,7 +553,7 @@ function renderCorridorCard(name, s) {
     '</div>' +
     (placeLine ? '<div class="corridor-place">'+placeLine+'</div>' : '') +
     '<div class="corridor-stats">' +
-      '<div class="corridor-stat"><div class="cs-label">Typically</div><div class="cs-value">'+fmtK(s.p25)+' \u2013 '+fmtK(s.p75)+'</div></div>' +
+      '<div class="corridor-stat"><div class="cs-label">Typically</div><div class="cs-value">'+fmtK(p25)+' – '+fmtK(p75)+'</div></div>' +
       '<div class="corridor-stat"><div class="cs-label">Drive</div><div class="cs-value" style="color:'+dClr+'">'+driveStr+'</div></div>' +
     '</div>' +
     '<div class="corridor-median-note">Median '+fmtK(s.median)+' · avg '+(avgAcres[name]||'—')+' acres</div>' +
