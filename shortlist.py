@@ -291,6 +291,41 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     else:
         showing = f"{total_found} properties matched your criteria"
 
+    # ── Scrape status strip ──────────────────────────────────────────────
+    # Pull source_report from the most recent cached run so we can surface
+    # raw-listing counts, dormant sources, and source errors.
+    status_bits = []
+    raw_total = 0
+    errored_sources = []
+    dormant_sources = []
+    try:
+        if prev_files:
+            with open(prev_files[0]) as _f:
+                _latest = json.load(_f)
+            sr = _latest.get("source_report") or {}
+            for name, rep in sr.items():
+                c = rep.get("count", 0)
+                if rep.get("error"):
+                    errored_sources.append(name)
+                elif c == 0 and name not in ("Domain API", "REA Manual"):
+                    # "Domain API" is intentionally null (falls back to Domain Web);
+                    # "REA Manual" is user-populated, blank is normal.
+                    dormant_sources.append(name)
+                raw_total += c
+    except Exception:
+        pass
+
+    if raw_total:
+        status_bits.append(f"{raw_total} listings scanned")
+    status_bits.append(f"{total_found} passed")
+    if new_ids:
+        status_bits.append(f"{len(new_ids)} new")
+    if dormant_sources:
+        status_bits.append(f'<span class="scrape-status-warn" title="Source returned 0 listings this run">{", ".join(dormant_sources)} idle</span>')
+    if errored_sources:
+        status_bits.append(f'<span class="scrape-status-warn" title="Source reported an error this run">{", ".join(errored_sources)} errored</span>')
+    scrape_status_html = " &middot; ".join(status_bits)
+
     best = props[0] if props else None
     top_match = ""
     if best:
@@ -383,6 +418,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
         .summary .count {{ font-size: 15px; color: var(--bark); font-weight: 500; }}
         .summary .top {{ font-size: 13px; color: var(--slate); margin-top: 4px; }}
+
+        /* ── Scrape status strip ─────────────────── */
+        .scrape-status {{
+            font-size: 11px; color: var(--slate);
+            padding: 8px 20px 0; margin: -14px 0 18px;
+            opacity: 0.85;
+        }}
+        .scrape-status-warn {{
+            color: #b45309; font-weight: 500;
+        }}
 
         /* ── Sort bar ──────────────────────────── */
         .sort-bar {{
@@ -715,6 +760,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <div class="count">{showing}</div>
             <div class="top">{top_match}</div>
         </div>
+
+        <div class="scrape-status">{scrape_status_html}</div>
 
         <div class="sort-bar">
             <span class="sort-label">Sort by</span>

@@ -55,6 +55,16 @@
         .summary .count { font-size: 15px; color: var(--bark); font-weight: 500; }
         .summary .top { font-size: 13px; color: var(--slate); margin-top: 4px; }
 
+        /* ── Scrape status strip ─────────────────── */
+        .scrape-status {
+            font-size: 11px; color: var(--slate);
+            padding: 8px 20px 0; margin: -14px 0 18px;
+            opacity: 0.85;
+        }
+        .scrape-status-warn {
+            color: #b45309; font-weight: 500;
+        }
+
         /* ── Sort bar ──────────────────────────── */
         .sort-bar {
             display: flex; align-items: center; gap: 6px;
@@ -386,6 +396,8 @@
             <div class="count">80 properties matched your criteria</div>
             <div class="top">Top match: &#x27;Chatham Valley&#x27; - Your Private Rural Retreat On The Duckmal (85%)</div>
         </div>
+
+        <div class="scrape-status">227 listings scanned &middot; 80 passed &middot; 4 new</div>
 
         <div class="sort-bar">
             <span class="sort-label">Sort by</span>

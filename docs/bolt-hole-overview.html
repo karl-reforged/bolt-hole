@@ -401,21 +401,21 @@
     <div class="section">
         <div class="section-label">The Short Version</div>
         <p>Every week, a shortlist of rural properties lands in your inbox &mdash; scored against your brief, filtered to your criteria, ready to browse on your phone from wherever you are. Tap your reactions, and next week's results get sharper.</p>
-        <p>On its latest run, the system found <strong>163 properties</strong> across four sources that meet your criteria. Top match: 78% fit. From here, it runs automatically &mdash; you just read the email.</p>
+        <p>On its latest run, the system found <strong>80 properties</strong> across five live sources that meet your criteria. Top match: 85% fit. From here, it runs automatically &mdash; you just read the email.</p>
     </div>
 
     <!-- Stats -->
     <div class="stats">
         <div class="stat">
-            <div class="stat-value">330+</div>
+            <div class="stat-value">200+</div>
             <div class="stat-label">Listings scanned</div>
         </div>
         <div class="stat">
-            <div class="stat-value">163</div>
+            <div class="stat-value">80</div>
             <div class="stat-label">Pass all filters</div>
         </div>
         <div class="stat">
-            <div class="stat-value">78%</div>
+            <div class="stat-value">85%</div>
             <div class="stat-label">Best match score</div>
         </div>
     </div>
@@ -505,7 +505,7 @@
             <div class="pipe-step">Deliver<small>weekly email</small></div>
         </div>
 
-        <p style="font-size: 15px;">Pulls live listings from Domain, Farmbuy, Elders, and Southern Tablelands Realty across 26 postcodes. Email alerts from REA, commercialrealestate.com.au, Nutrien Harcourts, and AuctionsPlus catch anything the scrapers miss. Off-market channels (Listing Loop, Property Whispers) cover the 15&ndash;25% of rural sales that never hit public portals. Everything gets deduplicated, filtered against your criteria, scored, and delivered as a ranked shortlist.</p>
+        <p style="font-size: 15px;">Pulls live listings from Domain, Farmbuy, Elders, and REA (via Apify) across 26 postcodes. Email alerts from commercialrealestate.com.au and Listing Loop catch anything the scrapers miss. Property Whispers sits in the pipeline as an off-market channel but is currently dormant &mdash; no alerts arriving. Everything gets deduplicated, filtered against your criteria, scored, and delivered as a ranked shortlist.</p>
     </div>
 
     <hr class="divider">
@@ -564,7 +564,7 @@
                 <span class="badge badge-done">DONE</span>
                 <span class="card-title">Search pipeline built &amp; running</span>
             </div>
-            <div class="card-body">Four active sources (Domain, Farmbuy, Elders, STR) producing 330+ listings per run, 163 passing all gates. Scored, ranked, and published to the live shortlist.</div>
+            <div class="card-body">Five active sources (Domain, Farmbuy, Elders, REA via Apify, Email Alerts) producing ~200 listings per run, 80 passing all gates. Scored, ranked, and published to the live shortlist.</div>
         </div>
 
         <div class="card">
@@ -613,7 +613,7 @@
             <a href="/bolt-hole/" class="page-link">
                 <div class="page-link-text">
                     <span class="page-link-title">Current Shortlist</span>
-                    <span class="page-link-desc">163 properties scored and ranked &mdash; photos, map, feedback buttons</span>
+                    <span class="page-link-desc">Scored and ranked &mdash; photos, map, sort by score/price/$per-acre/drive, feedback buttons</span>
                 </div>
                 <span class="page-link-arrow">&rarr;</span>
             </a>
