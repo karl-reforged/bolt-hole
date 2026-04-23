@@ -1168,11 +1168,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     // ── Shared notes (Apps Script backend) ────────────────────────────
-    function currentUser() {{
-        const u = (new URLSearchParams(location.search).get('user') || '').toLowerCase().trim();
-        return u || 'anonymous';
-    }}
-    const USER_ID = currentUser();
+    // No identity plumbing — one URL for everyone, sign off inside the note
+    // body if you want ("— George"). The sheet's author column stays as
+    // dead data for existing test rows.
     let notesCache = {{}};
 
     function escapeHtml(s) {{
@@ -1239,7 +1237,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         pill.classList.add('notes-pill-active');
         list.innerHTML = notes.map(n => (
             '<div class="note"><div class="note-meta">' +
-                '<span class="note-author">' + escapeHtml(n.author) + '</span>' +
                 '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
             '</div><div class="note-body">' + escapeHtml(n.note) + '</div></div>'
         )).join('');
@@ -1265,7 +1262,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const optimistic = {{
             id: 'local-' + Date.now(),
             property_id: propertyId,
-            author: USER_ID,
+            author: '',
             timestamp: new Date().toISOString(),
             note: text,
         }};
@@ -1275,7 +1272,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
         fetch(NOTES_URL, {{
             method: 'POST',
-            body: JSON.stringify({{action:'note', property_id: propertyId, author: USER_ID, note: text}}),
+            body: JSON.stringify({{action:'note', property_id: propertyId, author: '', note: text}}),
         }}).then(() => setTimeout(loadNotes, 2500)).catch(e => console.warn('note post failed', e));
     }}
 
@@ -1302,7 +1299,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             const pidAttr = escapeHtml(n.property_id);
             return '<div class="activity-item" onclick="scrollToProperty(\\'' + pidAttr.replace(/'/g, "\\\\'") + '\\')">' +
                 '<div class="activity-meta">' +
-                    '<span class="activity-author">' + escapeHtml(n.author) + '</span> · ' +
                     '<span class="activity-suburb">' + escapeHtml(addr || '—') + '</span> · ' +
                     '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
                 '</div><div class="activity-body">' + escapeHtml(n.note) + '</div></div>';
