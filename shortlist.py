@@ -229,6 +229,18 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             stats_parts.append(drive_html)
         if value_html:
             stats_parts.append(value_html)
+        missing_from_latest = p.get("missing_from_latest")
+        last_seen_days = p.get("last_seen_days") or 0
+        if missing_from_latest:
+            if last_seen_days == 0:
+                seen_label = "earlier today"
+            elif last_seen_days == 1:
+                seen_label = "yesterday"
+            else:
+                seen_label = f"{last_seen_days}d ago"
+            stats_parts.append(
+                f'<span class="stat stat-stale" title="Missing from this week\'s scrape — may have sold or the source throttled">last seen {seen_label}</span>'
+            )
         stats_row = " ".join(stats_parts)
 
         prop_id = _escape(p.get("source_id") or p.get("id") or str(i))
@@ -247,14 +259,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <span class="bd-val">{val:.0f}</span>
             </div>'''
 
+        stale_attr = 'data-stale="1"' if missing_from_latest else ''
+        is_new = 1 if (prop_id in new_ids and not missing_from_latest) else 0
         cards_html.append(f'''
-        <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{1 if prop_id in new_ids else 0}" data-ppa="{ppa:.0f}">
+        <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{is_new}" data-ppa="{ppa:.0f}" {stale_attr}>
             {photo_html}
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
                         <span class="price">{price_str}</span>
-                        {"<span class='new-badge'>NEW</span>" if prop_id in new_ids else ""}<button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
+                        {"<span class='new-badge'>NEW</span>" if is_new else ""}<button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
                     </div>
                     <button class="fav-btn" id="fav-{i}" onclick="toggleFavourite({i}, '{prop_id}')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -657,6 +671,13 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .stat-badge {{
             padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;
         }}
+        .stat-stale {{
+            font-size: 11px; color: var(--slate); opacity: 0.75;
+            font-style: italic;
+        }}
+        /* filter:opacity stacks with fadeUp animation (which holds opacity:1) */
+        .card[data-stale="1"] {{ filter: opacity(0.78); transition: filter 0.2s; }}
+        .card[data-stale="1"]:hover {{ filter: opacity(1); }}
         .description {{
             font-size: 13px; color: var(--slate); line-height: 1.6; margin-bottom: 12px;
         }}
@@ -1516,17 +1537,80 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
 # ── CLI ───────────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
-    results_files = sorted(RESULTS_DIR.glob("search_*.json"), reverse=True)
+def _parse_run_timestamp(filename_stem):
+    """search_20260423_1339 → datetime; None on parse failure."""
+    parts = filename_stem.split("_")
+    if len(parts) != 3:
+        return None
+    try:
+        return datetime.strptime(f"{parts[1]}_{parts[2]}", "%Y%m%d_%H%M")
+    except ValueError:
+        return None
 
-    if results_files:
-        with open(results_files[0]) as f:
-            data = json.load(f)
-        properties = data.get("properties", [])
-        print(f"Loaded {len(properties)} properties from {results_files[0].name}")
-    else:
+
+def _load_union_of_runs(runs_to_union=3, age_out_days=21):
+    """
+    Union properties across the N most-recent scrape JSONs by source_id.
+    Newer runs' data wins. Properties missing from the latest run but seen
+    within age_out_days get a 'last_seen_days' annotation so the UI can
+    mark them as stale. Returns (props_list, latest_file).
+    """
+    results_files = sorted(RESULTS_DIR.glob("search_*.json"), reverse=True)
+    if not results_files:
+        return [], None
+
+    latest_file = results_files[0]
+    latest_ts = _parse_run_timestamp(latest_file.stem) or datetime.now()
+    latest_ids = set()
+    union = {}  # source_id -> {"prop": dict, "last_seen": datetime}
+
+    # Iterate newest-first so newer data wins on first-seen
+    for fp in results_files[:runs_to_union]:
+        run_ts = _parse_run_timestamp(fp.stem)
+        try:
+            with open(fp) as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            continue
+        for p in data.get("properties", []):
+            sid = p.get("source_id") or p.get("id")
+            if not sid:
+                continue
+            if fp == latest_file:
+                latest_ids.add(sid)
+            if sid not in union:
+                union[sid] = {"prop": p, "last_seen": run_ts or latest_ts}
+
+    now = datetime.now()
+    props = []
+    for sid, record in union.items():
+        days_ago = max(0, (now - record["last_seen"]).days)
+        if days_ago > age_out_days:
+            continue
+        p = dict(record["prop"])
+        # Flag + day-count are separate so a same-day earlier-scrape prop still
+        # registers as stale (days_ago can legitimately be 0 for today's 12pm run
+        # when the 1:39pm run dropped it).
+        if sid not in latest_ids:
+            p["missing_from_latest"] = True
+            p["last_seen_days"] = days_ago
+        props.append(p)
+
+    return props, latest_file
+
+
+if __name__ == "__main__":
+    properties, latest_file = _load_union_of_runs(runs_to_union=3, age_out_days=21)
+
+    if not properties or not latest_file:
         print("No search results found. Run search.py first.")
         sys.exit(1)
+
+    stale_count = sum(1 for p in properties if p.get("missing_from_latest"))
+    fresh_count = len(properties) - stale_count
+    print(f"Loaded {len(properties)} properties ({fresh_count} from latest run, "
+          f"{stale_count} carried over from prior runs within 21d)")
+    results_files = [latest_file]  # downstream code only references [0]
 
     # Extract timestamp from filename: search_YYYYMMDD_HHMM.json → "17 March 2026 · 4:09pm"
     search_date = None
