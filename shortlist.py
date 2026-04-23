@@ -419,8 +419,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         /* ── Map ────────────────────────────────── */
         .map-container {{
             background: #fff; border: 1px solid var(--light-border);
-            border-radius: 10px; overflow: hidden; margin-bottom: 28px;
+            border-radius: 10px; margin-bottom: 28px;
+            /* overflow:hidden removed — iOS Safari clips Leaflet touch events with border-radius */
+            -webkit-overflow-scrolling: touch;
+            position: relative;
         }}
+        .map-container #shortlist-map {{
+            border-radius: 0 0 10px 10px; /* rounded bottom corners without clipping touch */
+            overflow: hidden;
+        }}
+        .leaflet-container {{ touch-action: manipulation; }}
         .map-container .map-label {{
             font-size: 12px; font-weight: 600; color: var(--slate);
             text-transform: uppercase; letter-spacing: 1px; padding: 12px 20px 0;

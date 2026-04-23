@@ -91,19 +91,17 @@
         }
 
         /* ── Map ────────────────────────────────── */
-.map-container {
-    background: #fff; border: 1px solid var(--light-border);
-    border-radius: 10px; margin-bottom: 28px;
-    /* overflow:hidden removed — iOS Safari clips Leaflet touch events with border-radius */
-    /* Leaflet handles its own overflow internally via .leaflet-container */
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-}
+        .map-container {
+            background: #fff; border: 1px solid var(--light-border);
+            border-radius: 10px; margin-bottom: 28px;
+            /* overflow:hidden removed — iOS Safari clips Leaflet touch events with border-radius */
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
         .map-container #shortlist-map {
-            border-radius: 0 0 10px 10px; /* maintain rounded bottom corners */
+            border-radius: 0 0 10px 10px; /* rounded bottom corners without clipping touch */
             overflow: hidden;
         }
-        /* iOS Safari: allow Leaflet to handle map gestures without page scroll interference */
         .leaflet-container { touch-action: manipulation; }
         .map-container .map-label {
             font-size: 12px; font-weight: 600; color: var(--slate);
