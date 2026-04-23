@@ -901,16 +901,23 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     // ── Feedback ──────────────────────────────────────────────────────
     function sendFeedback(idx, propertyId, reaction) {{
-        state.feedback[idx] = reaction;
+        // Clicking an already-selected reaction clears it (neutral)
+        const effective = state.feedback[idx] === reaction ? null : reaction;
+
+        if (effective === null) {{
+            delete state.feedback[idx];
+        }} else {{
+            state.feedback[idx] = effective;
+        }}
         state.reviewed = Object.keys(state.feedback).length;
-        applyFeedbackUI(idx, reaction);
+        applyFeedbackUI(idx, effective);
         updateProgress();
         saveState();
 
         if (FEEDBACK_URL) {{
             const url = FEEDBACK_URL + '?action=feedback'
                 + '&property_id=' + encodeURIComponent(propertyId)
-                + '&reaction=' + encodeURIComponent(reaction);
+                + '&reaction=' + encodeURIComponent(effective === null ? 'clear' : effective);
             fetch(url, {{ mode: 'no-cors' }}).catch(() => {{}});
         }}
     }}
@@ -920,7 +927,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const container = document.getElementById('feedback-' + idx);
         if (!container || !card) return;
 
-        // Button highlighting
+        // Button highlighting — reaction of null clears all
         const buttons = container.querySelectorAll('button');
         buttons.forEach(btn => {{
             btn.classList.remove('selected');
@@ -932,20 +939,22 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             }}
         }});
 
-        // "Not for me" → move card to dismissed section, hide from map
+        // Dismissed section membership only when reaction === 'pass'
         const wasDismissed = card.classList.contains('dismissed');
-        card.classList.toggle('dismissed', reaction === 'pass');
+        const shouldDismiss = reaction === 'pass';
+        card.classList.toggle('dismissed', shouldDismiss);
 
-        if (reaction === 'pass' && !wasDismissed) {{
+        if (shouldDismiss && !wasDismissed) {{
             moveToDismissed(card);
-        }} else if (reaction !== 'pass' && wasDismissed) {{
+        }} else if (!shouldDismiss && wasDismissed) {{
             moveToActive(card);
         }}
 
         // Show confirmation
         const msg = reaction === 'love' ? 'Noted — love it!' :
                     reaction === 'interesting' ? 'Noted — worth a look.' :
-                    'Noted — skipping this one.';
+                    reaction === 'pass' ? 'Noted — skipping this one.' :
+                    'Cleared.';
         showConfirmation(idx, msg);
 
         // Update map pin
@@ -1149,6 +1158,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             if (pin) {{
                 if (reaction === 'love') {{
                     pin.style.background = '#166534';
+                }} else {{
+                    // Neutral or interesting — restore default pin colour
+                    pin.style.background = '';
                 }}
                 pin.style.opacity = '1';
             }}
