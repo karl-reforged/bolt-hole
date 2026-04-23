@@ -41,6 +41,45 @@ CRITERIA_PATH = BASE_DIR / "criteria.json"
 PLAYWRIGHT_HEADLESS = os.getenv("PLAYWRIGHT_HEADLESS", "false").lower() == "true"
 
 
+_GAZETTEER_INDEX = None  # lazy-loaded: (locality+state → row, postcode → row)
+
+
+def _geocode_from_gazetteer(suburb, postcode, state):
+    """Suburb-centroid lat/lng from bundled AU postcode gazetteer.
+
+    Used as a fallback for sources (CRE, Farmbuy, Listing Loop email alerts)
+    that give us a suburb/postcode but no actual coordinates.
+    Returns (lat, lng) or (None, None) if not found.
+    """
+    global _GAZETTEER_INDEX
+    if _GAZETTEER_INDEX is None:
+        path = BASE_DIR / "data" / "gazetteer" / "au_postcodes.json"
+        try:
+            with open(path) as f:
+                rows = json.load(f)
+            loc_idx, pc_idx = {}, {}
+            for r in rows:
+                loc_key = (r["l"].upper(), r["s"])
+                if loc_key not in loc_idx:
+                    loc_idx[loc_key] = r
+                if r["p"] not in pc_idx:
+                    pc_idx[r["p"]] = r
+            _GAZETTEER_INDEX = (loc_idx, pc_idx)
+        except (OSError, json.JSONDecodeError, KeyError):
+            _GAZETTEER_INDEX = ({}, {})
+
+    loc_idx, pc_idx = _GAZETTEER_INDEX
+    if suburb and state:
+        hit = loc_idx.get((suburb.upper().strip(), state.upper().strip()))
+        if hit:
+            return hit["lat"], hit["lng"]
+    if postcode:
+        hit = pc_idx.get(str(postcode).strip())
+        if hit:
+            return hit["lat"], hit["lng"]
+    return None, None
+
+
 def _retry_session(retries=3, backoff=0.5, status_forcelist=(429, 500, 502, 503, 504)):
     """Create a requests Session with automatic retry and exponential backoff."""
     session = requests.Session()
@@ -798,13 +837,16 @@ def fetch_farmbuy(criteria):
         if listing_url and not listing_url.startswith("http"):
             listing_url = f"https://www.farmbuy.com{listing_url}"
 
+        fb_suburb = addr.get("suburb", "")
+        fb_state = addr.get("state", "NSW")
+        fb_lat, fb_lng = _geocode_from_gazetteer(fb_suburb, postcode, fb_state)
         normalized.append({
             "source": "farmbuy",
             "source_id": str(item.get("id", "")),
             "address": addr.get("full", ""),
-            "suburb": addr.get("suburb", ""),
+            "suburb": fb_suburb,
             "postcode": postcode,
-            "state": addr.get("state", "NSW"),
+            "state": fb_state,
             "price": price,
             "display_price": item.get("priceText", "Price on application"),
             "land_sqm": land_sqm,
@@ -816,8 +858,8 @@ def fetch_farmbuy(criteria):
             "description": item.get("description", "")[:1000] if item.get("description") else "",
             "listing_url": listing_url,
             "photo_url": item.get("mainTileImageURL"),
-            "lat": None,  # Farmbuy doesn't expose coords in list view
-            "lng": None,
+            "lat": fb_lat,  # Farmbuy list view has no coords; gazetteer fallback to suburb centroid
+            "lng": fb_lng,
             "date_listed": None,
             "agent": item.get("realestate"),
             "raw": item,
@@ -1861,6 +1903,7 @@ def _parse_listing_loop_alert(html, criteria):
         if img_match:
             photo = img_match.group(1)
 
+        ll_lat, ll_lng = _geocode_from_gazetteer(suburb, postcode, "NSW")
         prop = {
             "source": "listing_loop",
             "source_id": f"ll_{listing_id}",
@@ -1879,8 +1922,8 @@ def _parse_listing_loop_alert(html, criteria):
             "description": "",
             "listing_url": url,
             "photo_url": photo,
-            "lat": None,
-            "lng": None,
+            "lat": ll_lat,
+            "lng": ll_lng,
             "agent": None,
             "raw": {"alert_source": "listing_loop"},
         }
@@ -2072,6 +2115,7 @@ def _parse_cre_alert(html, criteria):
         slug = re.sub(r'[^a-z0-9]+', '-', full_address.lower()).strip('-')
         listing_url = f"https://www.commercialrealestate.com.au/property/{slug}"
 
+        cre_lat, cre_lng = _geocode_from_gazetteer(suburb, postcode, state)
         prop = {
             "source": "cre",
             "source_id": f"cre_{postcode}_{re.sub(r'[^a-z0-9]', '', address[:20].lower())}",
@@ -2090,8 +2134,8 @@ def _parse_cre_alert(html, criteria):
             "description": "",
             "listing_url": listing_url,
             "photo_url": None,
-            "lat": None,
-            "lng": None,
+            "lat": cre_lat,
+            "lng": cre_lng,
             "agent": None,
             "raw": {"alert_source": "cre"},
         }
