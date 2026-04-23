@@ -187,6 +187,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if drive_label:
             drive_html = f'<span class="stat-badge" style="color:{drive_color};background:{drive_bg};">{drive_label}</span>'
 
+        # Sort key for $/acre; 0 sentinel -> JS pushes to end
+        ppa = (price / acres) if (price and acres) else 0
+
         headline = _escape(p.get("headline", ""))
         address = _escape(p.get("address", ""))
         description = _escape(p.get("description", "")[:400])
@@ -241,7 +244,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             </div>'''
 
         cards_html.append(f'''
-        <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{1 if prop_id in new_ids else 0}">
+        <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{1 if prop_id in new_ids else 0}" data-ppa="{ppa:.0f}">
             {photo_html}
             <div class="card-body">
                 <div class="card-top-row">
@@ -717,6 +720,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <span class="sort-label">Sort by</span>
             <button class="sort-btn active" data-sort="score" onclick="sortCards('score')">Score</button>
             <button class="sort-btn" data-sort="price" onclick="sortCards('price')">Price</button>
+            <button class="sort-btn" data-sort="ppa" onclick="sortCards('ppa')" title="Cheapest $/acre first">$/acre</button>
             <button class="sort-btn" data-sort="acres" onclick="sortCards('acres')">Acres</button>
             <button class="sort-btn" data-sort="drive" onclick="sortCards('drive')">Drive</button>
             <button class="sort-btn" data-sort="new" onclick="sortCards('new')">New ({new_count})</button>
@@ -768,6 +772,12 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             price: (a, b) => {{
                 const ap = parseFloat(a.dataset.price) || Infinity;
                 const bp = parseFloat(b.dataset.price) || Infinity;
+                return ap - bp;
+            }},
+            ppa: (a, b) => {{
+                // Cheapest $/acre first; 0 sentinel (missing price or acres) pushed to end
+                const ap = parseFloat(a.dataset.ppa) || Infinity;
+                const bp = parseFloat(b.dataset.ppa) || Infinity;
                 return ap - bp;
             }},
             acres: (a, b) => parseFloat(b.dataset.acres) - parseFloat(a.dataset.acres),
