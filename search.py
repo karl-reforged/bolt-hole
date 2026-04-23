@@ -426,7 +426,19 @@ def extract_tags(listing, criteria):
 # ── Gate filter for normalized properties ──────────────────────────────────
 
 def passes_gates_normalized(prop, criteria):
-    """Check if a normalized property (from any source) passes gate criteria."""
+    """Check if a normalized property (from any source) passes gate criteria.
+
+    Hardened: requires coordinates. Any property without lat/lng is rejected
+    outright, because without coords we can't enforce the drive-time gate and
+    can't place the pin on the map. Email-alert sources (CRE, Farmbuy, Listing
+    Loop) rely on the gazetteer in sources._geocode_from_gazetteer to populate
+    coords at normalization time.
+
+    OSRM-no-answer (coords present, drive_mins is None) is treated as a pass
+    — OSRM's free tier flakes, and rejecting on transient outages would drop
+    genuine matches. Those properties are kept with drive_time_minutes=None
+    so the issue is visible in the shortlist rather than silent.
+    """
     gates = criteria["gates"]
 
     # Price gate
@@ -441,13 +453,16 @@ def passes_gates_normalized(prop, criteria):
         if land_ha < gates["land_size"]["min_hectares"] or land_ha > gates["land_size"]["max_hectares"]:
             return False, "land_size_out_of_range"
 
-    # Drive time gate (if we have coordinates)
+    # Coordinates gate — required so drive-time can be checked and pin can be mapped
     lat, lng = prop.get("lat"), prop.get("lng")
-    if lat and lng:
-        drive_mins = calc_drive_time(lat, lng)
-        if drive_mins and drive_mins > gates["drive_time"]["max_minutes"]:
-            return False, "drive_time_exceeded"
-        prop["_drive_mins"] = drive_mins  # stash for scoring
+    if not (lat and lng):
+        return False, "no_coordinates"
+
+    # Drive time gate
+    drive_mins = calc_drive_time(lat, lng)
+    if drive_mins is not None and drive_mins > gates["drive_time"]["max_minutes"]:
+        return False, "drive_time_exceeded"
+    prop["_drive_mins"] = drive_mins  # may be None if OSRM was unreachable
 
     return True, "pass"
 
