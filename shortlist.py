@@ -33,6 +33,10 @@ DOCS_DIR = BASE_DIR / "docs"
 DOCS_DIR.mkdir(exist_ok=True)
 
 FEEDBACK_URL = os.getenv("FEEDBACK_SCRIPT_URL", "")
+NOTES_URL = os.getenv(
+    "NOTES_SCRIPT_URL",
+    "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec",
+)
 
 # Readable labels for score breakdown keys
 SCORE_LABELS = {
@@ -272,11 +276,14 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                         <button class="btn btn-pass" onclick="sendFeedback({i}, '{prop_id}', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-{i}">
-                    <button class="comment-toggle" onclick="toggleComment({i})">Add a note</button>
-                    <div class="comment-form" id="comment-form-{i}" style="display:none;">
-                        <textarea id="comment-text-{i}" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment({i}, '{prop_id}')">Send note</button>
+                <div class="notes-section" id="notes-section-{i}" data-property-id="{prop_id}">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes({i})">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-{i}" style="display:none;">
+                        <div class="notes-list" id="notes-list-{i}"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-{i}" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, {i}, '{prop_id}')">
+                            <button class="notes-post" onclick="submitNote({i}, '{prop_id}')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-{i}" style="display:none;"></div>
@@ -334,6 +341,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     new_count = len(new_ids)
 
     feedback_url_js = _escape(FEEDBACK_URL) if FEEDBACK_URL else ""
+    notes_url_js = _escape(NOTES_URL) if NOTES_URL else ""
 
     # ── Map markers JSON ──────────────────────────────────────────────────
     mapped_props = [(i, p) for i, p in enumerate(props) if p.get("lat") and p.get("lng")]
@@ -682,21 +690,86 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .btn-pass.selected {{ background: var(--slate); color: #fff; }}
         .btn:disabled {{ opacity: 0.5; cursor: default; }}
 
-        /* ── Comment ─────────────────────────────── */
-        .comment-section {{ margin-top: 4px; }}
-        .comment-toggle {{
-            font-size: 12px; color: var(--slate); background: none; border: none;
-            cursor: pointer; padding: 4px 0; text-decoration: underline;
-            text-underline-offset: 2px;
+        /* ── Notes (shared, per-card) ────────────── */
+        .notes-section {{ margin-top: 4px; }}
+        .notes-pill {{
+            font-size: 12px; background: none; border: none;
+            cursor: pointer; padding: 4px 2px; font-family: inherit;
+            color: var(--eucalyptus); font-weight: 500;
+            transition: opacity 0.15s;
         }}
-        .comment-form {{ margin-top: 8px; }}
-        .comment-form textarea {{
-            width: 100%; border: 1px solid var(--light-border); border-radius: 7px;
-            padding: 10px 12px; font-size: 13px; font-family: inherit;
-            resize: vertical; color: var(--bark); margin-bottom: 6px;
+        .notes-pill.notes-pill-empty {{
+            color: var(--slate); font-weight: 400; opacity: 0.6;
         }}
-        .comment-form textarea:focus {{ outline: 2px solid var(--eucalyptus); border-color: transparent; }}
-        .btn-comment {{ background: var(--eucalyptus); color: #fff; font-size: 12px; padding: 6px 14px; }}
+        .notes-pill.notes-pill-empty:hover {{ opacity: 1; }}
+        .notes-pill.notes-pill-active {{
+            background: rgba(76, 141, 86, 0.08);
+            border-radius: 999px; padding: 3px 10px;
+        }}
+        .notes-drawer {{
+            margin-top: 8px; padding: 10px 12px;
+            background: #fafaf7; border: 1px solid var(--light-border);
+            border-radius: 8px;
+        }}
+        .notes-list {{ display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }}
+        .notes-list:empty {{ display: none; }}
+        .note {{
+            padding: 8px 10px; background: #fff;
+            border: 1px solid var(--light-border); border-radius: 7px;
+        }}
+        .note-meta {{
+            font-size: 11px; color: var(--slate); margin-bottom: 3px;
+            display: flex; gap: 8px; align-items: baseline;
+        }}
+        .note-author {{ font-weight: 600; color: var(--eucalyptus); text-transform: capitalize; }}
+        .note-time {{ opacity: 0.7; }}
+        .note-body {{
+            font-size: 13px; color: var(--bark); line-height: 1.4;
+            word-wrap: break-word;
+        }}
+        .notes-input-row {{ display: flex; gap: 6px; }}
+        .notes-input {{
+            flex: 1; border: 1px solid var(--light-border); border-radius: 7px;
+            padding: 7px 10px; font-size: 13px; font-family: inherit;
+            color: var(--bark); background: #fff;
+        }}
+        .notes-input:focus {{ outline: 2px solid var(--eucalyptus); border-color: transparent; }}
+        .notes-post {{
+            background: var(--eucalyptus); color: #fff; border: none;
+            border-radius: 7px; padding: 7px 14px; font-size: 12px;
+            font-weight: 500; cursor: pointer; font-family: inherit;
+        }}
+        .notes-post:hover {{ filter: brightness(1.08); }}
+
+        /* ── Activity strip (page header) ────────── */
+        .notes-activity {{
+            font-size: 11px; padding: 0 20px; margin: -10px 0 14px;
+        }}
+        .notes-activity-toggle {{
+            background: none; border: none; cursor: pointer;
+            color: var(--eucalyptus); font-size: 11px; font-weight: 500;
+            padding: 2px 0; font-family: inherit;
+        }}
+        .notes-activity-toggle:hover {{ text-decoration: underline; }}
+        .notes-activity-panel {{
+            margin-top: 8px; padding: 10px 12px;
+            background: #fafaf7; border: 1px solid var(--light-border);
+            border-radius: 8px; max-height: 280px; overflow-y: auto;
+        }}
+        .activity-item {{
+            padding: 8px 10px; margin-bottom: 6px; background: #fff;
+            border: 1px solid var(--light-border); border-radius: 7px;
+            cursor: pointer; transition: border-color 0.15s;
+        }}
+        .activity-item:last-child {{ margin-bottom: 0; }}
+        .activity-item:hover {{ border-color: var(--eucalyptus); }}
+        .activity-meta {{
+            font-size: 11px; color: var(--slate); margin-bottom: 3px;
+        }}
+        .activity-author {{ font-weight: 600; color: var(--eucalyptus); text-transform: capitalize; }}
+        .activity-suburb {{ color: var(--bark); }}
+        .activity-body {{ font-size: 12px; color: var(--bark); line-height: 1.4; }}
+
         .feedback-confirmation {{
             font-size: 12px; color: var(--eucalyptus); font-weight: 500; padding: 4px 0;
         }}
@@ -776,6 +849,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         </div>
 
         <div class="scrape-status">{scrape_status_html}</div>
+        <div class="notes-activity" id="notes-activity" style="display:none;">
+            <button class="notes-activity-toggle" onclick="toggleActivity()">💬 <span id="notes-activity-count">0</span> recent notes</button>
+            <div class="notes-activity-panel" id="notes-activity-panel" style="display:none;"></div>
+        </div>
 
         <div class="sort-bar">
             <span class="sort-label">Sort by</span>
@@ -869,6 +946,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     const FEEDBACK_URL = "{feedback_url_js}";
+    const NOTES_URL = "{notes_url_js}";
     const TOTAL = {total_shown};
     const state = {{
         feedback: {{}},    // idx -> reaction
@@ -1068,28 +1146,165 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }}
 
-    // ── Comments ──────────────────────────────────────────────────────
-    function toggleComment(idx) {{
-        const form = document.getElementById('comment-form-' + idx);
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        if (form.style.display === 'block') form.querySelector('textarea').focus();
+    // ── Shared notes (Apps Script backend) ────────────────────────────
+    function currentUser() {{
+        const u = (new URLSearchParams(location.search).get('user') || '').toLowerCase().trim();
+        return u || 'anonymous';
+    }}
+    const USER_ID = currentUser();
+    let notesCache = {{}};
+
+    function escapeHtml(s) {{
+        return String(s).replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}})[c]);
     }}
 
-    function sendComment(idx, propertyId) {{
-        const textarea = document.getElementById('comment-text-' + idx);
-        const comment = textarea.value.trim();
-        if (!comment) return;
+    function formatNoteDate(iso) {{
+        const d = new Date(iso);
+        if (isNaN(d)) return '';
+        const diff = (Date.now() - d.getTime()) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+        if (diff < 86400*7) return Math.floor(diff/86400) + 'd ago';
+        return d.toLocaleDateString(undefined, {{month:'short', day:'numeric'}});
+    }}
 
-        showConfirmation(idx, 'Note saved — thanks George.');
-        textarea.value = '';
-        document.getElementById('comment-form-' + idx).style.display = 'none';
+    function loadNotes() {{
+        if (!NOTES_URL) return;
+        fetch(NOTES_URL).then(r => r.json()).then(data => {{
+            const next = {{}};
+            (data.notes || []).forEach(n => {{
+                (next[n.property_id] = next[n.property_id] || []).push(n);
+            }});
+            // Preserve optimistic (local-*) notes the server hasn't echoed back yet,
+            // to avoid flashing away a user's fresh note during the write race window.
+            Object.entries(notesCache).forEach(([pid, arr]) => {{
+                const pendingLocals = arr.filter(n =>
+                    typeof n.id === 'string' && n.id.startsWith('local-'));
+                if (!pendingLocals.length) return;
+                const serverTexts = new Set((next[pid] || []).map(n =>
+                    (n.note || '') + '|' + (n.author || '')));
+                const stillPending = pendingLocals.filter(n =>
+                    !serverTexts.has((n.note || '') + '|' + (n.author || '')));
+                if (stillPending.length) {{
+                    next[pid] = [...(next[pid] || []), ...stillPending];
+                }}
+            }});
+            notesCache = next;
+            Object.values(notesCache).forEach(list =>
+                list.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)));
+            document.querySelectorAll('.notes-section').forEach(section => {{
+                const pid = section.dataset.propertyId;
+                const idx = section.id.replace('notes-section-', '');
+                renderNotesIntoCard(idx, notesCache[pid] || []);
+            }});
+            updateActivityStrip(data.notes || []);
+        }}).catch(e => console.warn('notes load failed', e));
+    }}
 
-        if (FEEDBACK_URL) {{
-            const url = FEEDBACK_URL + '?action=comment'
-                + '&property_id=' + encodeURIComponent(propertyId)
-                + '&comment=' + encodeURIComponent(comment);
-            fetch(url, {{ mode: 'no-cors' }}).catch(() => {{}});
+    function renderNotesIntoCard(idx, notes) {{
+        const pill = document.querySelector('#notes-section-' + idx + ' .notes-pill');
+        const list = document.getElementById('notes-list-' + idx);
+        if (!pill || !list) return;
+        if (!notes.length) {{
+            pill.textContent = '+ note';
+            pill.classList.add('notes-pill-empty');
+            pill.classList.remove('notes-pill-active');
+            list.innerHTML = '';
+            return;
         }}
+        pill.innerHTML = '💬 ' + notes.length + (notes.length === 1 ? ' note' : ' notes');
+        pill.classList.remove('notes-pill-empty');
+        pill.classList.add('notes-pill-active');
+        list.innerHTML = notes.map(n => (
+            '<div class="note"><div class="note-meta">' +
+                '<span class="note-author">' + escapeHtml(n.author) + '</span>' +
+                '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
+            '</div><div class="note-body">' + escapeHtml(n.note) + '</div></div>'
+        )).join('');
+    }}
+
+    function toggleNotes(idx) {{
+        const drawer = document.getElementById('notes-drawer-' + idx);
+        if (!drawer) return;
+        const isOpen = drawer.style.display === 'block';
+        drawer.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {{
+            const input = document.getElementById('notes-input-' + idx);
+            if (input) input.focus();
+        }}
+    }}
+
+    function submitNote(idx, propertyId) {{
+        const input = document.getElementById('notes-input-' + idx);
+        if (!input) return;
+        const text = (input.value || '').trim();
+        if (!text || !NOTES_URL) return;
+
+        const optimistic = {{
+            id: 'local-' + Date.now(),
+            property_id: propertyId,
+            author: USER_ID,
+            timestamp: new Date().toISOString(),
+            note: text,
+        }};
+        (notesCache[propertyId] = notesCache[propertyId] || []).push(optimistic);
+        renderNotesIntoCard(idx, notesCache[propertyId]);
+        input.value = '';
+
+        fetch(NOTES_URL, {{
+            method: 'POST',
+            body: JSON.stringify({{action:'note', property_id: propertyId, author: USER_ID, note: text}}),
+        }}).then(() => setTimeout(loadNotes, 2500)).catch(e => console.warn('note post failed', e));
+    }}
+
+    function noteKeydown(event, idx, propertyId) {{
+        if (event.key === 'Enter' && !event.shiftKey) {{
+            event.preventDefault();
+            submitNote(idx, propertyId);
+        }}
+    }}
+
+    function updateActivityStrip(allNotes) {{
+        const wrap = document.getElementById('notes-activity');
+        const countEl = document.getElementById('notes-activity-count');
+        const panel = document.getElementById('notes-activity-panel');
+        if (!wrap || !countEl || !panel) return;
+        if (!allNotes.length) {{ wrap.style.display = 'none'; return; }}
+        wrap.style.display = '';
+        countEl.textContent = allNotes.length;
+        const sorted = allNotes.slice().sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
+        panel.innerHTML = sorted.map(n => {{
+            const section = document.querySelector('.notes-section[data-property-id="' + n.property_id + '"]');
+            const card = section ? section.closest('.card') : null;
+            const addr = card ? (card.querySelector('.address')?.textContent || '').split(',')[0].trim() : n.property_id;
+            const pidAttr = escapeHtml(n.property_id);
+            return '<div class="activity-item" onclick="scrollToProperty(\\'' + pidAttr.replace(/'/g, "\\\\'") + '\\')">' +
+                '<div class="activity-meta">' +
+                    '<span class="activity-author">' + escapeHtml(n.author) + '</span> · ' +
+                    '<span class="activity-suburb">' + escapeHtml(addr || '—') + '</span> · ' +
+                    '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
+                '</div><div class="activity-body">' + escapeHtml(n.note) + '</div></div>';
+        }}).join('');
+    }}
+
+    function toggleActivity() {{
+        const panel = document.getElementById('notes-activity-panel');
+        if (!panel) return;
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }}
+
+    function scrollToProperty(pid) {{
+        const section = document.querySelector('.notes-section[data-property-id="' + pid + '"]');
+        if (!section) return;
+        const card = section.closest('.card');
+        if (!card) return;
+        card.scrollIntoView({{behavior:'smooth', block:'start'}});
+        const idx = section.id.replace('notes-section-', '');
+        const drawer = document.getElementById('notes-drawer-' + idx);
+        if (drawer && drawer.style.display !== 'block') toggleNotes(idx);
+        const panel = document.getElementById('notes-activity-panel');
+        if (panel) panel.style.display = 'none';
     }}
 
     function showConfirmation(idx, message) {{
@@ -1287,6 +1502,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     // ── Restore state on load ─────────────────────────────────────────
     loadState();
+    loadNotes();
     </script>
 </body>
 </html>'''

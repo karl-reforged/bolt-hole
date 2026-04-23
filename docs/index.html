@@ -318,21 +318,86 @@
         .btn-pass.selected { background: var(--slate); color: #fff; }
         .btn:disabled { opacity: 0.5; cursor: default; }
 
-        /* ── Comment ─────────────────────────────── */
-        .comment-section { margin-top: 4px; }
-        .comment-toggle {
-            font-size: 12px; color: var(--slate); background: none; border: none;
-            cursor: pointer; padding: 4px 0; text-decoration: underline;
-            text-underline-offset: 2px;
+        /* ── Notes (shared, per-card) ────────────── */
+        .notes-section { margin-top: 4px; }
+        .notes-pill {
+            font-size: 12px; background: none; border: none;
+            cursor: pointer; padding: 4px 2px; font-family: inherit;
+            color: var(--eucalyptus); font-weight: 500;
+            transition: opacity 0.15s;
         }
-        .comment-form { margin-top: 8px; }
-        .comment-form textarea {
-            width: 100%; border: 1px solid var(--light-border); border-radius: 7px;
-            padding: 10px 12px; font-size: 13px; font-family: inherit;
-            resize: vertical; color: var(--bark); margin-bottom: 6px;
+        .notes-pill.notes-pill-empty {
+            color: var(--slate); font-weight: 400; opacity: 0.6;
         }
-        .comment-form textarea:focus { outline: 2px solid var(--eucalyptus); border-color: transparent; }
-        .btn-comment { background: var(--eucalyptus); color: #fff; font-size: 12px; padding: 6px 14px; }
+        .notes-pill.notes-pill-empty:hover { opacity: 1; }
+        .notes-pill.notes-pill-active {
+            background: rgba(76, 141, 86, 0.08);
+            border-radius: 999px; padding: 3px 10px;
+        }
+        .notes-drawer {
+            margin-top: 8px; padding: 10px 12px;
+            background: #fafaf7; border: 1px solid var(--light-border);
+            border-radius: 8px;
+        }
+        .notes-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+        .notes-list:empty { display: none; }
+        .note {
+            padding: 8px 10px; background: #fff;
+            border: 1px solid var(--light-border); border-radius: 7px;
+        }
+        .note-meta {
+            font-size: 11px; color: var(--slate); margin-bottom: 3px;
+            display: flex; gap: 8px; align-items: baseline;
+        }
+        .note-author { font-weight: 600; color: var(--eucalyptus); text-transform: capitalize; }
+        .note-time { opacity: 0.7; }
+        .note-body {
+            font-size: 13px; color: var(--bark); line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .notes-input-row { display: flex; gap: 6px; }
+        .notes-input {
+            flex: 1; border: 1px solid var(--light-border); border-radius: 7px;
+            padding: 7px 10px; font-size: 13px; font-family: inherit;
+            color: var(--bark); background: #fff;
+        }
+        .notes-input:focus { outline: 2px solid var(--eucalyptus); border-color: transparent; }
+        .notes-post {
+            background: var(--eucalyptus); color: #fff; border: none;
+            border-radius: 7px; padding: 7px 14px; font-size: 12px;
+            font-weight: 500; cursor: pointer; font-family: inherit;
+        }
+        .notes-post:hover { filter: brightness(1.08); }
+
+        /* ── Activity strip (page header) ────────── */
+        .notes-activity {
+            font-size: 11px; padding: 0 20px; margin: -10px 0 14px;
+        }
+        .notes-activity-toggle {
+            background: none; border: none; cursor: pointer;
+            color: var(--eucalyptus); font-size: 11px; font-weight: 500;
+            padding: 2px 0; font-family: inherit;
+        }
+        .notes-activity-toggle:hover { text-decoration: underline; }
+        .notes-activity-panel {
+            margin-top: 8px; padding: 10px 12px;
+            background: #fafaf7; border: 1px solid var(--light-border);
+            border-radius: 8px; max-height: 280px; overflow-y: auto;
+        }
+        .activity-item {
+            padding: 8px 10px; margin-bottom: 6px; background: #fff;
+            border: 1px solid var(--light-border); border-radius: 7px;
+            cursor: pointer; transition: border-color 0.15s;
+        }
+        .activity-item:last-child { margin-bottom: 0; }
+        .activity-item:hover { border-color: var(--eucalyptus); }
+        .activity-meta {
+            font-size: 11px; color: var(--slate); margin-bottom: 3px;
+        }
+        .activity-author { font-weight: 600; color: var(--eucalyptus); text-transform: capitalize; }
+        .activity-suburb { color: var(--bark); }
+        .activity-body { font-size: 12px; color: var(--bark); line-height: 1.4; }
+
         .feedback-confirmation {
             font-size: 12px; color: var(--eucalyptus); font-weight: 500; padding: 4px 0;
         }
@@ -412,6 +477,10 @@
         </div>
 
         <div class="scrape-status">227 listings scanned &middot; 80 passed &middot; 4 new</div>
+        <div class="notes-activity" id="notes-activity" style="display:none;">
+            <button class="notes-activity-toggle" onclick="toggleActivity()">💬 <span id="notes-activity-count">0</span> recent notes</button>
+            <div class="notes-activity-panel" id="notes-activity-panel" style="display:none;"></div>
+        </div>
 
         <div class="sort-bar">
             <span class="sort-label">Sort by</span>
@@ -512,11 +581,14 @@ As you meander up the tree lined driveway, you will feel the privacy that this p
                         <button class="btn btn-pass" onclick="sendFeedback(0, '2020730886', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-0">
-                    <button class="comment-toggle" onclick="toggleComment(0)">Add a note</button>
-                    <div class="comment-form" id="comment-form-0" style="display:none;">
-                        <textarea id="comment-text-0" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(0, '2020730886')">Send note</button>
+                <div class="notes-section" id="notes-section-0" data-property-id="2020730886">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(0)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-0" style="display:none;">
+                        <div class="notes-list" id="notes-list-0"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-0" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 0, '2020730886')">
+                            <button class="notes-post" onclick="submitNote(0, '2020730886')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-0" style="display:none;"></div>
@@ -584,11 +656,14 @@ The cedar-clad residence, built approximately 35 yea...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(1, '2020298974', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-1">
-                    <button class="comment-toggle" onclick="toggleComment(1)">Add a note</button>
-                    <div class="comment-form" id="comment-form-1" style="display:none;">
-                        <textarea id="comment-text-1" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(1, '2020298974')">Send note</button>
+                <div class="notes-section" id="notes-section-1" data-property-id="2020298974">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(1)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-1" style="display:none;">
+                        <div class="notes-list" id="notes-list-1"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-1" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 1, '2020298974')">
+                            <button class="notes-post" onclick="submitNote(1, '2020298974')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-1" style="display:none;"></div>
@@ -655,11 +730,14 @@ The cedar-clad residence, built approximately 35 yea...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(2, '2020363906', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-2">
-                    <button class="comment-toggle" onclick="toggleComment(2)">Add a note</button>
-                    <div class="comment-form" id="comment-form-2" style="display:none;">
-                        <textarea id="comment-text-2" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(2, '2020363906')">Send note</button>
+                <div class="notes-section" id="notes-section-2" data-property-id="2020363906">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(2)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-2" style="display:none;">
+                        <div class="notes-list" id="notes-list-2"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-2" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 2, '2020363906')">
+                            <button class="notes-post" onclick="submitNote(2, '2020363906')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-2" style="display:none;"></div>
@@ -727,11 +805,14 @@ Privately set amongst established trees and hedging, and accessed via a beautifu
                         <button class="btn btn-pass" onclick="sendFeedback(3, '2020759502', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-3">
-                    <button class="comment-toggle" onclick="toggleComment(3)">Add a note</button>
-                    <div class="comment-form" id="comment-form-3" style="display:none;">
-                        <textarea id="comment-text-3" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(3, '2020759502')">Send note</button>
+                <div class="notes-section" id="notes-section-3" data-property-id="2020759502">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(3)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-3" style="display:none;">
+                        <div class="notes-list" id="notes-list-3"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-3" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 3, '2020759502')">
+                            <button class="notes-post" onclick="submitNote(3, '2020759502')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-3" style="display:none;"></div>
@@ -801,11 +882,14 @@ Offering an ideal balance of productivity and lifestyle, the property is private
                         <button class="btn btn-pass" onclick="sendFeedback(4, '2020699809', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-4">
-                    <button class="comment-toggle" onclick="toggleComment(4)">Add a note</button>
-                    <div class="comment-form" id="comment-form-4" style="display:none;">
-                        <textarea id="comment-text-4" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(4, '2020699809')">Send note</button>
+                <div class="notes-section" id="notes-section-4" data-property-id="2020699809">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(4)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-4" style="display:none;">
+                        <div class="notes-list" id="notes-list-4"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-4" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 4, '2020699809')">
+                            <button class="notes-post" onclick="submitNote(4, '2020699809')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-4" style="display:none;"></div>
@@ -873,11 +957,14 @@ Mountain biking, bushwalking, four wheel driving, birdwatching all at your doors
                         <button class="btn btn-pass" onclick="sendFeedback(5, '2019783254', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-5">
-                    <button class="comment-toggle" onclick="toggleComment(5)">Add a note</button>
-                    <div class="comment-form" id="comment-form-5" style="display:none;">
-                        <textarea id="comment-text-5" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(5, '2019783254')">Send note</button>
+                <div class="notes-section" id="notes-section-5" data-property-id="2019783254">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(5)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-5" style="display:none;">
+                        <div class="notes-list" id="notes-list-5"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-5" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 5, '2019783254')">
+                            <button class="notes-post" onclick="submitNote(5, '2019783254')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-5" style="display:none;"></div>
@@ -946,11 +1033,14 @@ Nestled in the serene landscapes of Sodwalls, Brindabella offers an idyllic retr
                         <button class="btn btn-pass" onclick="sendFeedback(6, '2019593640', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-6">
-                    <button class="comment-toggle" onclick="toggleComment(6)">Add a note</button>
-                    <div class="comment-form" id="comment-form-6" style="display:none;">
-                        <textarea id="comment-text-6" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(6, '2019593640')">Send note</button>
+                <div class="notes-section" id="notes-section-6" data-property-id="2019593640">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(6)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-6" style="display:none;">
+                        <div class="notes-list" id="notes-list-6"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-6" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 6, '2019593640')">
+                            <button class="notes-post" onclick="submitNote(6, '2019593640')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-6" style="display:none;"></div>
@@ -1019,11 +1109,14 @@ The property offers a large 15.5m x...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(7, '2018417701', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-7">
-                    <button class="comment-toggle" onclick="toggleComment(7)">Add a note</button>
-                    <div class="comment-form" id="comment-form-7" style="display:none;">
-                        <textarea id="comment-text-7" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(7, '2018417701')">Send note</button>
+                <div class="notes-section" id="notes-section-7" data-property-id="2018417701">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(7)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-7" style="display:none;">
+                        <div class="notes-list" id="notes-list-7"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-7" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 7, '2018417701')">
+                            <button class="notes-post" onclick="submitNote(7, '2018417701')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-7" style="display:none;"></div>
@@ -1090,11 +1183,14 @@ The property offers a large 15.5m x...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(8, 'elders-300P38900', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-8">
-                    <button class="comment-toggle" onclick="toggleComment(8)">Add a note</button>
-                    <div class="comment-form" id="comment-form-8" style="display:none;">
-                        <textarea id="comment-text-8" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(8, 'elders-300P38900')">Send note</button>
+                <div class="notes-section" id="notes-section-8" data-property-id="elders-300P38900">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(8)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-8" style="display:none;">
+                        <div class="notes-list" id="notes-list-8"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-8" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 8, 'elders-300P38900')">
+                            <button class="notes-post" onclick="submitNote(8, 'elders-300P38900')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-8" style="display:none;"></div>
@@ -1161,11 +1257,14 @@ The property offers a large 15.5m x...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(9, '2019935090', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-9">
-                    <button class="comment-toggle" onclick="toggleComment(9)">Add a note</button>
-                    <div class="comment-form" id="comment-form-9" style="display:none;">
-                        <textarea id="comment-text-9" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(9, '2019935090')">Send note</button>
+                <div class="notes-section" id="notes-section-9" data-property-id="2019935090">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(9)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-9" style="display:none;">
+                        <div class="notes-list" id="notes-list-9"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-9" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 9, '2019935090')">
+                            <button class="notes-post" onclick="submitNote(9, '2019935090')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-9" style="display:none;"></div>
@@ -1233,11 +1332,14 @@ The property boasts the ideal balance between location and privacy. It is just 1
                         <button class="btn btn-pass" onclick="sendFeedback(10, '2020563540', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-10">
-                    <button class="comment-toggle" onclick="toggleComment(10)">Add a note</button>
-                    <div class="comment-form" id="comment-form-10" style="display:none;">
-                        <textarea id="comment-text-10" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(10, '2020563540')">Send note</button>
+                <div class="notes-section" id="notes-section-10" data-property-id="2020563540">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(10)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-10" style="display:none;">
+                        <div class="notes-list" id="notes-list-10"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-10" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 10, '2020563540')">
+                            <button class="notes-post" onclick="submitNote(10, '2020563540')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-10" style="display:none;"></div>
@@ -1311,11 +1413,14 @@ Land &amp; Location:
                         <button class="btn btn-pass" onclick="sendFeedback(11, '2019682398', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-11">
-                    <button class="comment-toggle" onclick="toggleComment(11)">Add a note</button>
-                    <div class="comment-form" id="comment-form-11" style="display:none;">
-                        <textarea id="comment-text-11" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(11, '2019682398')">Send note</button>
+                <div class="notes-section" id="notes-section-11" data-property-id="2019682398">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(11)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-11" style="display:none;">
+                        <div class="notes-list" id="notes-list-11"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-11" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 11, '2019682398')">
+                            <button class="notes-post" onclick="submitNote(11, '2019682398')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-11" style="display:none;"></div>
@@ -1382,11 +1487,14 @@ Land &amp; Location:
                         <button class="btn btn-pass" onclick="sendFeedback(12, '2020247682', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-12">
-                    <button class="comment-toggle" onclick="toggleComment(12)">Add a note</button>
-                    <div class="comment-form" id="comment-form-12" style="display:none;">
-                        <textarea id="comment-text-12" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(12, '2020247682')">Send note</button>
+                <div class="notes-section" id="notes-section-12" data-property-id="2020247682">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(12)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-12" style="display:none;">
+                        <div class="notes-list" id="notes-list-12"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-12" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 12, '2020247682')">
+                            <button class="notes-post" onclick="submitNote(12, '2020247682')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-12" style="display:none;"></div>
@@ -1455,11 +1563,14 @@ Comprising approximately 40.56 hectares (1...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(13, '2020755872', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-13">
-                    <button class="comment-toggle" onclick="toggleComment(13)">Add a note</button>
-                    <div class="comment-form" id="comment-form-13" style="display:none;">
-                        <textarea id="comment-text-13" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(13, '2020755872')">Send note</button>
+                <div class="notes-section" id="notes-section-13" data-property-id="2020755872">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(13)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-13" style="display:none;">
+                        <div class="notes-list" id="notes-list-13"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-13" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 13, '2020755872')">
+                            <button class="notes-post" onclick="submitNote(13, '2020755872')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-13" style="display:none;"></div>
@@ -1526,11 +1637,14 @@ Comprising approximately 40.56 hectares (1...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(14, '2020746034', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-14">
-                    <button class="comment-toggle" onclick="toggleComment(14)">Add a note</button>
-                    <div class="comment-form" id="comment-form-14" style="display:none;">
-                        <textarea id="comment-text-14" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(14, '2020746034')">Send note</button>
+                <div class="notes-section" id="notes-section-14" data-property-id="2020746034">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(14)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-14" style="display:none;">
+                        <div class="notes-list" id="notes-list-14"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-14" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 14, '2020746034')">
+                            <button class="notes-post" onclick="submitNote(14, '2020746034')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-14" style="display:none;"></div>
@@ -1604,11 +1718,14 @@ Key Features
                         <button class="btn btn-pass" onclick="sendFeedback(15, '2020423196', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-15">
-                    <button class="comment-toggle" onclick="toggleComment(15)">Add a note</button>
-                    <div class="comment-form" id="comment-form-15" style="display:none;">
-                        <textarea id="comment-text-15" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(15, '2020423196')">Send note</button>
+                <div class="notes-section" id="notes-section-15" data-property-id="2020423196">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(15)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-15" style="display:none;">
+                        <div class="notes-list" id="notes-list-15"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-15" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 15, '2020423196')">
+                            <button class="notes-post" onclick="submitNote(15, '2020423196')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-15" style="display:none;"></div>
@@ -1678,11 +1795,14 @@ Offered to the public for the very first time, this remarkable 90-acre holding, 
                         <button class="btn btn-pass" onclick="sendFeedback(16, '2020421058', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-16">
-                    <button class="comment-toggle" onclick="toggleComment(16)">Add a note</button>
-                    <div class="comment-form" id="comment-form-16" style="display:none;">
-                        <textarea id="comment-text-16" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(16, '2020421058')">Send note</button>
+                <div class="notes-section" id="notes-section-16" data-property-id="2020421058">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(16)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-16" style="display:none;">
+                        <div class="notes-list" id="notes-list-16"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-16" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 16, '2020421058')">
+                            <button class="notes-post" onclick="submitNote(16, '2020421058')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-16" style="display:none;"></div>
@@ -1750,11 +1870,14 @@ Fully fenced boundaries, some new fencing, a mature stand of Radiata Pines, a le
                         <button class="btn btn-pass" onclick="sendFeedback(17, '2019761475', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-17">
-                    <button class="comment-toggle" onclick="toggleComment(17)">Add a note</button>
-                    <div class="comment-form" id="comment-form-17" style="display:none;">
-                        <textarea id="comment-text-17" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(17, '2019761475')">Send note</button>
+                <div class="notes-section" id="notes-section-17" data-property-id="2019761475">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(17)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-17" style="display:none;">
+                        <div class="notes-list" id="notes-list-17"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-17" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 17, '2019761475')">
+                            <button class="notes-post" onclick="submitNote(17, '2019761475')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-17" style="display:none;"></div>
@@ -1822,11 +1945,14 @@ Thoughtfully fenced into four paddocks and serviced b...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(18, '2020532191', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-18">
-                    <button class="comment-toggle" onclick="toggleComment(18)">Add a note</button>
-                    <div class="comment-form" id="comment-form-18" style="display:none;">
-                        <textarea id="comment-text-18" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(18, '2020532191')">Send note</button>
+                <div class="notes-section" id="notes-section-18" data-property-id="2020532191">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(18)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-18" style="display:none;">
+                        <div class="notes-list" id="notes-list-18"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-18" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 18, '2020532191')">
+                            <button class="notes-post" onclick="submitNote(18, '2020532191')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-18" style="display:none;"></div>
@@ -1895,11 +2021,14 @@ The kitchen ...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(19, '2020714457', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-19">
-                    <button class="comment-toggle" onclick="toggleComment(19)">Add a note</button>
-                    <div class="comment-form" id="comment-form-19" style="display:none;">
-                        <textarea id="comment-text-19" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(19, '2020714457')">Send note</button>
+                <div class="notes-section" id="notes-section-19" data-property-id="2020714457">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(19)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-19" style="display:none;">
+                        <div class="notes-list" id="notes-list-19"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-19" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 19, '2020714457')">
+                            <button class="notes-post" onclick="submitNote(19, '2020714457')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-19" style="display:none;"></div>
@@ -1967,11 +2096,14 @@ Positioned in an elevated location, the property captures sweeping panoramic vie
                         <button class="btn btn-pass" onclick="sendFeedback(20, '2020763831', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-20">
-                    <button class="comment-toggle" onclick="toggleComment(20)">Add a note</button>
-                    <div class="comment-form" id="comment-form-20" style="display:none;">
-                        <textarea id="comment-text-20" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(20, '2020763831')">Send note</button>
+                <div class="notes-section" id="notes-section-20" data-property-id="2020763831">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(20)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-20" style="display:none;">
+                        <div class="notes-list" id="notes-list-20"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-20" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 20, '2020763831')">
+                            <button class="notes-post" onclick="submitNote(20, '2020763831')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-20" style="display:none;"></div>
@@ -2039,11 +2171,14 @@ Situated approximately 25km* from Bathurst, 52km* to Oberon, 160km to Goulburn, 
                         <button class="btn btn-pass" onclick="sendFeedback(21, '2020771753', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-21">
-                    <button class="comment-toggle" onclick="toggleComment(21)">Add a note</button>
-                    <div class="comment-form" id="comment-form-21" style="display:none;">
-                        <textarea id="comment-text-21" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(21, '2020771753')">Send note</button>
+                <div class="notes-section" id="notes-section-21" data-property-id="2020771753">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(21)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-21" style="display:none;">
+                        <div class="notes-list" id="notes-list-21"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-21" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 21, '2020771753')">
+                            <button class="notes-post" onclick="submitNote(21, '2020771753')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-21" style="display:none;"></div>
@@ -2111,11 +2246,14 @@ Boasting privacy, the parcel offers a blend of open pasture and areas with estab
                         <button class="btn btn-pass" onclick="sendFeedback(22, '2020747444', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-22">
-                    <button class="comment-toggle" onclick="toggleComment(22)">Add a note</button>
-                    <div class="comment-form" id="comment-form-22" style="display:none;">
-                        <textarea id="comment-text-22" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(22, '2020747444')">Send note</button>
+                <div class="notes-section" id="notes-section-22" data-property-id="2020747444">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(22)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-22" style="display:none;">
+                        <div class="notes-list" id="notes-list-22"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-22" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 22, '2020747444')">
+                            <button class="notes-post" onclick="submitNote(22, '2020747444')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-22" style="display:none;"></div>
@@ -2191,11 +2329,14 @@ Boasting privacy, the parcel offers a blend of open pasture and areas with estab
                         <button class="btn btn-pass" onclick="sendFeedback(23, '2020770615', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-23">
-                    <button class="comment-toggle" onclick="toggleComment(23)">Add a note</button>
-                    <div class="comment-form" id="comment-form-23" style="display:none;">
-                        <textarea id="comment-text-23" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(23, '2020770615')">Send note</button>
+                <div class="notes-section" id="notes-section-23" data-property-id="2020770615">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(23)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-23" style="display:none;">
+                        <div class="notes-list" id="notes-list-23"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-23" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 23, '2020770615')">
+                            <button class="notes-post" onclick="submitNote(23, '2020770615')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-23" style="display:none;"></div>
@@ -2265,11 +2406,14 @@ Ensuring there is p...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(24, '2020627180', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-24">
-                    <button class="comment-toggle" onclick="toggleComment(24)">Add a note</button>
-                    <div class="comment-form" id="comment-form-24" style="display:none;">
-                        <textarea id="comment-text-24" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(24, '2020627180')">Send note</button>
+                <div class="notes-section" id="notes-section-24" data-property-id="2020627180">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(24)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-24" style="display:none;">
+                        <div class="notes-list" id="notes-list-24"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-24" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 24, '2020627180')">
+                            <button class="notes-post" onclick="submitNote(24, '2020627180')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-24" style="display:none;"></div>
@@ -2337,11 +2481,14 @@ The comfortable four-bedroom home is well positioned to take in the...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(25, '2020617988', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-25">
-                    <button class="comment-toggle" onclick="toggleComment(25)">Add a note</button>
-                    <div class="comment-form" id="comment-form-25" style="display:none;">
-                        <textarea id="comment-text-25" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(25, '2020617988')">Send note</button>
+                <div class="notes-section" id="notes-section-25" data-property-id="2020617988">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(25)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-25" style="display:none;">
+                        <div class="notes-list" id="notes-list-25"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-25" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 25, '2020617988')">
+                            <button class="notes-post" onclick="submitNote(25, '2020617988')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-25" style="display:none;"></div>
@@ -2410,11 +2557,14 @@ Some of the many features of Teasdale include:
                         <button class="btn btn-pass" onclick="sendFeedback(26, '2020477514', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-26">
-                    <button class="comment-toggle" onclick="toggleComment(26)">Add a note</button>
-                    <div class="comment-form" id="comment-form-26" style="display:none;">
-                        <textarea id="comment-text-26" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(26, '2020477514')">Send note</button>
+                <div class="notes-section" id="notes-section-26" data-property-id="2020477514">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(26)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-26" style="display:none;">
+                        <div class="notes-list" id="notes-list-26"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-26" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 26, '2020477514')">
+                            <button class="notes-post" onclick="submitNote(26, '2020477514')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-26" style="display:none;"></div>
@@ -2482,11 +2632,14 @@ Positioned peacefully in one of the most highly sought after rural locales of th
                         <button class="btn btn-pass" onclick="sendFeedback(27, '2019957443', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-27">
-                    <button class="comment-toggle" onclick="toggleComment(27)">Add a note</button>
-                    <div class="comment-form" id="comment-form-27" style="display:none;">
-                        <textarea id="comment-text-27" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(27, '2019957443')">Send note</button>
+                <div class="notes-section" id="notes-section-27" data-property-id="2019957443">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(27)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-27" style="display:none;">
+                        <div class="notes-list" id="notes-list-27"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-27" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 27, '2019957443')">
+                            <button class="notes-post" onclick="submitNote(27, '2019957443')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-27" style="display:none;"></div>
@@ -2554,11 +2707,14 @@ Set on approximately 32 acres, this appealing property features a well-maintaine
                         <button class="btn btn-pass" onclick="sendFeedback(28, '2020738302', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-28">
-                    <button class="comment-toggle" onclick="toggleComment(28)">Add a note</button>
-                    <div class="comment-form" id="comment-form-28" style="display:none;">
-                        <textarea id="comment-text-28" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(28, '2020738302')">Send note</button>
+                <div class="notes-section" id="notes-section-28" data-property-id="2020738302">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(28)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-28" style="display:none;">
+                        <div class="notes-list" id="notes-list-28"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-28" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 28, '2020738302')">
+                            <button class="notes-post" onclick="submitNote(28, '2020738302')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-28" style="display:none;"></div>
@@ -2627,11 +2783,14 @@ Set on approximately 32 acres, this appealing property features a well-maintaine
                         <button class="btn btn-pass" onclick="sendFeedback(29, '2020033500', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-29">
-                    <button class="comment-toggle" onclick="toggleComment(29)">Add a note</button>
-                    <div class="comment-form" id="comment-form-29" style="display:none;">
-                        <textarea id="comment-text-29" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(29, '2020033500')">Send note</button>
+                <div class="notes-section" id="notes-section-29" data-property-id="2020033500">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(29)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-29" style="display:none;">
+                        <div class="notes-list" id="notes-list-29"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-29" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 29, '2020033500')">
+                            <button class="notes-post" onclick="submitNote(29, '2020033500')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-29" style="display:none;"></div>
@@ -2702,11 +2861,14 @@ Features
                         <button class="btn btn-pass" onclick="sendFeedback(30, '2020634526', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-30">
-                    <button class="comment-toggle" onclick="toggleComment(30)">Add a note</button>
-                    <div class="comment-form" id="comment-form-30" style="display:none;">
-                        <textarea id="comment-text-30" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(30, '2020634526')">Send note</button>
+                <div class="notes-section" id="notes-section-30" data-property-id="2020634526">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(30)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-30" style="display:none;">
+                        <div class="notes-list" id="notes-list-30"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-30" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 30, '2020634526')">
+                            <button class="notes-post" onclick="submitNote(30, '2020634526')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-30" style="display:none;"></div>
@@ -2773,11 +2935,14 @@ Features
                         <button class="btn btn-pass" onclick="sendFeedback(31, 'elders-300P130769', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-31">
-                    <button class="comment-toggle" onclick="toggleComment(31)">Add a note</button>
-                    <div class="comment-form" id="comment-form-31" style="display:none;">
-                        <textarea id="comment-text-31" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(31, 'elders-300P130769')">Send note</button>
+                <div class="notes-section" id="notes-section-31" data-property-id="elders-300P130769">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(31)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-31" style="display:none;">
+                        <div class="notes-list" id="notes-list-31"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-31" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 31, 'elders-300P130769')">
+                            <button class="notes-post" onclick="submitNote(31, 'elders-300P130769')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-31" style="display:none;"></div>
@@ -2845,11 +3010,14 @@ The established property captures the essenc...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(32, '2020433208', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-32">
-                    <button class="comment-toggle" onclick="toggleComment(32)">Add a note</button>
-                    <div class="comment-form" id="comment-form-32" style="display:none;">
-                        <textarea id="comment-text-32" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(32, '2020433208')">Send note</button>
+                <div class="notes-section" id="notes-section-32" data-property-id="2020433208">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(32)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-32" style="display:none;">
+                        <div class="notes-list" id="notes-list-32"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-32" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 32, '2020433208')">
+                            <button class="notes-post" onclick="submitNote(32, '2020433208')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-32" style="display:none;"></div>
@@ -2917,11 +3085,14 @@ Enjoy the be...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(33, '2020568664', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-33">
-                    <button class="comment-toggle" onclick="toggleComment(33)">Add a note</button>
-                    <div class="comment-form" id="comment-form-33" style="display:none;">
-                        <textarea id="comment-text-33" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(33, '2020568664')">Send note</button>
+                <div class="notes-section" id="notes-section-33" data-property-id="2020568664">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(33)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-33" style="display:none;">
+                        <div class="notes-list" id="notes-list-33"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-33" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 33, '2020568664')">
+                            <button class="notes-post" onclick="submitNote(33, '2020568664')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-33" style="display:none;"></div>
@@ -2989,11 +3160,14 @@ Fenced into 4 main paddocks, the country features basalt soil with some excellen
                         <button class="btn btn-pass" onclick="sendFeedback(34, '2017597831', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-34">
-                    <button class="comment-toggle" onclick="toggleComment(34)">Add a note</button>
-                    <div class="comment-form" id="comment-form-34" style="display:none;">
-                        <textarea id="comment-text-34" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(34, '2017597831')">Send note</button>
+                <div class="notes-section" id="notes-section-34" data-property-id="2017597831">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(34)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-34" style="display:none;">
+                        <div class="notes-list" id="notes-list-34"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-34" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 34, '2017597831')">
+                            <button class="notes-post" onclick="submitNote(34, '2017597831')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-34" style="display:none;"></div>
@@ -3060,11 +3234,14 @@ Fenced into 4 main paddocks, the country features basalt soil with some excellen
                         <button class="btn btn-pass" onclick="sendFeedback(35, '2020561128', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-35">
-                    <button class="comment-toggle" onclick="toggleComment(35)">Add a note</button>
-                    <div class="comment-form" id="comment-form-35" style="display:none;">
-                        <textarea id="comment-text-35" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(35, '2020561128')">Send note</button>
+                <div class="notes-section" id="notes-section-35" data-property-id="2020561128">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(35)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-35" style="display:none;">
+                        <div class="notes-list" id="notes-list-35"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-35" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 35, '2020561128')">
+                            <button class="notes-post" onclick="submitNote(35, '2020561128')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-35" style="display:none;"></div>
@@ -3131,11 +3308,14 @@ Fenced into 4 main paddocks, the country features basalt soil with some excellen
                         <button class="btn btn-pass" onclick="sendFeedback(36, '2020661294', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-36">
-                    <button class="comment-toggle" onclick="toggleComment(36)">Add a note</button>
-                    <div class="comment-form" id="comment-form-36" style="display:none;">
-                        <textarea id="comment-text-36" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(36, '2020661294')">Send note</button>
+                <div class="notes-section" id="notes-section-36" data-property-id="2020661294">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(36)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-36" style="display:none;">
+                        <div class="notes-list" id="notes-list-36"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-36" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 36, '2020661294')">
+                            <button class="notes-post" onclick="submitNote(36, '2020661294')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-36" style="display:none;"></div>
@@ -3206,11 +3386,14 @@ Renovated Cottage + Sheds on 5 Acres ( approx 2...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(37, 'rea-700404432', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-37">
-                    <button class="comment-toggle" onclick="toggleComment(37)">Add a note</button>
-                    <div class="comment-form" id="comment-form-37" style="display:none;">
-                        <textarea id="comment-text-37" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(37, 'rea-700404432')">Send note</button>
+                <div class="notes-section" id="notes-section-37" data-property-id="rea-700404432">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(37)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-37" style="display:none;">
+                        <div class="notes-list" id="notes-list-37"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-37" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 37, 'rea-700404432')">
+                            <button class="notes-post" onclick="submitNote(37, 'rea-700404432')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-37" style="display:none;"></div>
@@ -3278,11 +3461,14 @@ Surrounded by pristine native bushland this block is a versatile property, offer
                         <button class="btn btn-pass" onclick="sendFeedback(38, '2019586135', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-38">
-                    <button class="comment-toggle" onclick="toggleComment(38)">Add a note</button>
-                    <div class="comment-form" id="comment-form-38" style="display:none;">
-                        <textarea id="comment-text-38" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(38, '2019586135')">Send note</button>
+                <div class="notes-section" id="notes-section-38" data-property-id="2019586135">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(38)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-38" style="display:none;">
+                        <div class="notes-list" id="notes-list-38"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-38" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 38, '2019586135')">
+                            <button class="notes-post" onclick="submitNote(38, '2019586135')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-38" style="display:none;"></div>
@@ -3351,11 +3537,14 @@ Insid...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(39, '2020688813', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-39">
-                    <button class="comment-toggle" onclick="toggleComment(39)">Add a note</button>
-                    <div class="comment-form" id="comment-form-39" style="display:none;">
-                        <textarea id="comment-text-39" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(39, '2020688813')">Send note</button>
+                <div class="notes-section" id="notes-section-39" data-property-id="2020688813">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(39)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-39" style="display:none;">
+                        <div class="notes-list" id="notes-list-39"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-39" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 39, '2020688813')">
+                            <button class="notes-post" onclick="submitNote(39, '2020688813')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-39" style="display:none;"></div>
@@ -3424,11 +3613,14 @@ Set on approximately 11 acres along Sunny Corner Road, this property presents a 
                         <button class="btn btn-pass" onclick="sendFeedback(40, 'rea-700404060', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-40">
-                    <button class="comment-toggle" onclick="toggleComment(40)">Add a note</button>
-                    <div class="comment-form" id="comment-form-40" style="display:none;">
-                        <textarea id="comment-text-40" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(40, 'rea-700404060')">Send note</button>
+                <div class="notes-section" id="notes-section-40" data-property-id="rea-700404060">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(40)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-40" style="display:none;">
+                        <div class="notes-list" id="notes-list-40"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-40" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 40, 'rea-700404060')">
+                            <button class="notes-post" onclick="submitNote(40, 'rea-700404060')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-40" style="display:none;"></div>
@@ -3497,11 +3689,14 @@ Locati...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(41, '2018646580', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-41">
-                    <button class="comment-toggle" onclick="toggleComment(41)">Add a note</button>
-                    <div class="comment-form" id="comment-form-41" style="display:none;">
-                        <textarea id="comment-text-41" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(41, '2018646580')">Send note</button>
+                <div class="notes-section" id="notes-section-41" data-property-id="2018646580">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(41)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-41" style="display:none;">
+                        <div class="notes-list" id="notes-list-41"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-41" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 41, '2018646580')">
+                            <button class="notes-post" onclick="submitNote(41, '2018646580')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-41" style="display:none;"></div>
@@ -3573,11 +3768,14 @@ Approx. 59.2 ha or Approx. 146 Acres
                         <button class="btn btn-pass" onclick="sendFeedback(42, '2018716560', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-42">
-                    <button class="comment-toggle" onclick="toggleComment(42)">Add a note</button>
-                    <div class="comment-form" id="comment-form-42" style="display:none;">
-                        <textarea id="comment-text-42" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(42, '2018716560')">Send note</button>
+                <div class="notes-section" id="notes-section-42" data-property-id="2018716560">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(42)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-42" style="display:none;">
+                        <div class="notes-list" id="notes-list-42"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-42" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 42, '2018716560')">
+                            <button class="notes-post" onclick="submitNote(42, '2018716560')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-42" style="display:none;"></div>
@@ -3645,11 +3843,14 @@ Freshly renovated throughout, the home features fresh new paint, new carpet, vin
                         <button class="btn btn-pass" onclick="sendFeedback(43, '2020684685', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-43">
-                    <button class="comment-toggle" onclick="toggleComment(43)">Add a note</button>
-                    <div class="comment-form" id="comment-form-43" style="display:none;">
-                        <textarea id="comment-text-43" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(43, '2020684685')">Send note</button>
+                <div class="notes-section" id="notes-section-43" data-property-id="2020684685">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(43)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-43" style="display:none;">
+                        <div class="notes-list" id="notes-list-43"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-43" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 43, '2020684685')">
+                            <button class="notes-post" onclick="submitNote(43, '2020684685')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-43" style="display:none;"></div>
@@ -3717,11 +3918,14 @@ True to its name, which means &quot;lookout&quot; or &quot;observing a mountain,
                         <button class="btn btn-pass" onclick="sendFeedback(44, '2020151938', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-44">
-                    <button class="comment-toggle" onclick="toggleComment(44)">Add a note</button>
-                    <div class="comment-form" id="comment-form-44" style="display:none;">
-                        <textarea id="comment-text-44" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(44, '2020151938')">Send note</button>
+                <div class="notes-section" id="notes-section-44" data-property-id="2020151938">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(44)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-44" style="display:none;">
+                        <div class="notes-list" id="notes-list-44"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-44" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 44, '2020151938')">
+                            <button class="notes-post" onclick="submitNote(44, '2020151938')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-44" style="display:none;"></div>
@@ -3788,11 +3992,14 @@ True to its name, which means &quot;lookout&quot; or &quot;observing a mountain,
                         <button class="btn btn-pass" onclick="sendFeedback(45, '2020005139', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-45">
-                    <button class="comment-toggle" onclick="toggleComment(45)">Add a note</button>
-                    <div class="comment-form" id="comment-form-45" style="display:none;">
-                        <textarea id="comment-text-45" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(45, '2020005139')">Send note</button>
+                <div class="notes-section" id="notes-section-45" data-property-id="2020005139">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(45)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-45" style="display:none;">
+                        <div class="notes-list" id="notes-list-45"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-45" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 45, '2020005139')">
+                            <button class="notes-post" onclick="submitNote(45, '2020005139')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-45" style="display:none;"></div>
@@ -3862,11 +4069,14 @@ Located in the enviable Southern Highlands, 18* kilometres from Moss Vale, 10* k
                         <button class="btn btn-pass" onclick="sendFeedback(46, '2017968510', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-46">
-                    <button class="comment-toggle" onclick="toggleComment(46)">Add a note</button>
-                    <div class="comment-form" id="comment-form-46" style="display:none;">
-                        <textarea id="comment-text-46" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(46, '2017968510')">Send note</button>
+                <div class="notes-section" id="notes-section-46" data-property-id="2017968510">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(46)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-46" style="display:none;">
+                        <div class="notes-list" id="notes-list-46"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-46" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 46, '2017968510')">
+                            <button class="notes-post" onclick="submitNote(46, '2017968510')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-46" style="display:none;"></div>
@@ -3936,11 +4146,14 @@ Features include:
                         <button class="btn btn-pass" onclick="sendFeedback(47, '2019525412', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-47">
-                    <button class="comment-toggle" onclick="toggleComment(47)">Add a note</button>
-                    <div class="comment-form" id="comment-form-47" style="display:none;">
-                        <textarea id="comment-text-47" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(47, '2019525412')">Send note</button>
+                <div class="notes-section" id="notes-section-47" data-property-id="2019525412">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(47)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-47" style="display:none;">
+                        <div class="notes-list" id="notes-list-47"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-47" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 47, '2019525412')">
+                            <button class="notes-post" onclick="submitNote(47, '2019525412')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-47" style="display:none;"></div>
@@ -4008,11 +4221,14 @@ Features include:
                         <button class="btn btn-pass" onclick="sendFeedback(48, '2020730933', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-48">
-                    <button class="comment-toggle" onclick="toggleComment(48)">Add a note</button>
-                    <div class="comment-form" id="comment-form-48" style="display:none;">
-                        <textarea id="comment-text-48" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(48, '2020730933')">Send note</button>
+                <div class="notes-section" id="notes-section-48" data-property-id="2020730933">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(48)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-48" style="display:none;">
+                        <div class="notes-list" id="notes-list-48"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-48" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 48, '2020730933')">
+                            <button class="notes-post" onclick="submitNote(48, '2020730933')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-48" style="display:none;"></div>
@@ -4080,11 +4296,14 @@ Set across predominantly level to gently undulating country, the property offers
                         <button class="btn btn-pass" onclick="sendFeedback(49, '2020742926', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-49">
-                    <button class="comment-toggle" onclick="toggleComment(49)">Add a note</button>
-                    <div class="comment-form" id="comment-form-49" style="display:none;">
-                        <textarea id="comment-text-49" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(49, '2020742926')">Send note</button>
+                <div class="notes-section" id="notes-section-49" data-property-id="2020742926">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(49)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-49" style="display:none;">
+                        <div class="notes-list" id="notes-list-49"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-49" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 49, '2020742926')">
+                            <button class="notes-post" onclick="submitNote(49, '2020742926')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-49" style="display:none;"></div>
@@ -4151,11 +4370,14 @@ Set across predominantly level to gently undulating country, the property offers
                         <button class="btn btn-pass" onclick="sendFeedback(50, 'elders-300P190699', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-50">
-                    <button class="comment-toggle" onclick="toggleComment(50)">Add a note</button>
-                    <div class="comment-form" id="comment-form-50" style="display:none;">
-                        <textarea id="comment-text-50" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(50, 'elders-300P190699')">Send note</button>
+                <div class="notes-section" id="notes-section-50" data-property-id="elders-300P190699">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(50)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-50" style="display:none;">
+                        <div class="notes-list" id="notes-list-50"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-50" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 50, 'elders-300P190699')">
+                            <button class="notes-post" onclick="submitNote(50, 'elders-300P190699')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-50" style="display:none;"></div>
@@ -4227,11 +4449,14 @@ Set across predominantly level to gently undulating country, the property offers
                         <button class="btn btn-pass" onclick="sendFeedback(51, '2020482330', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-51">
-                    <button class="comment-toggle" onclick="toggleComment(51)">Add a note</button>
-                    <div class="comment-form" id="comment-form-51" style="display:none;">
-                        <textarea id="comment-text-51" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(51, '2020482330')">Send note</button>
+                <div class="notes-section" id="notes-section-51" data-property-id="2020482330">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(51)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-51" style="display:none;">
+                        <div class="notes-list" id="notes-list-51"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-51" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 51, '2020482330')">
+                            <button class="notes-post" onclick="submitNote(51, '2020482330')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-51" style="display:none;"></div>
@@ -4303,11 +4528,14 @@ Set across predominantly level to gently undulating country, the property offers
                         <button class="btn btn-pass" onclick="sendFeedback(52, '2020614293', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-52">
-                    <button class="comment-toggle" onclick="toggleComment(52)">Add a note</button>
-                    <div class="comment-form" id="comment-form-52" style="display:none;">
-                        <textarea id="comment-text-52" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(52, '2020614293')">Send note</button>
+                <div class="notes-section" id="notes-section-52" data-property-id="2020614293">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(52)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-52" style="display:none;">
+                        <div class="notes-list" id="notes-list-52"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-52" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 52, '2020614293')">
+                            <button class="notes-post" onclick="submitNote(52, '2020614293')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-52" style="display:none;"></div>
@@ -4376,11 +4604,14 @@ Set across predominantly level to gently undulating country, the property offers
                         <button class="btn btn-pass" onclick="sendFeedback(53, '2019995902', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-53">
-                    <button class="comment-toggle" onclick="toggleComment(53)">Add a note</button>
-                    <div class="comment-form" id="comment-form-53" style="display:none;">
-                        <textarea id="comment-text-53" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(53, '2019995902')">Send note</button>
+                <div class="notes-section" id="notes-section-53" data-property-id="2019995902">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(53)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-53" style="display:none;">
+                        <div class="notes-list" id="notes-list-53"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-53" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 53, '2019995902')">
+                            <button class="notes-post" onclick="submitNote(53, '2019995902')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-53" style="display:none;"></div>
@@ -4448,11 +4679,14 @@ Properties of this scale and quality so close to the city are increasingly diffi
                         <button class="btn btn-pass" onclick="sendFeedback(54, '2020667071', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-54">
-                    <button class="comment-toggle" onclick="toggleComment(54)">Add a note</button>
-                    <div class="comment-form" id="comment-form-54" style="display:none;">
-                        <textarea id="comment-text-54" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(54, '2020667071')">Send note</button>
+                <div class="notes-section" id="notes-section-54" data-property-id="2020667071">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(54)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-54" style="display:none;">
+                        <div class="notes-list" id="notes-list-54"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-54" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 54, '2020667071')">
+                            <button class="notes-post" onclick="submitNote(54, '2020667071')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-54" style="display:none;"></div>
@@ -4528,11 +4762,14 @@ Convenient access to major regional centres
                         <button class="btn btn-pass" onclick="sendFeedback(55, '2020722991', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-55">
-                    <button class="comment-toggle" onclick="toggleComment(55)">Add a note</button>
-                    <div class="comment-form" id="comment-form-55" style="display:none;">
-                        <textarea id="comment-text-55" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(55, '2020722991')">Send note</button>
+                <div class="notes-section" id="notes-section-55" data-property-id="2020722991">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(55)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-55" style="display:none;">
+                        <div class="notes-list" id="notes-list-55"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-55" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 55, '2020722991')">
+                            <button class="notes-post" onclick="submitNote(55, '2020722991')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-55" style="display:none;"></div>
@@ -4600,11 +4837,14 @@ Offering absolute privacy this stunning property includes a combination of clear
                         <button class="btn btn-pass" onclick="sendFeedback(56, '2019979548', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-56">
-                    <button class="comment-toggle" onclick="toggleComment(56)">Add a note</button>
-                    <div class="comment-form" id="comment-form-56" style="display:none;">
-                        <textarea id="comment-text-56" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(56, '2019979548')">Send note</button>
+                <div class="notes-section" id="notes-section-56" data-property-id="2019979548">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(56)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-56" style="display:none;">
+                        <div class="notes-list" id="notes-list-56"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-56" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 56, '2019979548')">
+                            <button class="notes-post" onclick="submitNote(56, '2019979548')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-56" style="display:none;"></div>
@@ -4671,11 +4911,14 @@ Offering absolute privacy this stunning property includes a combination of clear
                         <button class="btn btn-pass" onclick="sendFeedback(57, '2020234652', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-57">
-                    <button class="comment-toggle" onclick="toggleComment(57)">Add a note</button>
-                    <div class="comment-form" id="comment-form-57" style="display:none;">
-                        <textarea id="comment-text-57" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(57, '2020234652')">Send note</button>
+                <div class="notes-section" id="notes-section-57" data-property-id="2020234652">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(57)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-57" style="display:none;">
+                        <div class="notes-list" id="notes-list-57"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-57" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 57, '2020234652')">
+                            <button class="notes-post" onclick="submitNote(57, '2020234652')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-57" style="display:none;"></div>
@@ -4744,11 +4987,14 @@ Whether you&#x27;re searching for a weekend ret...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(58, '2020697588', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-58">
-                    <button class="comment-toggle" onclick="toggleComment(58)">Add a note</button>
-                    <div class="comment-form" id="comment-form-58" style="display:none;">
-                        <textarea id="comment-text-58" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(58, '2020697588')">Send note</button>
+                <div class="notes-section" id="notes-section-58" data-property-id="2020697588">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(58)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-58" style="display:none;">
+                        <div class="notes-list" id="notes-list-58"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-58" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 58, '2020697588')">
+                            <button class="notes-post" onclick="submitNote(58, '2020697588')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-58" style="display:none;"></div>
@@ -4821,11 +5067,14 @@ Located in a tightly held district highly regarded as a blue ribbon grazing &amp
                         <button class="btn btn-pass" onclick="sendFeedback(59, '2020267516', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-59">
-                    <button class="comment-toggle" onclick="toggleComment(59)">Add a note</button>
-                    <div class="comment-form" id="comment-form-59" style="display:none;">
-                        <textarea id="comment-text-59" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(59, '2020267516')">Send note</button>
+                <div class="notes-section" id="notes-section-59" data-property-id="2020267516">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(59)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-59" style="display:none;">
+                        <div class="notes-list" id="notes-list-59"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-59" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 59, '2020267516')">
+                            <button class="notes-post" onclick="submitNote(59, '2020267516')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-59" style="display:none;"></div>
@@ -4896,11 +5145,14 @@ Whilst every care has been taken to veri...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(60, '2019034346', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-60">
-                    <button class="comment-toggle" onclick="toggleComment(60)">Add a note</button>
-                    <div class="comment-form" id="comment-form-60" style="display:none;">
-                        <textarea id="comment-text-60" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(60, '2019034346')">Send note</button>
+                <div class="notes-section" id="notes-section-60" data-property-id="2019034346">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(60)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-60" style="display:none;">
+                        <div class="notes-list" id="notes-list-60"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-60" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 60, '2019034346')">
+                            <button class="notes-post" onclick="submitNote(60, '2019034346')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-60" style="display:none;"></div>
@@ -4968,11 +5220,14 @@ This inviting single-level brick home showcases timeless character features thro
                         <button class="btn btn-pass" onclick="sendFeedback(61, '2020356873', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-61">
-                    <button class="comment-toggle" onclick="toggleComment(61)">Add a note</button>
-                    <div class="comment-form" id="comment-form-61" style="display:none;">
-                        <textarea id="comment-text-61" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(61, '2020356873')">Send note</button>
+                <div class="notes-section" id="notes-section-61" data-property-id="2020356873">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(61)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-61" style="display:none;">
+                        <div class="notes-list" id="notes-list-61"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-61" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 61, '2020356873')">
+                            <button class="notes-post" onclick="submitNote(61, '2020356873')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-61" style="display:none;"></div>
@@ -5041,11 +5296,14 @@ Constructed entirely of reinforced HYMIX concrete , the residence demonstrates a
                         <button class="btn btn-pass" onclick="sendFeedback(62, '2020450945', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-62">
-                    <button class="comment-toggle" onclick="toggleComment(62)">Add a note</button>
-                    <div class="comment-form" id="comment-form-62" style="display:none;">
-                        <textarea id="comment-text-62" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(62, '2020450945')">Send note</button>
+                <div class="notes-section" id="notes-section-62" data-property-id="2020450945">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(62)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-62" style="display:none;">
+                        <div class="notes-list" id="notes-list-62"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-62" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 62, '2020450945')">
+                            <button class="notes-post" onclick="submitNote(62, '2020450945')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-62" style="display:none;"></div>
@@ -5113,11 +5371,14 @@ Property featur...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(63, '2020724221', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-63">
-                    <button class="comment-toggle" onclick="toggleComment(63)">Add a note</button>
-                    <div class="comment-form" id="comment-form-63" style="display:none;">
-                        <textarea id="comment-text-63" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(63, '2020724221')">Send note</button>
+                <div class="notes-section" id="notes-section-63" data-property-id="2020724221">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(63)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-63" style="display:none;">
+                        <div class="notes-list" id="notes-list-63"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-63" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 63, '2020724221')">
+                            <button class="notes-post" onclick="submitNote(63, '2020724221')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-63" style="display:none;"></div>
@@ -5184,11 +5445,14 @@ Property featur...</div>
                         <button class="btn btn-pass" onclick="sendFeedback(64, 'elders-300P183947', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-64">
-                    <button class="comment-toggle" onclick="toggleComment(64)">Add a note</button>
-                    <div class="comment-form" id="comment-form-64" style="display:none;">
-                        <textarea id="comment-text-64" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(64, 'elders-300P183947')">Send note</button>
+                <div class="notes-section" id="notes-section-64" data-property-id="elders-300P183947">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(64)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-64" style="display:none;">
+                        <div class="notes-list" id="notes-list-64"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-64" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 64, 'elders-300P183947')">
+                            <button class="notes-post" onclick="submitNote(64, 'elders-300P183947')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-64" style="display:none;"></div>
@@ -5260,11 +5524,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(65, '2019536211', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-65">
-                    <button class="comment-toggle" onclick="toggleComment(65)">Add a note</button>
-                    <div class="comment-form" id="comment-form-65" style="display:none;">
-                        <textarea id="comment-text-65" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(65, '2019536211')">Send note</button>
+                <div class="notes-section" id="notes-section-65" data-property-id="2019536211">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(65)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-65" style="display:none;">
+                        <div class="notes-list" id="notes-list-65"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-65" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 65, '2019536211')">
+                            <button class="notes-post" onclick="submitNote(65, '2019536211')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-65" style="display:none;"></div>
@@ -5331,11 +5598,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(66, '2020464022', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-66">
-                    <button class="comment-toggle" onclick="toggleComment(66)">Add a note</button>
-                    <div class="comment-form" id="comment-form-66" style="display:none;">
-                        <textarea id="comment-text-66" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(66, '2020464022')">Send note</button>
+                <div class="notes-section" id="notes-section-66" data-property-id="2020464022">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(66)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-66" style="display:none;">
+                        <div class="notes-list" id="notes-list-66"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-66" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 66, '2020464022')">
+                            <button class="notes-post" onclick="submitNote(66, '2020464022')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-66" style="display:none;"></div>
@@ -5402,11 +5672,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(67, 'elders-300P187142', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-67">
-                    <button class="comment-toggle" onclick="toggleComment(67)">Add a note</button>
-                    <div class="comment-form" id="comment-form-67" style="display:none;">
-                        <textarea id="comment-text-67" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(67, 'elders-300P187142')">Send note</button>
+                <div class="notes-section" id="notes-section-67" data-property-id="elders-300P187142">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(67)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-67" style="display:none;">
+                        <div class="notes-list" id="notes-list-67"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-67" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 67, 'elders-300P187142')">
+                            <button class="notes-post" onclick="submitNote(67, 'elders-300P187142')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-67" style="display:none;"></div>
@@ -5473,11 +5746,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(68, 'll_a5b97780-4da3-41a7-bed7-b7b7fcb63c3e', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-68">
-                    <button class="comment-toggle" onclick="toggleComment(68)">Add a note</button>
-                    <div class="comment-form" id="comment-form-68" style="display:none;">
-                        <textarea id="comment-text-68" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(68, 'll_a5b97780-4da3-41a7-bed7-b7b7fcb63c3e')">Send note</button>
+                <div class="notes-section" id="notes-section-68" data-property-id="ll_a5b97780-4da3-41a7-bed7-b7b7fcb63c3e">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(68)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-68" style="display:none;">
+                        <div class="notes-list" id="notes-list-68"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-68" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 68, 'll_a5b97780-4da3-41a7-bed7-b7b7fcb63c3e')">
+                            <button class="notes-post" onclick="submitNote(68, 'll_a5b97780-4da3-41a7-bed7-b7b7fcb63c3e')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-68" style="display:none;"></div>
@@ -5544,11 +5820,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(69, 'cre_2580_', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-69">
-                    <button class="comment-toggle" onclick="toggleComment(69)">Add a note</button>
-                    <div class="comment-form" id="comment-form-69" style="display:none;">
-                        <textarea id="comment-text-69" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(69, 'cre_2580_')">Send note</button>
+                <div class="notes-section" id="notes-section-69" data-property-id="cre_2580_">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(69)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-69" style="display:none;">
+                        <div class="notes-list" id="notes-list-69"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-69" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 69, 'cre_2580_')">
+                            <button class="notes-post" onclick="submitNote(69, 'cre_2580_')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-69" style="display:none;"></div>
@@ -5615,11 +5894,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(70, 'cre_2325_82millfieldroad', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-70">
-                    <button class="comment-toggle" onclick="toggleComment(70)">Add a note</button>
-                    <div class="comment-form" id="comment-form-70" style="display:none;">
-                        <textarea id="comment-text-70" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(70, 'cre_2325_82millfieldroad')">Send note</button>
+                <div class="notes-section" id="notes-section-70" data-property-id="cre_2325_82millfieldroad">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(70)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-70" style="display:none;">
+                        <div class="notes-list" id="notes-list-70"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-70" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 70, 'cre_2325_82millfieldroad')">
+                            <button class="notes-post" onclick="submitNote(70, 'cre_2325_82millfieldroad')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-70" style="display:none;"></div>
@@ -5686,11 +5968,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(71, 'cre_2335_701standendrive', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-71">
-                    <button class="comment-toggle" onclick="toggleComment(71)">Add a note</button>
-                    <div class="comment-form" id="comment-form-71" style="display:none;">
-                        <textarea id="comment-text-71" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(71, 'cre_2335_701standendrive')">Send note</button>
+                <div class="notes-section" id="notes-section-71" data-property-id="cre_2335_701standendrive">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(71)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-71" style="display:none;">
+                        <div class="notes-list" id="notes-list-71"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-71" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 71, 'cre_2335_701standendrive')">
+                            <button class="notes-post" onclick="submitNote(71, 'cre_2335_701standendrive')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-71" style="display:none;"></div>
@@ -5757,11 +6042,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(72, 'cre_2265_516owensroad', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-72">
-                    <button class="comment-toggle" onclick="toggleComment(72)">Add a note</button>
-                    <div class="comment-form" id="comment-form-72" style="display:none;">
-                        <textarea id="comment-text-72" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(72, 'cre_2265_516owensroad')">Send note</button>
+                <div class="notes-section" id="notes-section-72" data-property-id="cre_2265_516owensroad">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(72)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-72" style="display:none;">
+                        <div class="notes-list" id="notes-list-72"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-72" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 72, 'cre_2265_516owensroad')">
+                            <button class="notes-post" onclick="submitNote(72, 'cre_2265_516owensroad')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-72" style="display:none;"></div>
@@ -5828,11 +6116,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(73, 'cre_2580_3middlearmroad', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-73">
-                    <button class="comment-toggle" onclick="toggleComment(73)">Add a note</button>
-                    <div class="comment-form" id="comment-form-73" style="display:none;">
-                        <textarea id="comment-text-73" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(73, 'cre_2580_3middlearmroad')">Send note</button>
+                <div class="notes-section" id="notes-section-73" data-property-id="cre_2580_3middlearmroad">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(73)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-73" style="display:none;">
+                        <div class="notes-list" id="notes-list-73"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-73" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 73, 'cre_2580_3middlearmroad')">
+                            <button class="notes-post" onclick="submitNote(73, 'cre_2580_3middlearmroad')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-73" style="display:none;"></div>
@@ -5899,11 +6190,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(74, '417323', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-74">
-                    <button class="comment-toggle" onclick="toggleComment(74)">Add a note</button>
-                    <div class="comment-form" id="comment-form-74" style="display:none;">
-                        <textarea id="comment-text-74" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(74, '417323')">Send note</button>
+                <div class="notes-section" id="notes-section-74" data-property-id="417323">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(74)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-74" style="display:none;">
+                        <div class="notes-list" id="notes-list-74"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-74" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 74, '417323')">
+                            <button class="notes-post" onclick="submitNote(74, '417323')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-74" style="display:none;"></div>
@@ -5970,11 +6264,14 @@ Features include
                         <button class="btn btn-pass" onclick="sendFeedback(75, 'cre_2581_1911rugbyroad', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-75">
-                    <button class="comment-toggle" onclick="toggleComment(75)">Add a note</button>
-                    <div class="comment-form" id="comment-form-75" style="display:none;">
-                        <textarea id="comment-text-75" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(75, 'cre_2581_1911rugbyroad')">Send note</button>
+                <div class="notes-section" id="notes-section-75" data-property-id="cre_2581_1911rugbyroad">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(75)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-75" style="display:none;">
+                        <div class="notes-list" id="notes-list-75"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-75" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 75, 'cre_2581_1911rugbyroad')">
+                            <button class="notes-post" onclick="submitNote(75, 'cre_2581_1911rugbyroad')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-75" style="display:none;"></div>
@@ -6043,11 +6340,14 @@ Discover a piece of history with this expansive 33.6-acre property located in th
                         <button class="btn btn-pass" onclick="sendFeedback(76, '2019884953', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-76">
-                    <button class="comment-toggle" onclick="toggleComment(76)">Add a note</button>
-                    <div class="comment-form" id="comment-form-76" style="display:none;">
-                        <textarea id="comment-text-76" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(76, '2019884953')">Send note</button>
+                <div class="notes-section" id="notes-section-76" data-property-id="2019884953">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(76)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-76" style="display:none;">
+                        <div class="notes-list" id="notes-list-76"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-76" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 76, '2019884953')">
+                            <button class="notes-post" onclick="submitNote(76, '2019884953')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-76" style="display:none;"></div>
@@ -6115,11 +6415,14 @@ The site benefits from existing council consent for quarry development and opera
                         <button class="btn btn-pass" onclick="sendFeedback(77, '2020777840', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-77">
-                    <button class="comment-toggle" onclick="toggleComment(77)">Add a note</button>
-                    <div class="comment-form" id="comment-form-77" style="display:none;">
-                        <textarea id="comment-text-77" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(77, '2020777840')">Send note</button>
+                <div class="notes-section" id="notes-section-77" data-property-id="2020777840">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(77)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-77" style="display:none;">
+                        <div class="notes-list" id="notes-list-77"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-77" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 77, '2020777840')">
+                            <button class="notes-post" onclick="submitNote(77, '2020777840')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-77" style="display:none;"></div>
@@ -6186,11 +6489,14 @@ The site benefits from existing council consent for quarry development and opera
                         <button class="btn btn-pass" onclick="sendFeedback(78, 'cre_2583_453reidsflatroad', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-78">
-                    <button class="comment-toggle" onclick="toggleComment(78)">Add a note</button>
-                    <div class="comment-form" id="comment-form-78" style="display:none;">
-                        <textarea id="comment-text-78" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(78, 'cre_2583_453reidsflatroad')">Send note</button>
+                <div class="notes-section" id="notes-section-78" data-property-id="cre_2583_453reidsflatroad">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(78)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-78" style="display:none;">
+                        <div class="notes-list" id="notes-list-78"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-78" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 78, 'cre_2583_453reidsflatroad')">
+                            <button class="notes-post" onclick="submitNote(78, 'cre_2583_453reidsflatroad')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-78" style="display:none;"></div>
@@ -6257,11 +6563,14 @@ The site benefits from existing council consent for quarry development and opera
                         <button class="btn btn-pass" onclick="sendFeedback(79, 'cre_2422_112weismantleslane', 'pass')">Not for me</button>
                     </div>
                 </div>
-                <div class="comment-section" id="comment-section-79">
-                    <button class="comment-toggle" onclick="toggleComment(79)">Add a note</button>
-                    <div class="comment-form" id="comment-form-79" style="display:none;">
-                        <textarea id="comment-text-79" placeholder="What caught your eye, or what's the dealbreaker?" rows="2"></textarea>
-                        <button class="btn btn-comment" onclick="sendComment(79, 'cre_2422_112weismantleslane')">Send note</button>
+                <div class="notes-section" id="notes-section-79" data-property-id="cre_2422_112weismantleslane">
+                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes(79)">+ note</button>
+                    <div class="notes-drawer" id="notes-drawer-79" style="display:none;">
+                        <div class="notes-list" id="notes-list-79"></div>
+                        <div class="notes-input-row">
+                            <input type="text" class="notes-input" id="notes-input-79" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, 79, 'cre_2422_112weismantleslane')">
+                            <button class="notes-post" onclick="submitNote(79, 'cre_2422_112weismantleslane')">Post</button>
+                        </div>
                     </div>
                 </div>
                 <div class="feedback-confirmation" id="confirm-79" style="display:none;"></div>
@@ -6321,6 +6630,7 @@ The site benefits from existing council consent for quarry development and opera
     }
 
     const FEEDBACK_URL = "";
+    const NOTES_URL = "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec";
     const TOTAL = 80;
     const state = {
         feedback: {},    // idx -> reaction
@@ -6520,28 +6830,165 @@ The site benefits from existing council consent for quarry development and opera
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
 
-    // ── Comments ──────────────────────────────────────────────────────
-    function toggleComment(idx) {
-        const form = document.getElementById('comment-form-' + idx);
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        if (form.style.display === 'block') form.querySelector('textarea').focus();
+    // ── Shared notes (Apps Script backend) ────────────────────────────
+    function currentUser() {
+        const u = (new URLSearchParams(location.search).get('user') || '').toLowerCase().trim();
+        return u || 'anonymous';
+    }
+    const USER_ID = currentUser();
+    let notesCache = {};
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     }
 
-    function sendComment(idx, propertyId) {
-        const textarea = document.getElementById('comment-text-' + idx);
-        const comment = textarea.value.trim();
-        if (!comment) return;
+    function formatNoteDate(iso) {
+        const d = new Date(iso);
+        if (isNaN(d)) return '';
+        const diff = (Date.now() - d.getTime()) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+        if (diff < 86400*7) return Math.floor(diff/86400) + 'd ago';
+        return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+    }
 
-        showConfirmation(idx, 'Note saved — thanks George.');
-        textarea.value = '';
-        document.getElementById('comment-form-' + idx).style.display = 'none';
+    function loadNotes() {
+        if (!NOTES_URL) return;
+        fetch(NOTES_URL).then(r => r.json()).then(data => {
+            const next = {};
+            (data.notes || []).forEach(n => {
+                (next[n.property_id] = next[n.property_id] || []).push(n);
+            });
+            // Preserve optimistic (local-*) notes the server hasn't echoed back yet,
+            // to avoid flashing away a user's fresh note during the write race window.
+            Object.entries(notesCache).forEach(([pid, arr]) => {
+                const pendingLocals = arr.filter(n =>
+                    typeof n.id === 'string' && n.id.startsWith('local-'));
+                if (!pendingLocals.length) return;
+                const serverTexts = new Set((next[pid] || []).map(n =>
+                    (n.note || '') + '|' + (n.author || '')));
+                const stillPending = pendingLocals.filter(n =>
+                    !serverTexts.has((n.note || '') + '|' + (n.author || '')));
+                if (stillPending.length) {
+                    next[pid] = [...(next[pid] || []), ...stillPending];
+                }
+            });
+            notesCache = next;
+            Object.values(notesCache).forEach(list =>
+                list.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)));
+            document.querySelectorAll('.notes-section').forEach(section => {
+                const pid = section.dataset.propertyId;
+                const idx = section.id.replace('notes-section-', '');
+                renderNotesIntoCard(idx, notesCache[pid] || []);
+            });
+            updateActivityStrip(data.notes || []);
+        }).catch(e => console.warn('notes load failed', e));
+    }
 
-        if (FEEDBACK_URL) {
-            const url = FEEDBACK_URL + '?action=comment'
-                + '&property_id=' + encodeURIComponent(propertyId)
-                + '&comment=' + encodeURIComponent(comment);
-            fetch(url, { mode: 'no-cors' }).catch(() => {});
+    function renderNotesIntoCard(idx, notes) {
+        const pill = document.querySelector('#notes-section-' + idx + ' .notes-pill');
+        const list = document.getElementById('notes-list-' + idx);
+        if (!pill || !list) return;
+        if (!notes.length) {
+            pill.textContent = '+ note';
+            pill.classList.add('notes-pill-empty');
+            pill.classList.remove('notes-pill-active');
+            list.innerHTML = '';
+            return;
         }
+        pill.innerHTML = '💬 ' + notes.length + (notes.length === 1 ? ' note' : ' notes');
+        pill.classList.remove('notes-pill-empty');
+        pill.classList.add('notes-pill-active');
+        list.innerHTML = notes.map(n => (
+            '<div class="note"><div class="note-meta">' +
+                '<span class="note-author">' + escapeHtml(n.author) + '</span>' +
+                '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
+            '</div><div class="note-body">' + escapeHtml(n.note) + '</div></div>'
+        )).join('');
+    }
+
+    function toggleNotes(idx) {
+        const drawer = document.getElementById('notes-drawer-' + idx);
+        if (!drawer) return;
+        const isOpen = drawer.style.display === 'block';
+        drawer.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {
+            const input = document.getElementById('notes-input-' + idx);
+            if (input) input.focus();
+        }
+    }
+
+    function submitNote(idx, propertyId) {
+        const input = document.getElementById('notes-input-' + idx);
+        if (!input) return;
+        const text = (input.value || '').trim();
+        if (!text || !NOTES_URL) return;
+
+        const optimistic = {
+            id: 'local-' + Date.now(),
+            property_id: propertyId,
+            author: USER_ID,
+            timestamp: new Date().toISOString(),
+            note: text,
+        };
+        (notesCache[propertyId] = notesCache[propertyId] || []).push(optimistic);
+        renderNotesIntoCard(idx, notesCache[propertyId]);
+        input.value = '';
+
+        fetch(NOTES_URL, {
+            method: 'POST',
+            body: JSON.stringify({action:'note', property_id: propertyId, author: USER_ID, note: text}),
+        }).then(() => setTimeout(loadNotes, 2500)).catch(e => console.warn('note post failed', e));
+    }
+
+    function noteKeydown(event, idx, propertyId) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            submitNote(idx, propertyId);
+        }
+    }
+
+    function updateActivityStrip(allNotes) {
+        const wrap = document.getElementById('notes-activity');
+        const countEl = document.getElementById('notes-activity-count');
+        const panel = document.getElementById('notes-activity-panel');
+        if (!wrap || !countEl || !panel) return;
+        if (!allNotes.length) { wrap.style.display = 'none'; return; }
+        wrap.style.display = '';
+        countEl.textContent = allNotes.length;
+        const sorted = allNotes.slice().sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
+        panel.innerHTML = sorted.map(n => {
+            const section = document.querySelector('.notes-section[data-property-id="' + n.property_id + '"]');
+            const card = section ? section.closest('.card') : null;
+            const addr = card ? (card.querySelector('.address')?.textContent || '').split(',')[0].trim() : n.property_id;
+            const pidAttr = escapeHtml(n.property_id);
+            return '<div class="activity-item" onclick="scrollToProperty(\'' + pidAttr.replace(/'/g, "\\'") + '\')">' +
+                '<div class="activity-meta">' +
+                    '<span class="activity-author">' + escapeHtml(n.author) + '</span> · ' +
+                    '<span class="activity-suburb">' + escapeHtml(addr || '—') + '</span> · ' +
+                    '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
+                '</div><div class="activity-body">' + escapeHtml(n.note) + '</div></div>';
+        }).join('');
+    }
+
+    function toggleActivity() {
+        const panel = document.getElementById('notes-activity-panel');
+        if (!panel) return;
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function scrollToProperty(pid) {
+        const section = document.querySelector('.notes-section[data-property-id="' + pid + '"]');
+        if (!section) return;
+        const card = section.closest('.card');
+        if (!card) return;
+        card.scrollIntoView({behavior:'smooth', block:'start'});
+        const idx = section.id.replace('notes-section-', '');
+        const drawer = document.getElementById('notes-drawer-' + idx);
+        if (drawer && drawer.style.display !== 'block') toggleNotes(idx);
+        const panel = document.getElementById('notes-activity-panel');
+        if (panel) panel.style.display = 'none';
     }
 
     function showConfirmation(idx, message) {
@@ -6739,6 +7186,7 @@ The site benefits from existing council consent for quarry development and opera
 
     // ── Restore state on load ─────────────────────────────────────────
     loadState();
+    loadNotes();
     </script>
 </body>
 </html>
