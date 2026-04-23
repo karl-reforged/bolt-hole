@@ -503,6 +503,20 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
         #shortlist-map {{ height: 480px; width: 100%; }}
 
+        /* ── Map legend ─────────────────────────── */
+        .map-legend {{
+            display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+            padding: 6px 20px 10px; font-size: 11px; color: var(--slate);
+        }}
+        .map-legend-item {{ display: inline-flex; align-items: center; gap: 5px; }}
+        .map-legend-dot {{
+            width: 10px; height: 10px; border-radius: 50%;
+            border: 1.5px solid #fff; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.15);
+            display: inline-block;
+        }}
+        .map-legend-dot.fav {{ background: #fff; border-color: var(--fav-gold); box-shadow: 0 0 0 2px rgba(234,179,8,0.35); }}
+        .map-legend-dot.syd {{ background: #ef4444; border-color: #fff; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.15); }}
+
         /* ── Expanded map modal ─────────────────── */
         .map-modal {{
             position: fixed; inset: 0; background: rgba(15,23,42,0.85);
@@ -780,6 +794,14 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     {map_coverage_badge}
                     <button type="button" class="map-expand-btn" onclick="openExpandedMap()" title="Open full-screen map">Expand &nearr;</button>
                 </div>
+            </div>
+            <div class="map-legend" aria-label="Map pin colour legend">
+                <span class="map-legend-item"><span class="map-legend-dot" style="background:#166534;"></span>70%+ match</span>
+                <span class="map-legend-item"><span class="map-legend-dot" style="background:#1e40af;"></span>55&ndash;69%</span>
+                <span class="map-legend-item"><span class="map-legend-dot" style="background:#92400e;"></span>40&ndash;54%</span>
+                <span class="map-legend-item"><span class="map-legend-dot" style="background:#64748b;"></span>&lt;40%</span>
+                <span class="map-legend-item"><span class="map-legend-dot fav"></span>Favourite</span>
+                <span class="map-legend-item"><span class="map-legend-dot syd"></span>Sydney</span>
             </div>
             <div id="shortlist-map"></div>
         </div>
