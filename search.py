@@ -618,12 +618,27 @@ def run_search(domain_only=False):
 
         properties = []
         rejected = {}
+        rejected_details = []  # per-property rejection log for audit
         gate_passed = []
 
         for prop in all_normalized:
             passed, reason = passes_gates_normalized(prop, criteria)
             if not passed:
                 rejected[reason] = rejected.get(reason, 0) + 1
+                rejected_details.append({
+                    "source": prop.get("source"),
+                    "source_id": prop.get("source_id"),
+                    "suburb": prop.get("suburb"),
+                    "address": prop.get("address"),
+                    "price": prop.get("price"),
+                    "land_acres": prop.get("land_acres"),
+                    "lat": prop.get("lat"),
+                    "lng": prop.get("lng"),
+                    "drive_time_minutes": prop.get("_drive_mins"),
+                    "headline": prop.get("headline"),
+                    "listing_url": prop.get("listing_url"),
+                    "reject_reason": reason,
+                })
                 continue
             gate_passed.append(prop)
 
@@ -677,6 +692,18 @@ def run_search(domain_only=False):
             "properties": properties,
         }, f, indent=2, default=str)
     print(f"\nSaved to {outfile}")
+
+    # Sidecar: per-property rejection log for false-negative audits
+    if not domain_only and rejected_details:
+        rejected_file = RESULTS_DIR / f"rejected_{timestamp}.json"
+        with open(rejected_file, "w") as f:
+            json.dump({
+                "search_date": datetime.now().isoformat(),
+                "rejected_count": len(rejected_details),
+                "by_reason": rejected,
+                "properties": rejected_details,
+            }, f, indent=2, default=str)
+        print(f"Rejected log: {rejected_file}")
 
     return properties, source_report if not domain_only else {}
 

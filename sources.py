@@ -2090,12 +2090,23 @@ def _parse_cre_alert(html, criteria):
         addr_m = re.search(addr_pat, seg, re.IGNORECASE)
         if addr_m:
             address = addr_m.group(1).strip()
-            # Clean leading noise (stray numbers from HTML table attributes)
+            # Strip leading HTML-attribute noise (e.g., "000" from table width)
+            address = re.sub(r'^0+\s+', '', address)
+            # Strip leading marketing labels that occasionally leak into the address
+            address = re.sub(r'^(?:New To Market|For Sale|Just Listed|Private Sale)\s+', '', address, flags=re.IGNORECASE)
+            # Existing: short number followed by another digit (e.g., "12 516 Owens Rd")
             address = re.sub(r'^(?:Part\s+)?\d{1,3}\s+(?=\d)', '', address).strip()
 
         price = None
         display_price = ""
         price_matches = re.findall(price_pat, seg)
+        # Filter out matches that are the criteria budget-range footer
+        # (e.g. "$100,000 - $2,000,000" appearing in the "search criteria" block)
+        min_p = criteria.get("gates", {}).get("budget", {}).get("min_price")
+        max_p = criteria.get("gates", {}).get("budget", {}).get("max_price")
+        if min_p and max_p:
+            criteria_sig = f"${min_p:,} - ${max_p:,}"
+            price_matches = [m for m in price_matches if m.strip() != criteria_sig]
         if price_matches:
             display_price = price_matches[-1].strip()
             nums = re.findall(r'\$([\d,]+)', display_price)
@@ -2288,7 +2299,8 @@ def fetch_elders(criteria):
             # Build address
             street_num = (listing.get("street_number") or "").strip()
             street_name = (listing.get("street_name") or "").strip()
-            suburb = (listing.get("suburb") or "").strip()
+            # Elders feed returns suburb in ALL CAPS — title-case for display
+            suburb = (listing.get("suburb") or "").strip().title()
             state = (listing.get("state") or "NSW").strip()
             address = f"{street_num} {street_name}, {suburb} {state} {postcode}".strip()
             if address.startswith(","):
@@ -2774,7 +2786,10 @@ def fetch_all(criteria=None):
         ("Domain Web", fetch_domain_web),
         ("Farmbuy", fetch_farmbuy),
         ("Elders", fetch_elders),
-        ("Southern Tablelands Realty", fetch_str),
+        # Southern Tablelands Realty disabled 2026-04-23: probe showed 0 unique
+        # contribution (10 of 18 duped by Domain, 8 failed gates). Keep the
+        # fetch_str() function intact — re-enable here if coverage ever shifts.
+        # ("Southern Tablelands Realty", fetch_str),
         ("REA (Apify)", fetch_rea_apify),
         ("REA Manual", fetch_rea_manual),
         ("Email Alerts", fetch_email_alerts),
