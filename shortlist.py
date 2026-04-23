@@ -298,6 +298,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     feedback_url_js = _escape(FEEDBACK_URL) if FEEDBACK_URL else ""
 
     # ── Map markers JSON ──────────────────────────────────────────────────
+    mapped_props = [(i, p) for i, p in enumerate(props) if p.get("lat") and p.get("lng")]
+    total_count = len(props)
+    mapped_count = len(mapped_props)
+    missing_count = total_count - mapped_count
     markers_json = json.dumps([
         {
             "idx": i,
@@ -308,9 +312,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             "pct": p["score"]["pct"],
             "acres": f"{p['land_acres']:.0f}ac" if p.get("land_acres") else "",
         }
-        for i, p in enumerate(props)
-        if p.get("lat") and p.get("lng")
+        for i, p in mapped_props
     ])
+    if missing_count > 0:
+        map_coverage_badge = (
+            f'<span class="map-coverage">{mapped_count} of {total_count} on map '
+            f'<span class="map-coverage-missing" title="Properties without geocoded coordinates">'
+            f'· {missing_count} missing coords</span></span>'
+        )
+    else:
+        map_coverage_badge = f'<span class="map-coverage">{mapped_count} on map</span>'
 
     # ── Full page HTML ────────────────────────────────────────────────────
     page_html = f'''<!DOCTYPE html>
@@ -413,8 +424,55 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .map-container .map-label {{
             font-size: 12px; font-weight: 600; color: var(--slate);
             text-transform: uppercase; letter-spacing: 1px; padding: 12px 20px 0;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
         }}
-        #shortlist-map {{ height: 340px; width: 100%; }}
+        .map-label-right {{
+            display: flex; align-items: center; gap: 12px;
+        }}
+        .map-coverage {{
+            font-size: 11px; font-weight: 500; color: var(--slate);
+            text-transform: none; letter-spacing: 0;
+        }}
+        .map-coverage-missing {{
+            color: #b45309;
+        }}
+        .map-expand-btn {{
+            font-family: inherit; font-size: 11px; font-weight: 600; color: var(--slate);
+            background: #f5f0e8; border: 1px solid var(--light-border); border-radius: 6px;
+            padding: 5px 10px; cursor: pointer; text-transform: none; letter-spacing: 0;
+            transition: background 0.15s, color 0.15s;
+        }}
+        .map-expand-btn:hover {{
+            background: var(--eucalyptus); color: #fff; border-color: var(--eucalyptus);
+        }}
+        #shortlist-map {{ height: 480px; width: 100%; }}
+
+        /* ── Expanded map modal ─────────────────── */
+        .map-modal {{
+            position: fixed; inset: 0; background: rgba(15,23,42,0.85);
+            z-index: 10000; display: flex; flex-direction: column;
+            padding: 32px; box-sizing: border-box;
+        }}
+        .map-modal.hidden {{ display: none; }}
+        .map-modal-header {{
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 16px; color: #fff;
+        }}
+        .map-modal-title {{
+            font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+        }}
+        .map-modal-close {{
+            background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #fff;
+            font-size: 14px; font-weight: 500; padding: 6px 14px; border-radius: 6px;
+            cursor: pointer; font-family: inherit;
+        }}
+        .map-modal-close:hover {{
+            background: rgba(255,255,255,0.12);
+        }}
+        #expanded-map {{
+            flex: 1; width: 100%; border-radius: 10px; overflow: hidden;
+            background: #fff;
+        }}
         .map-pin {{
             display: flex; align-items: center; justify-content: center;
             width: 28px; height: 28px; border-radius: 50%;
@@ -657,8 +715,22 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         </div>
 
         <div class="map-container">
-            <div class="map-label">Where they are</div>
+            <div class="map-label">
+                <span>Where they are</span>
+                <div class="map-label-right">
+                    {map_coverage_badge}
+                    <button type="button" class="map-expand-btn" onclick="openExpandedMap()" title="Open full-screen map">Expand &nearr;</button>
+                </div>
+            </div>
             <div id="shortlist-map"></div>
+        </div>
+
+        <div class="map-modal hidden" id="map-modal" role="dialog" aria-modal="true" aria-label="Expanded shortlist map">
+            <div class="map-modal-header">
+                <div class="map-modal-title">All properties · map view</div>
+                <button type="button" class="map-modal-close" onclick="closeExpandedMap()">Close &times;</button>
+            </div>
+            <div id="expanded-map"></div>
         </div>
 
         {all_cards}
@@ -999,7 +1071,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     let map;
     if (markersData.length > 0) {{
         map = L.map('shortlist-map', {{ zoomControl: true, attributionControl: false }});
-        L.tileLayer('https://{{s}}.basemaps.cartocdn.com/voyager/{{z}}/{{x}}/{{y}}@2x.png', {{
+        L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}@2x.png', {{
             maxZoom: 14,
             attribution: '&copy; OSM &amp; CARTO'
         }}).addTo(map);
@@ -1062,6 +1134,57 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             observer.observe(card);
         }});
     }}
+
+    // ── Expanded-map modal ───────────────────────────────────────────
+    let expandedMap = null;
+    function openExpandedMap() {{
+        const modal = document.getElementById('map-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        if (!expandedMap && typeof markersData !== 'undefined' && markersData.length > 0) {{
+            expandedMap = L.map('expanded-map', {{ zoomControl: true, attributionControl: false }});
+            L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}@2x.png', {{
+                maxZoom: 14, attribution: '&copy; OSM &amp; CARTO'
+            }}).addTo(expandedMap);
+            L.circleMarker([-33.8688, 151.2653], {{
+                radius: 5, fillColor: '#ef4444', fillOpacity: 0.9, color: '#fff', weight: 2
+            }}).addTo(expandedMap).bindPopup('<strong>Sydney</strong><br>Reference point');
+            const eb = [[-33.8688, 151.2653]];
+            markersData.forEach(m => {{
+                const color = pinColor(m.pct);
+                const icon = L.divIcon({{
+                    className: '',
+                    html: '<div class="map-pin" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
+                    iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
+                }});
+                const marker = L.marker([m.lat, m.lng], {{ icon: icon }}).addTo(expandedMap);
+                marker.bindPopup(
+                    '<strong>' + m.suburb + '</strong><br>' +
+                    m.price + (m.acres ? ' &middot; ' + m.acres : '') +
+                    ' &middot; ' + m.pct.toFixed(0) + '%<br>' +
+                    '<a class="popup-link" onclick="closeExpandedMap(); scrollToCard(' + m.idx + ')">Jump to card &darr;</a>'
+                );
+                eb.push([m.lat, m.lng]);
+            }});
+            expandedMap.fitBounds(eb, {{ padding: [40, 40] }});
+        }}
+        setTimeout(() => {{ if (expandedMap) expandedMap.invalidateSize(); }}, 50);
+    }}
+    function closeExpandedMap() {{
+        const modal = document.getElementById('map-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }}
+    (function wireExpandedMap() {{
+        const modal = document.getElementById('map-modal');
+        if (!modal) return;
+        modal.addEventListener('click', e => {{ if (e.target === modal) closeExpandedMap(); }});
+        document.addEventListener('keydown', e => {{
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeExpandedMap();
+        }});
+    }})();
 
     // ── Restore state on load ─────────────────────────────────────────
     loadState();
