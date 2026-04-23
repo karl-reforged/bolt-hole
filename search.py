@@ -31,6 +31,11 @@ DOMAIN_AUTH_URL = "https://auth.domain.com.au/v1/connect/token"
 DOMAIN_CLIENT_ID = os.getenv("DOMAIN_CLIENT_ID")  # client_... value
 DOMAIN_CLIENT_SECRET = os.getenv("DOMAIN_CLIENT_SECRET")  # secret_... value
 
+NOTES_URL = os.getenv(
+    "NOTES_SCRIPT_URL",
+    "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec",
+)
+
 _cached_token = None
 
 # ── Load criteria ──────────────────────────────────────────────────────────
@@ -693,6 +698,9 @@ def run_search(domain_only=False):
         }, f, indent=2, default=str)
     print(f"\nSaved to {outfile}")
 
+    # Mirror to sheet as self-contained property DB (non-fatal)
+    _upsert_properties_to_sheet(properties)
+
     # Sidecar: per-property rejection log for false-negative audits
     if not domain_only and rejected_details:
         rejected_file = RESULTS_DIR / f"rejected_{timestamp}.json"
@@ -709,6 +717,29 @@ def run_search(domain_only=False):
 
 
 # ── Resilience: sanity gate + cache fallback ─────────────────────────────
+
+def _upsert_properties_to_sheet(properties):
+    """
+    Mirror the scraped properties to the Apps Script `properties` tab so the
+    project stays self-contained (sheet is the canonical DB, local JSONs are
+    snapshots). Non-fatal: logs on failure and moves on — the scrape has
+    already been saved to disk.
+    """
+    if not NOTES_URL or not properties:
+        return
+    body = json.dumps({"action": "properties_upsert", "properties": properties})
+    try:
+        resp = requests.post(NOTES_URL, data=body, timeout=60)
+        status = resp.status_code
+    except requests.RequestException as exc:
+        print(f"Sheet upsert skipped: {exc}")
+        return
+    # Apps Script 302s to userContent then 200s; treat any 2xx/3xx as success.
+    if status < 400:
+        print(f"Sheet upsert: queued {len(properties)} properties to sheet")
+    else:
+        print(f"Sheet upsert: endpoint returned HTTP {status}")
+
 
 def _load_previous_results():
     """Load the most recent previous search results for comparison."""

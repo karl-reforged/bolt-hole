@@ -1544,12 +1544,41 @@ def _parse_run_timestamp(filename_stem):
         return None
 
 
+def _fetch_sheet_properties():
+    """
+    Fetch properties from the Apps Script sheet (self-contained DB) keyed by
+    source_id. Returns {} if endpoint is absent, action is unimplemented,
+    or any network hiccup. Never raises — sheet is a bonus, JSONs are canon.
+    """
+    url = os.getenv(
+        "NOTES_SCRIPT_URL",
+        "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec",
+    )
+    if not url:
+        return {}
+    import urllib.request
+    import urllib.error
+    try:
+        with urllib.request.urlopen(url + "?action=properties", timeout=8) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, OSError):
+        return {}
+    out = {}
+    for row in data.get("properties", []):
+        sid = row.get("source_id")
+        if not sid:
+            continue
+        out[str(sid)] = row
+    return out
+
+
 def _load_union_of_runs(runs_to_union=3, age_out_days=21):
     """
-    Union properties across the N most-recent scrape JSONs by source_id.
-    Newer runs' data wins. Properties missing from the latest run but seen
-    within age_out_days get a 'last_seen_days' annotation so the UI can
-    mark them as stale. Returns (props_list, latest_file).
+    Union properties across the N most-recent scrape JSONs by source_id, then
+    overlay any sheet-only properties still within the age-out window. Local
+    JSON data wins when present (freshest). Properties missing from the
+    latest run get 'missing_from_latest' + 'last_seen_days' so the UI can
+    mark them stale. Returns (props_list, latest_file).
     """
     results_files = sorted(RESULTS_DIR.glob("search_*.json"), reverse=True)
     if not results_files:
@@ -1577,7 +1606,38 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21):
             if sid not in union:
                 union[sid] = {"prop": p, "last_seen": run_ts or latest_ts}
 
+    # Sheet overlay — fills gaps for properties not present in local JSONs but
+    # recorded in the sheet (e.g. other machines, or runs deleted from disk).
     now = datetime.now()
+    sheet_props = _fetch_sheet_properties()
+    sheet_added = 0
+    for sid, row in sheet_props.items():
+        if sid in union:
+            continue
+        # Status column supports manual age-out (set to "withdrawn"/"sold")
+        if row.get("status") and row["status"] not in ("active", "", None):
+            continue
+        payload = row.get("payload")
+        if isinstance(payload, dict) and payload:
+            prop = payload
+        else:
+            continue
+        # Age-out using last_seen from sheet
+        last_seen_iso = row.get("last_seen")
+        if last_seen_iso:
+            try:
+                last_seen = datetime.fromisoformat(str(last_seen_iso).replace("Z", "+00:00"))
+                if last_seen.tzinfo:
+                    last_seen = last_seen.replace(tzinfo=None)
+            except ValueError:
+                last_seen = now
+        else:
+            last_seen = now
+        union[sid] = {"prop": prop, "last_seen": last_seen}
+        sheet_added += 1
+    if sheet_added:
+        print(f"Sheet overlay: +{sheet_added} properties not in local runs")
+
     props = []
     for sid, record in union.items():
         days_ago = max(0, (now - record["last_seen"]).days)
