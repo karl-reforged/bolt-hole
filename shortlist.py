@@ -241,6 +241,22 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             stats_parts.append(
                 f'<span class="stat stat-stale" title="Missing from this week\'s scrape — may have sold or the source throttled">last seen {seen_label}</span>'
             )
+        first_seen_days = p.get("first_seen_days")
+        # Cap at 7d: anything older risks being a sheet-bootstrap artefact
+        # (the perpetual DB went live 2026-04-23, so pre-existing listings
+        # all share that date as first_seen even though they're truly older).
+        # Once the bootstrap cohort ages out of the 21-day window, this cap
+        # can be relaxed — every first_seen will then be genuine.
+        if first_seen_days is not None and first_seen_days <= 7:
+            if first_seen_days == 0:
+                first_label = "spotted today"
+            elif first_seen_days == 1:
+                first_label = "spotted yesterday"
+            else:
+                first_label = f"spotted {first_seen_days}d ago"
+            stats_parts.append(
+                f'<span class="stat stat-fresh" title="First time this listing appeared in our scrapes">{first_label}</span>'
+            )
         stats_row = " ".join(stats_parts)
 
         prop_id = _escape(p.get("source_id") or p.get("id") or str(i))
@@ -692,6 +708,12 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .stat-stale {{
             font-size: 11px; color: var(--slate); opacity: 0.75;
             font-style: italic;
+        }}
+        .stat-fresh {{
+            font-size: 11px; color: #475569;
+            background: #f1f5f9; border: 1px solid #cbd5e1;
+            padding: 1px 8px; border-radius: 10px;
+            cursor: help;
         }}
         /* filter:opacity stacks with fadeUp animation (which holds opacity:1) */
         .card[data-stale="1"] {{ filter: opacity(0.78); transition: filter 0.2s; }}
@@ -1289,10 +1311,18 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         renderNotesIntoCard(idx, notesCache[propertyId]);
         input.value = '';
 
-        fetch(NOTES_URL, {{
-            method: 'POST',
-            body: JSON.stringify({{action:'note', property_id: propertyId, author: '', note: text}}),
-        }}).then(() => setTimeout(loadNotes, 2500)).catch(e => console.warn('note post failed', e));
+        const body = JSON.stringify({{action:'note', property_id: propertyId, author: '', note: text}});
+        const postOnce = () => fetch(NOTES_URL, {{ method: 'POST', body }});
+        postOnce()
+            .then(() => setTimeout(loadNotes, 2500))
+            .catch(e => {{
+                console.warn('note post failed, retrying once in 1.5s', e);
+                setTimeout(() => {{
+                    postOnce()
+                        .then(() => setTimeout(loadNotes, 2500))
+                        .catch(e2 => console.warn('note post retry failed — note remains optimistic-only', e2));
+                }}, 1500);
+            }});
     }}
 
     function noteKeydown(event, idx, propertyId) {{
@@ -1635,7 +1665,7 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21):
     latest_file = results_files[0]
     latest_ts = _parse_run_timestamp(latest_file.stem) or datetime.now()
     latest_ids = set()
-    union = {}  # source_id -> {"prop": dict, "last_seen": datetime}
+    union = {}  # source_id -> {"prop": dict, "last_seen": datetime, "first_seen": datetime}
 
     # Iterate newest-first so newer data wins on first-seen
     for fp in results_files[:runs_to_union]:
@@ -1652,7 +1682,12 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21):
             if fp == latest_file:
                 latest_ids.add(sid)
             if sid not in union:
-                union[sid] = {"prop": p, "last_seen": run_ts or latest_ts}
+                ts = run_ts or latest_ts
+                union[sid] = {"prop": p, "last_seen": ts, "first_seen": ts}
+            elif run_ts and run_ts < union[sid]["first_seen"]:
+                # Walking newest-first: subsequent occurrences are older, so
+                # extend first_seen backwards as far as our scrape window goes.
+                union[sid]["first_seen"] = run_ts
 
     # Sheet overlay — fills gaps for properties not present in local JSONs but
     # recorded in the sheet (e.g. other machines, or runs deleted from disk).
@@ -1681,10 +1716,36 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21):
                 last_seen = now
         else:
             last_seen = now
-        union[sid] = {"prop": prop, "last_seen": last_seen}
+        first_seen_iso = row.get("first_seen")
+        if first_seen_iso:
+            try:
+                first_seen_dt = datetime.fromisoformat(str(first_seen_iso).replace("Z", "+00:00"))
+                if first_seen_dt.tzinfo:
+                    first_seen_dt = first_seen_dt.replace(tzinfo=None)
+            except ValueError:
+                first_seen_dt = last_seen
+        else:
+            first_seen_dt = last_seen
+        union[sid] = {"prop": prop, "last_seen": last_seen, "first_seen": first_seen_dt}
         sheet_added += 1
     if sheet_added:
         print(f"Sheet overlay: +{sheet_added} properties not in local runs")
+
+    # Sheet may know an older first_seen than our 3-run window covers — overlay
+    # backwards for properties already present from local JSONs.
+    for sid, record in union.items():
+        sheet_row = sheet_props.get(sid)
+        if not sheet_row or not sheet_row.get("first_seen"):
+            continue
+        try:
+            sheet_first = datetime.fromisoformat(
+                str(sheet_row["first_seen"]).replace("Z", "+00:00"))
+            if sheet_first.tzinfo:
+                sheet_first = sheet_first.replace(tzinfo=None)
+            if sheet_first < record["first_seen"]:
+                record["first_seen"] = sheet_first
+        except ValueError:
+            pass
 
     props = []
     for sid, record in union.items():
@@ -1698,6 +1759,7 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21):
         if sid not in latest_ids:
             p["missing_from_latest"] = True
             p["last_seen_days"] = days_ago
+        p["first_seen_days"] = max(0, (now - record["first_seen"]).days)
         props.append(p)
 
     return props, latest_file
