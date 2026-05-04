@@ -521,6 +521,7 @@
                 <span>Where they are</span>
                 <div class="map-label-right">
                     <span class="map-coverage">167 on map</span>
+                    <button type="button" class="map-expand-btn" onclick="resetMapView()" title="Zoom out to show every property">&#x21BA; Reset</button>
                     <button type="button" class="map-expand-btn" onclick="openExpandedMap()" title="Open full-screen map">Expand &nearr;</button>
                 </div>
             </div>
@@ -13846,6 +13847,8 @@ Properties of this scale and quality so close to the city are increasingly diffi
         pin.classList.add('pulse');
     }
 
+    let initialMapBounds = null;
+
     function panMapToCard(idx) {
         const marker = mapMarkers[idx];
         if (!marker || !map) return;
@@ -13854,11 +13857,22 @@ Properties of this scale and quality so close to the city are increasingly diffi
         // Defer pan/zoom until the smooth-scroll has settled so the popup
         // anchors correctly relative to the now-visible map viewport.
         setTimeout(() => {
-            const targetZoom = Math.max(map.getZoom(), 11);
+            // Softer zoom on small touch viewports — at zoom 11 a phone
+            // shows only one suburb, which can feel disorienting. Phones
+            // get zoom 9 (regional), tablets/desktops get zoom 11.
+            const isPhone = window.innerWidth < 600;
+            const floorZoom = isPhone ? 9 : 11;
+            const targetZoom = Math.max(map.getZoom(), floorZoom);
             map.flyTo(marker.getLatLng(), targetZoom, { duration: 0.7 });
             marker.openPopup();
             pulsePin(idx);
         }, 350);
+    }
+
+    function resetMapView() {
+        if (!map || !initialMapBounds) return;
+        map.closePopup();
+        map.flyToBounds(initialMapBounds, { padding: [30, 30], duration: 0.6 });
     }
 
     function updateMapPin(idx, reaction) {
@@ -13929,6 +13943,7 @@ Properties of this scale and quality so close to the city are increasingly diffi
         });
 
         map.fitBounds(bounds, { padding: [30, 30] });
+        initialMapBounds = bounds;
     } else {
         document.querySelector('.map-container').style.display = 'none';
     }

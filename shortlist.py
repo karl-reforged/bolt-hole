@@ -908,6 +908,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <span>Where they are</span>
                 <div class="map-label-right">
                     {map_coverage_badge}
+                    <button type="button" class="map-expand-btn" onclick="resetMapView()" title="Zoom out to show every property">&#x21BA; Reset</button>
                     <button type="button" class="map-expand-btn" onclick="openExpandedMap()" title="Open full-screen map">Expand &nearr;</button>
                 </div>
             </div>
@@ -1396,6 +1397,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         pin.classList.add('pulse');
     }}
 
+    let initialMapBounds = null;
+
     function panMapToCard(idx) {{
         const marker = mapMarkers[idx];
         if (!marker || !map) return;
@@ -1404,11 +1407,22 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         // Defer pan/zoom until the smooth-scroll has settled so the popup
         // anchors correctly relative to the now-visible map viewport.
         setTimeout(() => {{
-            const targetZoom = Math.max(map.getZoom(), 11);
+            // Softer zoom on small touch viewports — at zoom 11 a phone
+            // shows only one suburb, which can feel disorienting. Phones
+            // get zoom 9 (regional), tablets/desktops get zoom 11.
+            const isPhone = window.innerWidth < 600;
+            const floorZoom = isPhone ? 9 : 11;
+            const targetZoom = Math.max(map.getZoom(), floorZoom);
             map.flyTo(marker.getLatLng(), targetZoom, {{ duration: 0.7 }});
             marker.openPopup();
             pulsePin(idx);
         }}, 350);
+    }}
+
+    function resetMapView() {{
+        if (!map || !initialMapBounds) return;
+        map.closePopup();
+        map.flyToBounds(initialMapBounds, {{ padding: [30, 30], duration: 0.6 }});
     }}
 
     function updateMapPin(idx, reaction) {{
@@ -1479,6 +1493,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }});
 
         map.fitBounds(bounds, {{ padding: [30, 30] }});
+        initialMapBounds = bounds;
     }} else {{
         document.querySelector('.map-container').style.display = 'none';
     }}
