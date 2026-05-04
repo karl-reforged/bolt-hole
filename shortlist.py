@@ -1011,28 +1011,41 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     const NOTES_URL = "{notes_url_js}";
     const TOTAL = {total_shown};
     const state = {{
-        feedback: {{}},    // idx -> reaction
-        favourites: {{}},  // idx -> true
+        feedback: {{}},    // propertyId -> reaction (was idx-keyed before v2;
+        favourites: {{}},  // propertyId -> true   the v2 key prevents misread)
         reviewed: 0,
         favCount: 0,
     }};
 
     // ── Persist to localStorage so scroll-back shows state ──────────
+    // Storage key bumped to v2 when state moved from idx-keyed to
+    // propertyId-keyed — old data would silently misassign reactions
+    // to whichever property happened to land at the same list position
+    // in a later scrape.
+    const STATE_KEY = 'blh_state_v2';
     function saveState() {{
-        try {{ localStorage.setItem('blh_state', JSON.stringify(state)); }} catch(e) {{}}
+        try {{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }} catch(e) {{}}
+    }}
+    function cardIdxForPid(pid) {{
+        const card = document.querySelector('.card[data-property-id="' + CSS.escape(pid) + '"]');
+        return card ? parseInt(card.dataset.idx) : null;
     }}
     function loadState() {{
         try {{
-            const s = localStorage.getItem('blh_state');
+            const s = localStorage.getItem(STATE_KEY);
             if (s) {{
                 const saved = JSON.parse(s);
                 Object.assign(state, saved);
-                // Restore UI
-                Object.entries(state.feedback).forEach(([idx, reaction]) => {{
-                    applyFeedbackUI(parseInt(idx), reaction);
+                // Restore UI — look each propertyId up in the current scrape;
+                // unknown ones (aged out, sold) just stay in state silently.
+                Object.entries(state.feedback).forEach(([pid, reaction]) => {{
+                    const idx = cardIdxForPid(pid);
+                    if (idx !== null) applyFeedbackUI(idx, reaction);
                 }});
-                Object.entries(state.favourites).forEach(([idx, isFav]) => {{
-                    if (isFav) applyFavouriteUI(parseInt(idx));
+                Object.entries(state.favourites).forEach(([pid, isFav]) => {{
+                    if (!isFav) return;
+                    const idx = cardIdxForPid(pid);
+                    if (idx !== null) applyFavouriteUI(idx);
                 }});
                 updateProgress();
             }}
@@ -1042,12 +1055,12 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     // ── Feedback ──────────────────────────────────────────────────────
     function sendFeedback(idx, propertyId, reaction) {{
         // Clicking an already-selected reaction clears it (neutral)
-        const effective = state.feedback[idx] === reaction ? null : reaction;
+        const effective = state.feedback[propertyId] === reaction ? null : reaction;
 
         if (effective === null) {{
-            delete state.feedback[idx];
+            delete state.feedback[propertyId];
         }} else {{
-            state.feedback[idx] = effective;
+            state.feedback[propertyId] = effective;
         }}
         state.reviewed = Object.keys(state.feedback).length;
         applyFeedbackUI(idx, effective);
@@ -1163,8 +1176,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     // ── Favourites ────────────────────────────────────────────────────
     function toggleFavourite(idx, propertyId) {{
-        const isFav = !state.favourites[idx];
-        state.favourites[idx] = isFav;
+        const isFav = !state.favourites[propertyId];
+        state.favourites[propertyId] = isFav;
         state.favCount = Object.values(state.favourites).filter(Boolean).length;
 
         if (isFav) {{
