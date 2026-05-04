@@ -267,6 +267,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:{sc_color};" onclick="panMapToCard({i})" title="Tap to find on map">#{i+1}</span>
                         <span class="price">{price_str}</span>
                         {"<span class='new-badge'>NEW</span>" if is_new else ""}<button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
                     </div>
@@ -485,6 +486,23 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             letter-spacing: 0.5px; margin-right: 6px;
             vertical-align: middle;
         }}
+
+        /* ── Rank badge (matches map pin number/colour) ─── */
+        .rank-badge {{
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 24px; height: 24px; padding: 0 7px;
+            font-size: 12px; font-weight: 700; color: #fff;
+            border-radius: 12px; margin-right: 8px;
+            cursor: pointer; user-select: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            transition: transform 0.15s, box-shadow 0.15s;
+            vertical-align: middle;
+        }}
+        .rank-badge:hover {{
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+        }}
+        .rank-badge:active {{ transform: translateY(0); }}
 
         /* ── Map ────────────────────────────────── */
         .map-container {{
@@ -1376,6 +1394,21 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         pin.classList.remove('pulse');
         void pin.offsetWidth; // reflow to restart animation
         pin.classList.add('pulse');
+    }}
+
+    function panMapToCard(idx) {{
+        const marker = mapMarkers[idx];
+        if (!marker || !map) return;
+        const mapEl = document.getElementById('shortlist-map');
+        if (mapEl) mapEl.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+        // Defer pan/zoom until the smooth-scroll has settled so the popup
+        // anchors correctly relative to the now-visible map viewport.
+        setTimeout(() => {{
+            const targetZoom = Math.max(map.getZoom(), 11);
+            map.flyTo(marker.getLatLng(), targetZoom, {{ duration: 0.7 }});
+            marker.openPopup();
+            pulsePin(idx);
+        }}, 350);
     }}
 
     function updateMapPin(idx, reaction) {{

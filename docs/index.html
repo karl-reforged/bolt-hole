@@ -100,6 +100,23 @@
             vertical-align: middle;
         }
 
+        /* ── Rank badge (matches map pin number/colour) ─── */
+        .rank-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 24px; height: 24px; padding: 0 7px;
+            font-size: 12px; font-weight: 700; color: #fff;
+            border-radius: 12px; margin-right: 8px;
+            cursor: pointer; user-select: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            transition: transform 0.15s, box-shadow 0.15s;
+            vertical-align: middle;
+        }
+        .rank-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+        }
+        .rank-badge:active { transform: translateY(0); }
+
         /* ── Map ────────────────────────────────── */
         .map-container {
             background: #fff; border: 1px solid var(--light-border);
@@ -532,6 +549,7 @@
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(0)" title="Tap to find on map">#1</span>
                         <span class="price">Auction - Friday 8th May from 10:30am</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(0)" title="Tap to see score breakdown">85% match</button>
                     </div>
@@ -607,6 +625,7 @@ As you meander up the tree lined driveway, you will feel the privacy that this p
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(1)" title="Tap to find on map">#2</span>
                         <span class="price">$1,190,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(1)" title="Tap to see score breakdown">85% match</button>
                     </div>
@@ -685,6 +704,7 @@ What You&#x27;ll Love
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(2)" title="Tap to find on map">#3</span>
                         <span class="price">$950,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(2)" title="Tap to see score breakdown">84% match</button>
                     </div>
@@ -760,6 +780,7 @@ This comfortable two bedroom home is ideal as a weekend retreat or permanent res
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(3)" title="Tap to find on map">#4</span>
                         <span class="price">$650,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(3)" title="Tap to see score breakdown">83% match</button>
                     </div>
@@ -842,6 +863,7 @@ Property Highlights:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(4)" title="Tap to find on map">#5</span>
                         <span class="price">$1,650,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(4)" title="Tap to see score breakdown">82% match</button>
                     </div>
@@ -916,6 +938,7 @@ Property Highlights:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(5)" title="Tap to find on map">#6</span>
                         <span class="price">$995,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(5)" title="Tap to see score breakdown">82% match</button>
                     </div>
@@ -991,6 +1014,7 @@ Elevat...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(6)" title="Tap to find on map">#7</span>
                         <span class="price">$1,200,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(6)" title="Tap to see score breakdown">80% match</button>
                     </div>
@@ -1067,6 +1091,7 @@ Whether you&#x27;re dreaming o...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(7)" title="Tap to find on map">#8</span>
                         <span class="price">$895,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(7)" title="Tap to see score breakdown">79% match</button>
                     </div>
@@ -1144,6 +1169,7 @@ Council has already determined an approved building site, taking in attractiv...
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(8)" title="Tap to find on map">#9</span>
                         <span class="price">$1,250,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(8)" title="Tap to see score breakdown">78% match</button>
                     </div>
@@ -1219,6 +1245,7 @@ Privately set amongst established trees and hedging, and accessed via a beautifu
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(9)" title="Tap to find on map">#10</span>
                         <span class="price">$1,250,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(9)" title="Tap to see score breakdown">78% match</button>
                     </div>
@@ -1296,6 +1323,7 @@ Offering an ideal balance of productivity and lifestyle, the property is private
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(10)" title="Tap to find on map">#11</span>
                         <span class="price">$1,630,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(10)" title="Tap to see score breakdown">76% match</button>
                     </div>
@@ -1370,6 +1398,7 @@ Offering an ideal balance of productivity and lifestyle, the property is private
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(11)" title="Tap to find on map">#12</span>
                         <span class="price">$995,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(11)" title="Tap to see score breakdown">76% match</button>
                     </div>
@@ -1446,6 +1475,7 @@ The property offers a large 15.5m x...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(12)" title="Tap to find on map">#13</span>
                         <span class="price">Auction (Unless Sold Prior)</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(12)" title="Tap to see score breakdown">75% match</button>
                     </div>
@@ -1527,6 +1557,7 @@ Features:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(13)" title="Tap to find on map">#14</span>
                         <span class="price">$890,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(13)" title="Tap to see score breakdown">75% match</button>
                     </div>
@@ -1604,6 +1635,7 @@ An absolutely ide...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(14)" title="Tap to find on map">#15</span>
                         <span class="price">$1,995,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(14)" title="Tap to see score breakdown">74% match</button>
                     </div>
@@ -1680,6 +1712,7 @@ Combining peace and privacy with a flexible dual-residence layout, ideally suite
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(15)" title="Tap to find on map">#16</span>
                         <span class="price">$1,200,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(15)" title="Tap to see score breakdown">73% match</button>
                     </div>
@@ -1754,6 +1787,7 @@ Combining peace and privacy with a flexible dual-residence layout, ideally suite
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(16)" title="Tap to find on map">#17</span>
                         <span class="price">Price on Application</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(16)" title="Tap to see score breakdown">73% match</button>
                     </div>
@@ -1829,6 +1863,7 @@ The property boasts the ideal balance between location and privacy. It is just 1
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(17)" title="Tap to find on map">#18</span>
                         <span class="price">$1,950,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(17)" title="Tap to see score breakdown">73% match</button>
                     </div>
@@ -1903,6 +1938,7 @@ The property boasts the ideal balance between location and privacy. It is just 1
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(18)" title="Tap to find on map">#19</span>
                         <span class="price">$1,800,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(18)" title="Tap to see score breakdown">72% match</button>
                     </div>
@@ -1984,6 +2020,7 @@ Land &amp; Location:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(19)" title="Tap to find on map">#20</span>
                         <span class="price">$895,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(19)" title="Tap to see score breakdown">72% match</button>
                     </div>
@@ -2061,6 +2098,7 @@ Key Features:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(20)" title="Tap to find on map">#21</span>
                         <span class="price">$1,599,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(20)" title="Tap to see score breakdown">72% match</button>
                     </div>
@@ -2136,6 +2174,7 @@ The architect deigned, solid brick, solar passive family home maximises comfort 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(21)" title="Tap to find on map">#22</span>
                         <span class="price">$849,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(21)" title="Tap to see score breakdown">72% match</button>
                     </div>
@@ -2211,6 +2250,7 @@ Escape to your own piece of heaven, a breathtaking 58-acre property (22.19ha) wi
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(22)" title="Tap to find on map">#23</span>
                         <span class="price">$1,849,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(22)" title="Tap to see score breakdown">72% match</button>
                     </div>
@@ -2287,6 +2327,7 @@ This timeless 1940s homestead exudes warmth and character, gorgeous, pressed pla
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(23)" title="Tap to find on map">#24</span>
                         <span class="price">$685,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(23)" title="Tap to see score breakdown">71% match</button>
                     </div>
@@ -2361,6 +2402,7 @@ This timeless 1940s homestead exudes warmth and character, gorgeous, pressed pla
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(24)" title="Tap to find on map">#25</span>
                         <span class="price">$1,950,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(24)" title="Tap to see score breakdown">70% match</button>
                     </div>
@@ -2435,6 +2477,7 @@ This timeless 1940s homestead exudes warmth and character, gorgeous, pressed pla
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(25)" title="Tap to find on map">#26</span>
                         <span class="price">$1,289,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(25)" title="Tap to see score breakdown">70% match</button>
                     </div>
@@ -2512,6 +2555,7 @@ The property is defined by its s...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(26)" title="Tap to find on map">#27</span>
                         <span class="price">$1,400,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(26)" title="Tap to see score breakdown">70% match</button>
                     </div>
@@ -2588,6 +2632,7 @@ Comprising approximately 40.56 hectares (1...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(27)" title="Tap to find on map">#28</span>
                         <span class="price">$1,395,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(27)" title="Tap to see score breakdown">70% match</button>
                     </div>
@@ -2662,6 +2707,7 @@ Comprising approximately 40.56 hectares (1...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(28)" title="Tap to find on map">#29</span>
                         <span class="price">$1,260,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(28)" title="Tap to see score breakdown">70% match</button>
                     </div>
@@ -2743,6 +2789,7 @@ Key Features
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(29)" title="Tap to find on map">#30</span>
                         <span class="price">$925,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(29)" title="Tap to see score breakdown">70% match</button>
                     </div>
@@ -2818,6 +2865,7 @@ The 2014 Hi-Tech transportable home captures stunning eastern views the perfect 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(30)" title="Tap to find on map">#31</span>
                         <span class="price">$1,199,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(30)" title="Tap to see score breakdown">70% match</button>
                     </div>
@@ -2893,6 +2941,7 @@ Having its own building entitlement provides a great opportunity for further con
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(31)" title="Tap to find on map">#32</span>
                         <span class="price">$900,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(31)" title="Tap to see score breakdown">68% match</button>
                     </div>
@@ -2970,6 +3019,7 @@ Offered to the public for the very first time, this remarkable 90-acre holding, 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(32)" title="Tap to find on map">#33</span>
                         <span class="price">$1,695,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(32)" title="Tap to see score breakdown">68% match</button>
                     </div>
@@ -3045,6 +3095,7 @@ Thoughtfully fenced into four paddocks and serviced b...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(33)" title="Tap to find on map">#34</span>
                         <span class="price">Contact Agent</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(33)" title="Tap to see score breakdown">68% match</button>
                     </div>
@@ -3121,6 +3172,7 @@ The kitchen ...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(34)" title="Tap to find on map">#35</span>
                         <span class="price">$550,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(34)" title="Tap to see score breakdown">67% match</button>
                     </div>
@@ -3196,6 +3248,7 @@ Zoned RU2 Rural Landscape, this ...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(35)" title="Tap to find on map">#36</span>
                         <span class="price">$2,000,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(35)" title="Tap to see score breakdown">67% match</button>
                     </div>
@@ -3271,6 +3324,7 @@ A trul...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(36)" title="Tap to find on map">#37</span>
                         <span class="price">$1,450,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(36)" title="Tap to see score breakdown">66% match</button>
                     </div>
@@ -3346,6 +3400,7 @@ Step inside to a warm and inviting open-plan living, dining, kitchen and family 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(37)" title="Tap to find on map">#38</span>
                         <span class="price">$995,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(37)" title="Tap to see score breakdown">66% match</button>
                     </div>
@@ -3422,6 +3477,7 @@ Offering the perfect blend of country lifestyle living or potential for grazing 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(38)" title="Tap to find on map">#39</span>
                         <span class="price">$620,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(38)" title="Tap to see score breakdown">66% match</button>
                     </div>
@@ -3498,6 +3554,7 @@ The property has a dwelling entitlement and currently has a shed and 20 foot con
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(39)" title="Tap to find on map">#40</span>
                         <span class="price">Auction</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(39)" title="Tap to see score breakdown">66% match</button>
                     </div>
@@ -3573,6 +3630,7 @@ Situated approximately 25km* from Bathurst, 52km* to Oberon, 160km to Goulburn, 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(40)" title="Tap to find on map">#41</span>
                         <span class="price">$950,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(40)" title="Tap to see score breakdown">66% match</button>
                     </div>
@@ -3648,6 +3706,7 @@ With a dwelling entitlement in place, the opportunity to create your own home he
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(41)" title="Tap to find on map">#42</span>
                         <span class="price">$549,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(41)" title="Tap to see score breakdown">65% match</button>
                     </div>
@@ -3723,6 +3782,7 @@ Boasting privacy, the parcel offers a blend of open pasture and areas with estab
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(42)" title="Tap to find on map">#43</span>
                         <span class="price">Auction</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(42)" title="Tap to see score breakdown">65% match</button>
                     </div>
@@ -3806,6 +3866,7 @@ Boasting privacy, the parcel offers a blend of open pasture and areas with estab
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(43)" title="Tap to find on map">#44</span>
                         <span class="price">$1,890,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(43)" title="Tap to see score breakdown">65% match</button>
                     </div>
@@ -3883,6 +3944,7 @@ Ensuring there is p...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(44)" title="Tap to find on map">#45</span>
                         <span class="price">$1,550,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(44)" title="Tap to see score breakdown">65% match</button>
                     </div>
@@ -3958,6 +4020,7 @@ The comfortable four-bedroom home is well positioned to take in the...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(45)" title="Tap to find on map">#46</span>
                         <span class="price">$249,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(45)" title="Tap to see score breakdown">65% match</button>
                     </div>
@@ -4032,6 +4095,7 @@ The comfortable four-bedroom home is well positioned to take in the...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(46)" title="Tap to find on map">#47</span>
                         <span class="price">$950,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(46)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -4108,6 +4172,7 @@ Some of the many features of Teasdale include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(47)" title="Tap to find on map">#48</span>
                         <span class="price">Contact Agent</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(47)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -4183,6 +4248,7 @@ Positioned peacefully in one of the most highly sought after rural locales of th
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(48)" title="Tap to find on map">#49</span>
                         <span class="price">By Negotiation</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(48)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -4259,6 +4325,7 @@ Designed with the equestrian in mind, the property features quality post and rai
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(49)" title="Tap to find on map">#50</span>
                         <span class="price">Auction - Friday 8th May from 10:30am</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(49)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -4334,6 +4401,7 @@ Set on approximately 32 acres, this appealing property features a well-maintaine
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(50)" title="Tap to find on map">#51</span>
                         <span class="price">Auction Sat 30th May at 4pm</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(50)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -4408,6 +4476,7 @@ Set on approximately 32 acres, this appealing property features a well-maintaine
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(51)" title="Tap to find on map">#52</span>
                         <span class="price">$1,595,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(51)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -4486,6 +4555,7 @@ The Residence - Near new, Effortless Living
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(52)" title="Tap to find on map">#53</span>
                         <span class="price">$800,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(52)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -4564,6 +4634,7 @@ Features:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(53)" title="Tap to find on map">#54</span>
                         <span class="price">$1,135,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(53)" title="Tap to see score breakdown">63% match</button>
                     </div>
@@ -4638,6 +4709,7 @@ Features:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(54)" title="Tap to find on map">#55</span>
                         <span class="price">$570,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(54)" title="Tap to see score breakdown">62% match</button>
                     </div>
@@ -4714,6 +4786,7 @@ Features:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(55)" title="Tap to find on map">#56</span>
                         <span class="price">$960,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(55)" title="Tap to see score breakdown">62% match</button>
                     </div>
@@ -4792,6 +4865,7 @@ Features
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(56)" title="Tap to find on map">#57</span>
                         <span class="price">$1,395,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(56)" title="Tap to see score breakdown">62% match</button>
                     </div>
@@ -4868,6 +4942,7 @@ If you are looking for an ideal property which offers a diverse lifestyle such b
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(57)" title="Tap to find on map">#58</span>
                         <span class="price">$1,800,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(57)" title="Tap to see score breakdown">62% match</button>
                     </div>
@@ -4945,6 +5020,7 @@ Set on approx. 65 acres of be...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(58)" title="Tap to find on map">#59</span>
                         <span class="price">$1,725,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(58)" title="Tap to see score breakdown">62% match</button>
                     </div>
@@ -5019,6 +5095,7 @@ Set on approx. 65 acres of be...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(59)" title="Tap to find on map">#60</span>
                         <span class="price">$600,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(59)" title="Tap to see score breakdown">61% match</button>
                     </div>
@@ -5094,6 +5171,7 @@ The established property captures the essenc...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(60)" title="Tap to find on map">#61</span>
                         <span class="price">$1,420,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(60)" title="Tap to see score breakdown">61% match</button>
                     </div>
@@ -5169,6 +5247,7 @@ Set on approximately 50 acres of fertile, well-balanced land with sweeping front
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(61)" title="Tap to find on map">#62</span>
                         <span class="price">$1,495,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(61)" title="Tap to see score breakdown">61% match</button>
                     </div>
@@ -5243,6 +5322,7 @@ Set on approximately 50 acres of fertile, well-balanced land with sweeping front
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(62)" title="Tap to find on map">#63</span>
                         <span class="price">$1,000,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(62)" title="Tap to see score breakdown">61% match</button>
                     </div>
@@ -5319,6 +5399,7 @@ Thoughtfully updated, the home features three generous bedrooms, including a spa
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(63)" title="Tap to find on map">#64</span>
                         <span class="price">$1,100,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(63)" title="Tap to see score breakdown">60% match</button>
                     </div>
@@ -5394,6 +5475,7 @@ Enjoy the be...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(64)" title="Tap to find on map">#65</span>
                         <span class="price">$1,750,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(64)" title="Tap to see score breakdown">59% match</button>
                     </div>
@@ -5469,6 +5551,7 @@ Fenced into 4 main paddocks, the country features basalt soil with some excellen
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(65)" title="Tap to find on map">#66</span>
                         <span class="price">$975,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(65)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -5543,6 +5626,7 @@ Fenced into 4 main paddocks, the country features basalt soil with some excellen
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(66)" title="Tap to find on map">#67</span>
                         <span class="price">CONTACT AGENT</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(66)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -5617,6 +5701,7 @@ Fenced into 4 main paddocks, the country features basalt soil with some excellen
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(67)" title="Tap to find on map">#68</span>
                         <span class="price">$1,950,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(67)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -5695,6 +5780,7 @@ Key points about the farm
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(68)" title="Tap to find on map">#69</span>
                         <span class="price">$699,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(68)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -5769,6 +5855,7 @@ Key points about the farm
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(69)" title="Tap to find on map">#70</span>
                         <span class="price">$499,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(69)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -5844,6 +5931,7 @@ Perfect for a range of uses, whilst having an on site cabin + shipping container
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(70)" title="Tap to find on map">#71</span>
                         <span class="price">$425,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(70)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -5924,6 +6012,7 @@ Key features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(71)" title="Tap to find on map">#72</span>
                         <span class="price">$1,850,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(71)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -5999,6 +6088,7 @@ This 40.07-hectare property is ideal for cattle, sheep, or horses with four full
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(72)" title="Tap to find on map">#73</span>
                         <span class="price">$680,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(72)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -6079,6 +6169,7 @@ Then t...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(73)" title="Tap to find on map">#74</span>
                         <span class="price">$695,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(73)" title="Tap to see score breakdown">57% match</button>
                     </div>
@@ -6155,6 +6246,7 @@ The block has been in the one family and farmed since the 1930&#x27;s and its lo
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(74)" title="Tap to find on map">#75</span>
                         <span class="price">Contact Agent</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(74)" title="Tap to see score breakdown">56% match</button>
                     </div>
@@ -6230,6 +6322,7 @@ Surrounded by pristine native bushland this block is a versatile property, offer
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(75)" title="Tap to find on map">#76</span>
                         <span class="price">$1,499,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(75)" title="Tap to see score breakdown">56% match</button>
                     </div>
@@ -6305,6 +6398,7 @@ The residence offers a family friendly layout, upon entry you will notice the la
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(76)" title="Tap to find on map">#77</span>
                         <span class="price">$1,390,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(76)" title="Tap to see score breakdown">55% match</button>
                     </div>
@@ -6381,6 +6475,7 @@ Insid...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(77)" title="Tap to find on map">#78</span>
                         <span class="price">FOR SALE</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(77)" title="Tap to see score breakdown">54% match</button>
                     </div>
@@ -6457,6 +6552,7 @@ Locati...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(78)" title="Tap to find on map">#79</span>
                         <span class="price">$1,750,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(78)" title="Tap to see score breakdown">54% match</button>
                     </div>
@@ -6536,6 +6632,7 @@ Approx. 59.2 ha or Approx. 146 Acres
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(79)" title="Tap to find on map">#80</span>
                         <span class="price">$715,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(79)" title="Tap to see score breakdown">54% match</button>
                     </div>
@@ -6612,6 +6709,7 @@ The property offers excellent flexibi...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(80)" title="Tap to find on map">#81</span>
                         <span class="price">$1,200,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(80)" title="Tap to see score breakdown">54% match</button>
                     </div>
@@ -6687,6 +6785,7 @@ Freshly renovated throughout, the home features fresh new paint, new carpet, vin
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(81)" title="Tap to find on map">#82</span>
                         <span class="price">$1,850,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(81)" title="Tap to see score breakdown">54% match</button>
                     </div>
@@ -6762,6 +6861,7 @@ True to its name, which means &quot;lookout&quot; or &quot;observing a mountain,
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(82)" title="Tap to find on map">#83</span>
                         <span class="price">$1,250,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(82)" title="Tap to see score breakdown">54% match</button>
                     </div>
@@ -6836,6 +6936,7 @@ True to its name, which means &quot;lookout&quot; or &quot;observing a mountain,
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(83)" title="Tap to find on map">#84</span>
                         <span class="price">$850,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(83)" title="Tap to see score breakdown">54% match</button>
                     </div>
@@ -6912,6 +7013,7 @@ A creek wind...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(84)" title="Tap to find on map">#85</span>
                         <span class="price">Contact Agent</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(84)" title="Tap to see score breakdown">53% match</button>
                     </div>
@@ -6986,6 +7088,7 @@ A creek wind...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(85)" title="Tap to find on map">#86</span>
                         <span class="price">CONTACT AGENT</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(85)" title="Tap to see score breakdown">53% match</button>
                     </div>
@@ -7061,6 +7164,7 @@ Two 4 bed Homes on 100 Acres, OFF GRID, Privately Separated.</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(86)" title="Tap to find on map">#87</span>
                         <span class="price">$585,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(86)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -7136,6 +7240,7 @@ With its incredible views, basalt soils, scattered native trees, and gentle undu
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(87)" title="Tap to find on map">#88</span>
                         <span class="price">$750,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(87)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -7212,6 +7317,7 @@ The majority of the land lies across the southe...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(88)" title="Tap to find on map">#89</span>
                         <span class="price">$1,100,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(88)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -7289,6 +7395,7 @@ Features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(89)" title="Tap to find on map">#90</span>
                         <span class="price">Auction - Friday 8th May from 10:30am</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(89)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -7364,6 +7471,7 @@ Features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(90)" title="Tap to find on map">#91</span>
                         <span class="price">$1,150,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(90)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -7439,6 +7547,7 @@ Set across predominantly level to gently undulating country, the property offers
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(91)" title="Tap to find on map">#92</span>
                         <span class="price">$1,239,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(91)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -7521,6 +7630,7 @@ Call this the f...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(92)" title="Tap to find on map">#93</span>
                         <span class="price">400,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(92)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -7595,6 +7705,7 @@ Call this the f...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(93)" title="Tap to find on map">#94</span>
                         <span class="price">By Negotiation</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(93)" title="Tap to see score breakdown">51% match</button>
                     </div>
@@ -7671,6 +7782,7 @@ Located just 5km from Murrumbateman village and 25 minutes from Canberra&#x27;s 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(94)" title="Tap to find on map">#95</span>
                         <span class="price">$580,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(94)" title="Tap to see score breakdown">50% match</button>
                     </div>
@@ -7750,6 +7862,7 @@ Located just 5km from Murrumbateman village and 25 minutes from Canberra&#x27;s 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(95)" title="Tap to find on map">#96</span>
                         <span class="price">$660,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(95)" title="Tap to see score breakdown">49% match</button>
                     </div>
@@ -7829,6 +7942,7 @@ Located just 5km from Murrumbateman village and 25 minutes from Canberra&#x27;s 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(96)" title="Tap to find on map">#97</span>
                         <span class="price">$1,250,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(96)" title="Tap to see score breakdown">49% match</button>
                     </div>
@@ -7906,6 +8020,7 @@ Set across 20 hectares (50 acres) of gently rolling countryside, this is a rare 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(97)" title="Tap to find on map">#98</span>
                         <span class="price">$495,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(97)" title="Tap to see score breakdown">48% match</button>
                     </div>
@@ -7985,6 +8100,7 @@ Set across 20 hectares (50 acres) of gently rolling countryside, this is a rare 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(98)" title="Tap to find on map">#99</span>
                         <span class="price">$1,250,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(98)" title="Tap to see score breakdown">47% match</button>
                     </div>
@@ -8063,6 +8179,7 @@ Aligned with Lithgow Council&#x27;s forward planning and offering outstanding fl
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(99)" title="Tap to find on map">#100</span>
                         <span class="price">$369,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(99)" title="Tap to see score breakdown">46% match</button>
                     </div>
@@ -8139,6 +8256,7 @@ Aligned with Lithgow Council&#x27;s forward planning and offering outstanding fl
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(100)" title="Tap to find on map">#101</span>
                         <span class="price">$995,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(100)" title="Tap to see score breakdown">46% match</button>
                     </div>
@@ -8222,6 +8340,7 @@ Convenient access to major regional centres
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(101)" title="Tap to find on map">#102</span>
                         <span class="price">$425,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(101)" title="Tap to see score breakdown">46% match</button>
                     </div>
@@ -8296,6 +8415,7 @@ Convenient access to major regional centres
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(102)" title="Tap to find on map">#103</span>
                         <span class="price">QUICK SALE NEEDED</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(102)" title="Tap to see score breakdown">46% match</button>
                     </div>
@@ -8372,6 +8492,7 @@ Offering views to the west and south from numerous locations on the property. Ta
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(103)" title="Tap to find on map">#104</span>
                         <span class="price">Contact Agent</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(103)" title="Tap to see score breakdown">45% match</button>
                     </div>
@@ -8447,6 +8568,7 @@ Offering absolute privacy this stunning property includes a combination of clear
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(104)" title="Tap to find on map">#105</span>
                         <span class="price">$1,450,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(104)" title="Tap to see score breakdown">45% match</button>
                     </div>
@@ -8521,6 +8643,7 @@ Offering absolute privacy this stunning property includes a combination of clear
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(105)" title="Tap to find on map">#106</span>
                         <span class="price">$340,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(105)" title="Tap to see score breakdown">44% match</button>
                     </div>
@@ -8597,6 +8720,7 @@ Whether you&#x27;re searching for a weekend ret...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(106)" title="Tap to find on map">#107</span>
                         <span class="price">Contact Agent</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(106)" title="Tap to see score breakdown">44% match</button>
                     </div>
@@ -8677,6 +8801,7 @@ Located in a tightly held district highly regarded as a blue ribbon grazing &amp
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(107)" title="Tap to find on map">#108</span>
                         <span class="price">$899,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(107)" title="Tap to see score breakdown">44% match</button>
                     </div>
@@ -8753,6 +8878,7 @@ Fenced into six* paddocks, water is secured by six* dams ...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(108)" title="Tap to find on map">#109</span>
                         <span class="price">$1,700,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(108)" title="Tap to see score breakdown">42% match</button>
                     </div>
@@ -8828,6 +8954,7 @@ This inviting single-level brick home showcases timeless character features thro
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(109)" title="Tap to find on map">#110</span>
                         <span class="price">$370,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(109)" title="Tap to see score breakdown">42% match</button>
                     </div>
@@ -8903,6 +9030,7 @@ A substantial dam and quality shedding support a wide range of leisure pursuits,
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(110)" title="Tap to find on map">#111</span>
                         <span class="price">$835,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(110)" title="Tap to see score breakdown">42% match</button>
                     </div>
@@ -8980,6 +9108,7 @@ The front portion of the property features gently undulating, usable land with b
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(111)" title="Tap to find on map">#112</span>
                         <span class="price">$885,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(111)" title="Tap to see score breakdown">42% match</button>
                     </div>
@@ -9062,6 +9191,7 @@ Features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(112)" title="Tap to find on map">#113</span>
                         <span class="price">$1,550,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(112)" title="Tap to see score breakdown">41% match</button>
                     </div>
@@ -9138,6 +9268,7 @@ Constructed entirely of reinforced HYMIX concrete , the residence demonstrates a
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(113)" title="Tap to find on map">#114</span>
                         <span class="price">For Sale</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(113)" title="Tap to see score breakdown">41% match</button>
                     </div>
@@ -9213,6 +9344,7 @@ Property featur...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(114)" title="Tap to find on map">#115</span>
                         <span class="price">$1,250,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(114)" title="Tap to see score breakdown">41% match</button>
                     </div>
@@ -9288,6 +9420,7 @@ With its stunning &quot;intact stained-glass windows, deco...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(115)" title="Tap to find on map">#116</span>
                         <span class="price">$1,950,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(115)" title="Tap to see score breakdown">41% match</button>
                     </div>
@@ -9362,6 +9495,7 @@ With its stunning &quot;intact stained-glass windows, deco...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(116)" title="Tap to find on map">#117</span>
                         <span class="price">$1,100,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(116)" title="Tap to see score breakdown">40% match</button>
                     </div>
@@ -9442,6 +9576,7 @@ Features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(117)" title="Tap to find on map">#118</span>
                         <span class="price">$990,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(117)" title="Tap to see score breakdown">40% match</button>
                     </div>
@@ -9522,6 +9657,7 @@ Features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(118)" title="Tap to find on map">#119</span>
                         <span class="price">Expressions of Interest</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(118)" title="Tap to see score breakdown">39% match</button>
                     </div>
@@ -9597,6 +9733,7 @@ Imagine waking up to breathtaking views that stretch across the Goulburn region.
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(119)" title="Tap to find on map">#120</span>
                         <span class="price">$1,390,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(119)" title="Tap to see score breakdown">38% match</button>
                     </div>
@@ -9676,6 +9813,7 @@ Features include
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(120)" title="Tap to find on map">#121</span>
                         <span class="price">$1,550,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(120)" title="Tap to see score breakdown">36% match</button>
                     </div>
@@ -9750,6 +9888,7 @@ Features include
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(121)" title="Tap to find on map">#122</span>
                         <span class="price">$549,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(121)" title="Tap to see score breakdown">36% match</button>
                     </div>
@@ -9828,6 +9967,7 @@ Features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(122)" title="Tap to find on map">#123</span>
                         <span class="price">$1,620,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(122)" title="Tap to see score breakdown">34% match</button>
                     </div>
@@ -9902,6 +10042,7 @@ Features include:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(123)" title="Tap to find on map">#124</span>
                         <span class="price">$1,080,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(123)" title="Tap to see score breakdown">33% match</button>
                     </div>
@@ -9978,6 +10119,7 @@ Designed as the ultimate escape with 4 self-contained pods and the master pod be
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(124)" title="Tap to find on map">#125</span>
                         <span class="price">$1,300,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(124)" title="Tap to see score breakdown">31% match</button>
                     </div>
@@ -10054,6 +10196,7 @@ The comfortable three-bedroom home features warm timbre floorboards and a we...<
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(125)" title="Tap to find on map">#126</span>
                         <span class="price">$595,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(125)" title="Tap to see score breakdown">26% match</button>
                     </div>
@@ -10129,6 +10272,7 @@ PRD Real Estate is excited to introduce the &quot;Mayfield Estate&quot; subdivis
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(126)" title="Tap to find on map">#127</span>
                         <span class="price">$520,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(126)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -10207,6 +10351,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(127)" title="Tap to find on map">#128</span>
                         <span class="price">Expressions of Interest!</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(127)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -10281,6 +10426,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(128)" title="Tap to find on map">#129</span>
                         <span class="price">$750,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(128)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -10355,6 +10501,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(129)" title="Tap to find on map">#130</span>
                         <span class="price"></span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(129)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -10429,6 +10576,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(130)" title="Tap to find on map">#131</span>
                         <span class="price">$1,950,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(130)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -10503,6 +10651,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(131)" title="Tap to find on map">#132</span>
                         <span class="price">$750,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(131)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -10577,6 +10726,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(132)" title="Tap to find on map">#133</span>
                         <span class="price">$1,300,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(132)" title="Tap to see score breakdown">15% match</button>
                     </div>
@@ -10651,6 +10801,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(133)" title="Tap to find on map">#134</span>
                         <span class="price">$550,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(133)" title="Tap to see score breakdown">14% match</button>
                     </div>
@@ -10725,6 +10876,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(134)" title="Tap to find on map">#135</span>
                         <span class="price"></span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(134)" title="Tap to see score breakdown">14% match</button>
                     </div>
@@ -10799,6 +10951,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(135)" title="Tap to find on map">#136</span>
                         <span class="price">$1,400,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(135)" title="Tap to see score breakdown">14% match</button>
                     </div>
@@ -10873,6 +11026,7 @@ Just beautiful, call n...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(136)" title="Tap to find on map">#137</span>
                         <span class="price">$380,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(136)" title="Tap to see score breakdown">14% match</button>
                     </div>
@@ -10949,6 +11103,7 @@ Discover a piece of history with this expansive 33.6-acre property located in th
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(137)" title="Tap to find on map">#138</span>
                         <span class="price">$1,000,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(137)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -11024,6 +11179,7 @@ The site benefits from existing council consent for quarry development and opera
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(138)" title="Tap to find on map">#139</span>
                         <span class="price">$995,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(138)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -11098,6 +11254,7 @@ The site benefits from existing council consent for quarry development and opera
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(139)" title="Tap to find on map">#140</span>
                         <span class="price">$709,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(139)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -11172,6 +11329,7 @@ The site benefits from existing council consent for quarry development and opera
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(140)" title="Tap to find on map">#141</span>
                         <span class="price">$799,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(140)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -11246,6 +11404,7 @@ The site benefits from existing council consent for quarry development and opera
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(141)" title="Tap to find on map">#142</span>
                         <span class="price"></span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(141)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -11320,6 +11479,7 @@ The site benefits from existing council consent for quarry development and opera
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(142)" title="Tap to find on map">#143</span>
                         <span class="price">$1,049,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(142)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -11394,6 +11554,7 @@ The site benefits from existing council consent for quarry development and opera
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(143)" title="Tap to find on map">#144</span>
                         <span class="price">$1,100,000</span>
                         <span class='new-badge'>NEW</span><button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(143)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -11468,6 +11629,7 @@ The site benefits from existing council consent for quarry development and opera
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(144)" title="Tap to find on map">#145</span>
                         <span class="price">$1,295,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(144)" title="Tap to see score breakdown">78% match</button>
                     </div>
@@ -11543,6 +11705,7 @@ Mountain biking, bushwalking, four wheel driving, birdwatching all at your doors
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(145)" title="Tap to find on map">#146</span>
                         <span class="price">$1,300,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(145)" title="Tap to see score breakdown">76% match</button>
                     </div>
@@ -11619,6 +11782,7 @@ Nestled in the serene landscapes of Sodwalls, Brindabella offers an idyllic retr
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(146)" title="Tap to find on map">#147</span>
                         <span class="price">$950,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(146)" title="Tap to see score breakdown">68% match</button>
                     </div>
@@ -11694,6 +11858,7 @@ Fully fenced boundaries, some new fencing, a mature stand of Radiata Pines, a le
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(147)" title="Tap to find on map">#148</span>
                         <span class="price">Market Preview</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(147)" title="Tap to see score breakdown">67% match</button>
                     </div>
@@ -11769,6 +11934,7 @@ Positioned in an elevated location, the property captures sweeping panoramic vie
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(148)" title="Tap to find on map">#149</span>
                         <span class="price">$1,200,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(148)" title="Tap to see score breakdown">62% match</button>
                     </div>
@@ -11845,6 +12011,7 @@ The three-bedroom, two-bathroom home is move-in ready, with floating timber floo
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(149)" title="Tap to find on map">#150</span>
                         <span class="price">$1,300,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(149)" title="Tap to see score breakdown">60% match</button>
                     </div>
@@ -11920,6 +12087,7 @@ Thoughtfully enhancing the homes...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(150)" title="Tap to find on map">#151</span>
                         <span class="price">$565,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(150)" title="Tap to see score breakdown">58% match</button>
                     </div>
@@ -11998,6 +12166,7 @@ Renovated Cottage + Sheds on 5 Acres ( approx 2...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(151)" title="Tap to find on map">#152</span>
                         <span class="price">$729,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(151)" title="Tap to see score breakdown">55% match</button>
                     </div>
@@ -12080,6 +12249,7 @@ Features:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(152)" title="Tap to find on map">#153</span>
                         <span class="price">$375,000</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(152)" title="Tap to see score breakdown">42% match</button>
                     </div>
@@ -12158,6 +12328,7 @@ Whilst every care has been taken to veri...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(153)" title="Tap to find on map">#154</span>
                         <span class="price">$1,650,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(153)" title="Tap to see score breakdown">26% match</button>
                     </div>
@@ -12232,6 +12403,7 @@ Whilst every care has been taken to veri...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(154)" title="Tap to find on map">#155</span>
                         <span class="price">$2,000,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(154)" title="Tap to see score breakdown">26% match</button>
                     </div>
@@ -12306,6 +12478,7 @@ Whilst every care has been taken to veri...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(155)" title="Tap to find on map">#156</span>
                         <span class="price"></span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(155)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -12380,6 +12553,7 @@ Whilst every care has been taken to veri...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(156)" title="Tap to find on map">#157</span>
                         <span class="price">$700,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(156)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -12454,6 +12628,7 @@ Whilst every care has been taken to veri...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(157)" title="Tap to find on map">#158</span>
                         <span class="price">$1,250,000</span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(157)" title="Tap to see score breakdown">6% match</button>
                     </div>
@@ -12528,6 +12703,7 @@ Whilst every care has been taken to veri...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#166534;" onclick="panMapToCard(158)" title="Tap to find on map">#159</span>
                         <span class="price">$1,475,000</span>
                         <button class="score-badge" style="color:#166534;background:#dcfce7;" onclick="toggleBreakdown(158)" title="Tap to see score breakdown">82% match</button>
                     </div>
@@ -12603,6 +12779,7 @@ The cedar-clad residence, built approximately 35 yea...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(159)" title="Tap to find on map">#160</span>
                         <span class="price">$790,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(159)" title="Tap to see score breakdown">64% match</button>
                     </div>
@@ -12677,6 +12854,7 @@ The cedar-clad residence, built approximately 35 yea...</div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(160)" title="Tap to find on map">#161</span>
                         <span class="price">$1,800,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(160)" title="Tap to see score breakdown">59% match</button>
                     </div>
@@ -12753,6 +12931,7 @@ The home features:
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#1e40af;" onclick="panMapToCard(161)" title="Tap to find on map">#162</span>
                         <span class="price">$799,000</span>
                         <button class="score-badge" style="color:#1e40af;background:#dbeafe;" onclick="toggleBreakdown(161)" title="Tap to see score breakdown">55% match</button>
                     </div>
@@ -12829,6 +13008,7 @@ Set on approximately 11 acres along Sunny Corner Road, this property presents a 
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(162)" title="Tap to find on map">#163</span>
                         <span class="price">Under Contract</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(162)" title="Tap to see score breakdown">52% match</button>
                     </div>
@@ -12906,6 +13086,7 @@ Located in the enviable Southern Highlands, 18* kilometres from Moss Vale, 10* k
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#92400e;" onclick="panMapToCard(163)" title="Tap to find on map">#164</span>
                         <span class="price">Contact Agent</span>
                         <button class="score-badge" style="color:#92400e;background:#fef3c7;" onclick="toggleBreakdown(163)" title="Tap to see score breakdown">46% match</button>
                     </div>
@@ -12981,6 +13162,7 @@ Properties of this scale and quality so close to the city are increasingly diffi
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(164)" title="Tap to find on map">#165</span>
                         <span class="price"></span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(164)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -13055,6 +13237,7 @@ Properties of this scale and quality so close to the city are increasingly diffi
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(165)" title="Tap to find on map">#166</span>
                         <span class="price"></span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(165)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -13129,6 +13312,7 @@ Properties of this scale and quality so close to the city are increasingly diffi
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
+                        <span class="rank-badge" style="background:#64748b;" onclick="panMapToCard(166)" title="Tap to find on map">#167</span>
                         <span class="price"></span>
                         <button class="score-badge" style="color:#64748b;background:#f1f5f9;" onclick="toggleBreakdown(166)" title="Tap to see score breakdown">20% match</button>
                     </div>
@@ -13660,6 +13844,21 @@ Properties of this scale and quality so close to the city are increasingly diffi
         pin.classList.remove('pulse');
         void pin.offsetWidth; // reflow to restart animation
         pin.classList.add('pulse');
+    }
+
+    function panMapToCard(idx) {
+        const marker = mapMarkers[idx];
+        if (!marker || !map) return;
+        const mapEl = document.getElementById('shortlist-map');
+        if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Defer pan/zoom until the smooth-scroll has settled so the popup
+        // anchors correctly relative to the now-visible map viewport.
+        setTimeout(() => {
+            const targetZoom = Math.max(map.getZoom(), 11);
+            map.flyTo(marker.getLatLng(), targetZoom, { duration: 0.7 });
+            marker.openPopup();
+            pulsePin(idx);
+        }, 350);
     }
 
     function updateMapPin(idx, reaction) {
