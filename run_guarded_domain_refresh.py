@@ -104,9 +104,9 @@ def run_once(attempt: int, args) -> tuple[bool, Path | None, dict, list[str]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--min-domain", type=int, default=0, help="minimum Domain Web raw source count; lowered while Akamai blocks /sale/ URLs")
-    ap.add_argument("--min-passed", type=int, default=30, help="minimum final gate-passed properties (lowered while Domain Web blocked)")
-    ap.add_argument("--min-domain-desc", type=int, default=0, help="minimum gate-passed Domain Web listings with descriptions")
+    ap.add_argument("--min-domain", type=int, default=240, help="minimum Domain Web raw source count; historical healthy run is ~270-280")
+    ap.add_argument("--min-passed", type=int, default=110, help="minimum final gate-passed properties")
+    ap.add_argument("--min-domain-desc", type=int, default=90, help="minimum gate-passed Domain Web listings with descriptions")
     ap.add_argument("--cooldown", type=int, default=900, help="seconds between failed attempts")
     ap.add_argument("--max-attempts", type=int, default=3, help="0 means retry indefinitely")
     ap.add_argument("--timeout", type=int, default=2700, help="per search timeout seconds")
