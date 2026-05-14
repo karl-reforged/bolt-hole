@@ -20,8 +20,9 @@ import json
 import html as html_mod
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -1663,13 +1664,57 @@ def _fetch_sheet_properties():
     return out
 
 
-def _load_union_of_runs(runs_to_union=3, age_out_days=21):
+def _parse_iso_datetime(value):
+    """Parse ISO-ish timestamps from source payloads; return naive datetime or None."""
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if dt.tzinfo:
+            dt = dt.replace(tzinfo=None)
+        return dt
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_realestate_com_listing(prop):
+    """True only for realestate.com.au listings, not Elders/CommercialRealEstate."""
+    source = (prop.get("source") or "").lower()
+    url = prop.get("listing_url") or ""
+    host = urlparse(url).netloc.lower()
+    return source in {"rea_apify", "rea_web", "rea"} or host == "realestate.com.au" or host.endswith(".realestate.com.au")
+
+
+def _union_source_files(results_files, latest_ts, age_out_days, min_runs):
+    """Return newest files worth unioning.
+
+    The old implementation used only the latest N result files. That is brittle
+    when a source has several same-day failed/partial runs: useful listings can
+    be pushed out of the N-file window long before they are actually stale.
+    Use the whole retention horizon instead, while still keeping at least N
+    files for sparse histories.
     """
-    Union properties across the N most-recent scrape JSONs by source_id, then
-    overlay any sheet-only properties still within the age-out window. Local
-    JSON data wins when present (freshest). Properties missing from the
-    latest run get 'missing_from_latest' + 'last_seen_days' so the UI can
-    mark them stale. Returns (props_list, latest_file).
+    cutoff = latest_ts - timedelta(days=age_out_days)
+    selected = []
+    for fp in results_files:
+        run_ts = _parse_run_timestamp(fp.stem)
+        if len(selected) < min_runs or (run_ts and run_ts >= cutoff):
+            selected.append(fp)
+    return selected
+
+
+def _load_union_of_runs(runs_to_union=3, age_out_days=21, rea_new_days=9):
+    """
+    Union properties across recent scrape JSONs by source_id, then overlay any
+    sheet-only properties still within the age-out window. Local JSON data wins
+    when present (freshest). Properties missing from the latest run get
+    'missing_from_latest' + 'last_seen_days' so the UI can mark them stale.
+
+    Important source-failure rule: scan the full age-out horizon, not just the
+    latest N files. Temporary source failures can otherwise evict recent
+    realestate.com.au listings after a handful of bad runs. Any realestate.com.au
+    listing with date_listed in the last `rea_new_days` is explicitly retained.
+    Returns (props_list, latest_file).
     """
     results_files = sorted(RESULTS_DIR.glob("search_*.json"), reverse=True)
     if not results_files:
@@ -1680,8 +1725,10 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21):
     latest_ids = set()
     union = {}  # source_id -> {"prop": dict, "last_seen": datetime, "first_seen": datetime}
 
-    # Iterate newest-first so newer data wins on first-seen
-    for fp in results_files[:runs_to_union]:
+    # Iterate newest-first so newer data wins, but include the whole retention
+    # horizon so repeated failed/partial runs cannot push live-but-unrefreshed
+    # listings out of the published list prematurely.
+    for fp in _union_source_files(results_files, latest_ts, age_out_days, runs_to_union):
         run_ts = _parse_run_timestamp(fp.stem)
         try:
             with open(fp) as f:
@@ -1761,11 +1808,21 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21):
             pass
 
     props = []
+    rea_new_cutoff = latest_ts - timedelta(days=rea_new_days)
     for sid, record in union.items():
         days_ago = max(0, (now - record["last_seen"]).days)
-        if days_ago > age_out_days:
+        p0 = record["prop"]
+        listed_at = _parse_iso_datetime(p0.get("date_listed"))
+        is_recent_rea = (
+            _is_realestate_com_listing(p0)
+            and listed_at is not None
+            and listed_at >= rea_new_cutoff
+        )
+        if days_ago > age_out_days and not is_recent_rea:
             continue
-        p = dict(record["prop"])
+        p = dict(p0)
+        if is_recent_rea:
+            p["recent_realestate_com"] = True
         # Flag + day-count are separate so a same-day earlier-scrape prop still
         # registers as stale (days_ago can legitimately be 0 for today's 12pm run
         # when the 1:39pm run dropped it).
