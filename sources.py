@@ -40,6 +40,16 @@ CRITERIA_PATH = BASE_DIR / "criteria.json"
 # Set PLAYWRIGHT_HEADLESS=true to override (e.g. in CI).
 PLAYWRIGHT_HEADLESS = os.getenv("PLAYWRIGHT_HEADLESS", "false").lower() == "true"
 
+# Domain/Akamai now fingerprints Playwright's bundled Chromium more aggressively
+# than a normal installed Chrome. Prefer the real browser on Karl's MBP; allow an
+# env override so the scraper still works if Chrome moves.
+CHROME_EXECUTABLE = os.getenv("BOLT_CHROME_EXECUTABLE")
+CHROME_EXECUTABLE_CANDIDATES = [
+    CHROME_EXECUTABLE,
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+]
+
 
 _GAZETTEER_INDEX = None  # lazy-loaded: (locality+state → row, postcode → row)
 
@@ -405,32 +415,70 @@ def _normalize_domain_web_listing(item):
     }
 
 
-def _fetch_json_via_browser(page, url):
-    """Fetch a URL as JSON using the browser's fetch() API.
+def _extract_next_data_json(html):
+    """Extract and decode a Next.js __NEXT_DATA__ payload from HTML."""
+    if not isinstance(html, str):
+        return None
+    match = re.search(
+        r'<script\s+id="__NEXT_DATA__"\s+type="application/json">(.*?)</script>',
+        html,
+        re.DOTALL,
+    )
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return None
 
-    Domain returns full Next.js page data as JSON when Accept: application/json
-    is sent. Using the browser's fetch() bypasses TLS fingerprint detection
-    that blocks requests/curl.
+
+def _coerce_domain_payload(body):
+    """Return parsed Domain JSON from either JSON text or full Next.js HTML."""
+    if isinstance(body, dict):
+        return body
+    if not isinstance(body, str):
+        return None
+    text = body.strip()
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    return _extract_next_data_json(text)
+
+
+def _launch_chrome_for_domain(playwright):
+    """Launch the least-blocked Chromium browser for Domain scraping."""
+    launch_kwargs = {
+        "headless": PLAYWRIGHT_HEADLESS,
+        "args": ["--disable-blink-features=AutomationControlled"],
+    }
+    for candidate in CHROME_EXECUTABLE_CANDIDATES:
+        if candidate and Path(candidate).exists():
+            launch_kwargs["executable_path"] = candidate
+            break
+    return playwright.chromium.launch(**launch_kwargs)
+
+
+def _fetch_json_via_browser(page, url):
+    """Fetch Domain page data by top-level navigation and parse __NEXT_DATA__.
+
+    Domain/Akamai now kills or blocks in-page fetch()/XHR from Playwright, while
+    normal navigation in installed Chrome succeeds after a short JS interstitial.
+    Navigation is slower but reliable enough for the daily Bolt refresh.
     """
     try:
-        result = page.evaluate("""async (url) => {
-            try {
-                const resp = await fetch(url, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                if (!resp.ok) return { error: resp.status, body: null };
-                const data = await resp.json();
-                return { error: null, body: data };
-            } catch (e) {
-                return { error: e.message, body: null };
-            }
-        }""", url)
-        if result.get("error"):
-            return None, result["error"]
-        return result.get("body"), None
+        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(3000)
+        html = page.content()
+        data = _coerce_domain_payload(html)
+        if data is not None:
+            return data, None
+        preview = (html or "")[:120].replace("\n", " ")
+        return None, f"unparseable Domain response after navigation: {preview}"
     except Exception as e:
         return None, str(e)
-
 
 def _parse_search_json(data):
     """Parse Domain search page JSON for listings and pagination.
@@ -547,11 +595,14 @@ def _batch_fetch_details(page, urls, batch_size=10):
                 const results = await Promise.allSettled(
                     urls.map(async (url) => {
                         const resp = await fetch(url, {
-                            headers: { 'Accept': 'application/json' }
+                            headers: {
+                                'Accept': 'application/json,text/html;q=0.9,*/*;q=0.8',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
                         });
-                        if (!resp.ok) return { url, error: resp.status, body: null };
-                        const data = await resp.json();
-                        return { url, error: null, body: data };
+                        const text = await resp.text();
+                        if (!resp.ok) return { url, error: resp.status, body: text };
+                        return { url, error: null, body: text };
                     })
                 );
                 return results.map((r, i) => {
@@ -565,12 +616,29 @@ def _batch_fetch_details(page, urls, batch_size=10):
 
         for item in batch_results:
             url = item.get("url", "")
-            if item.get("body"):
-                detail = _parse_detail_json(item["body"])
+            data = _coerce_domain_payload(item.get("body"))
+            if data:
+                detail = _parse_detail_json(data)
                 if detail.get("is_archived"):
                     continue  # skip removed/archived listings
                 if detail.get("description"):
                     results[url] = detail
+                    continue
+
+            # Fallback: Domain often blocks fetch() while allowing full page
+            # navigation in installed Chrome.
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                page.wait_for_timeout(1500)
+                nav_data = _coerce_domain_payload(page.content())
+                if nav_data:
+                    detail = _parse_detail_json(nav_data)
+                    if detail.get("is_archived"):
+                        continue
+                    if detail.get("description"):
+                        results[url] = detail
+            except Exception as e:
+                print(f"  Detail navigation fallback failed: {e}")
 
         # Brief delay between batches
         if batch_start + batch_size < len(urls):
@@ -616,29 +684,61 @@ def fetch_domain_web(criteria):
     print(f"Domain Web: searching {len(postcodes)} postcodes via JSON fetch...")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=PLAYWRIGHT_HEADLESS)
+        browser = _launch_chrome_for_domain(p)
         try:
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/131.0.0.0 Safari/537.36",
-                viewport={"width": 1280, "height": 800},
-            )
+            def _new_context():
+                # Keep the default installed-Chrome fingerprint. Custom contexts
+                # and hard-coded user agents now trigger Domain/Akamai blocks.
+                pg = browser.new_page()
+                pg.set_viewport_size({"width": 1280, "height": 800})
+                return None, pg
 
-            # Navigate to Domain once to establish browser context/cookies
-            page = context.new_page()
+            context, page = _new_context()
+            context_recreates = 0
+            MAX_CONTEXT_RECREATES = 3
+
             try:
-                page.goto("https://www.domain.com.au/sale/", wait_until="domcontentloaded", timeout=30000)
+                page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
             except Exception as e:
                 print(f"  Domain Web: initial page load failed — {e}")
-                return []
+                # Try once more with fresh context
+                try:
+                    context.close()
+                except Exception:
+                    pass
+                context, page = _new_context()
+                try:
+                    page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
+                except Exception as e2:
+                    print(f"  Domain Web: retry page load also failed — {e2}")
+                    return []
 
             consecutive_empty = 0
 
             # ── Phase 1: Fetch search pages via JSON ──
             for i, pc in enumerate(postcodes):
                 url = _domain_web_search_url(pc, gates)
-                data, err = _fetch_json_via_browser(page, url)
+                # Circuit breaker: recreate browser context on TargetClosedError
+                try:
+                    data, err = _fetch_json_via_browser(page, url)
+                except Exception as fetch_exc:
+                    if ('Target page, context or browser has been closed' in str(fetch_exc)
+                            or 'browser has been closed' in str(fetch_exc)
+                            and context_recreates < MAX_CONTEXT_RECREATES):
+                        print(f"  [{pc}] browser context died, recreating (attempt {context_recreates + 1}/{MAX_CONTEXT_RECREATES})...")
+                        try:
+                            context.close()
+                        except Exception:
+                            pass
+                        context, page = _new_context()
+                        context_recreates += 1
+                        try:
+                            page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
+                        except Exception:
+                            pass
+                        data, err = None, str(fetch_exc)
+                    else:
+                        data, err = None, str(fetch_exc)
 
                 if err or not data:
                     print(f"  [{pc}] fetch failed: {err}")
@@ -662,7 +762,22 @@ def fetch_domain_web(criteria):
                 # Fetch page 2+ if available (limit to 5 pages per postcode)
                 for page_num in range(2, min(max_page + 1, 6)):
                     page_url = f"{url}&page={page_num}"
-                    more_data, err2 = _fetch_json_via_browser(page, page_url)
+                    try:
+                        more_data, err2 = _fetch_json_via_browser(page, page_url)
+                    except Exception as pag_exc:
+                        if ('Target page, context or browser has been closed' in str(pag_exc)
+                                and context_recreates < MAX_CONTEXT_RECREATES):
+                            try:
+                                context.close()
+                            except Exception:
+                                pass
+                            context, page = _new_context()
+                            context_recreates += 1
+                            try:
+                                page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
+                            except Exception:
+                                pass
+                        more_data, err2 = None, str(pag_exc)
                     if more_data:
                         more, _ = _parse_search_json(more_data)
                         listings.extend(more)
@@ -1156,12 +1271,9 @@ def fetch_rea_web(criteria):
     print(f"REA Web: testing access with first postcode...")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=PLAYWRIGHT_HEADLESS)
+        browser = _launch_chrome_for_domain(p)
         try:
             context = browser.new_context(
-                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/131.0.0.0 Safari/537.36",
                 viewport={"width": 1280, "height": 800},
             )
 
@@ -1322,16 +1434,10 @@ def enrich_with_descriptions(properties):
     print(f"Detail fetch (fallback): {len(need_fetch)} listings still need descriptions...")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=PLAYWRIGHT_HEADLESS)
+        browser = _launch_chrome_for_domain(p)
         try:
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) "
-                           "Chrome/131.0.0.0 Safari/537.36",
-                viewport={"width": 1280, "height": 800},
-            )
-
-            page = context.new_page()
+            page = browser.new_page()
+            page.set_viewport_size({"width": 1280, "height": 800})
             try:
                 page.goto("https://www.domain.com.au/sale/", wait_until="domcontentloaded", timeout=30000)
             except Exception as e:
@@ -1427,9 +1533,15 @@ def fetch_rea_apify(criteria):
     # ── Step 1: Start the actor run (async) ──
     run_url = f"{APIFY_API_BASE}/acts/{actor_api_id}/runs"
     try:
+        run_params = {
+            "token": token,
+            # Pay-per-result Actors now require a positive platform-side charge
+            # ceiling. This is separate from the actor input's maxListings.
+            "maxItems": str(actor_input["maxListings"]),
+        }
         resp = session.post(
             run_url,
-            params={"token": token},
+            params=run_params,
             json=actor_input,
             timeout=30,
         )

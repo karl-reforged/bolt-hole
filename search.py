@@ -725,6 +725,9 @@ def _upsert_properties_to_sheet(properties):
     snapshots). Non-fatal: logs on failure and moves on — the scrape has
     already been saved to disk.
     """
+    if os.getenv("BOLT_SKIP_SHEET_UPSERT") == "1":
+        print("Sheet upsert skipped: BOLT_SKIP_SHEET_UPSERT=1")
+        return
     if not NOTES_URL or not properties:
         return
     body = json.dumps({"action": "properties_upsert", "properties": properties})
