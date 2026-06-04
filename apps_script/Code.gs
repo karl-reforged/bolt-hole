@@ -21,11 +21,14 @@
 
 const NOTES_TAB = 'notes';
 const PROPERTIES_TAB = 'properties';
+const REACTIONS_TAB = 'reactions';
 const NOTES_HEADERS = ['id', 'property_id', 'author', 'timestamp', 'note'];
 const PROPERTIES_HEADERS = [
   'source_id', 'suburb', 'address', 'first_seen', 'last_seen',
   'status', 'listing_url', 'payload',
 ];
+// One row per property_id, last-writer-wins. reaction in love|interesting|pass.
+const REACTIONS_HEADERS = ['property_id', 'reaction', 'timestamp'];
 
 // ── Entry points ────────────────────────────────────────────────────────────
 
@@ -33,6 +36,9 @@ function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || '';
   if (action === 'properties') {
     return _json({ properties: _readProperties() });
+  }
+  if (action === 'reactions') {
+    return _json({ reactions: _readReactions() });
   }
   return _json({ notes: _readNotes() });
 }
@@ -49,6 +55,10 @@ function doPost(e) {
   if (action === 'properties_upsert') {
     const n = _upsertProperties(body.properties || []);
     return _json({ ok: true, upserted: n });
+  }
+  if (action === 'reaction') {
+    _upsertReaction(body);
+    return _json({ ok: true });
   }
   return _json({ ok: false, error: 'unknown_action:' + action });
 }
@@ -165,6 +175,52 @@ function _upsertProperties(properties) {
   }
 
   return upserted;
+}
+
+// ── Reactions ─────────────────────────────────────────────────────────────────
+
+function _readReactions() {
+  const sheet = _sheet(REACTIONS_TAB, REACTIONS_HEADERS);
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const obj = {};
+    headers.forEach((h, j) => { obj[h] = _normalise(rows[i][j]); });
+    if (!obj.property_id || !obj.reaction) continue; // empty / cleared
+    out.push({ property_id: String(obj.property_id), reaction: String(obj.reaction) });
+  }
+  return out;
+}
+
+function _upsertReaction(body) {
+  const pid = String(body.property_id || '');
+  if (!pid) return;
+  const reaction = body.reaction || '';
+  const sheet = _sheet(REACTIONS_TAB, REACTIONS_HEADERS);
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows[0];
+  const pidCol = headers.indexOf('property_id');
+
+  let rowNum = 0; // 1-indexed sheet row of an existing reaction for this pid
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][pidCol] || '') === pid) { rowNum = i + 1; break; }
+  }
+
+  // Neutral/clear removes the row so the property drops out of _readReactions
+  if (reaction === 'clear' || reaction === '') {
+    if (rowNum) sheet.deleteRow(rowNum);
+    return;
+  }
+
+  const record = { property_id: pid, reaction: reaction, timestamp: new Date().toISOString() };
+  const rowValues = headers.map(h => record[h] === undefined ? '' : record[h]);
+  if (rowNum) {
+    sheet.getRange(rowNum, 1, 1, headers.length).setValues([rowValues]);
+  } else {
+    sheet.appendRow(rowValues);
+  }
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

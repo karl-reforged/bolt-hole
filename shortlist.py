@@ -1080,6 +1080,45 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }} catch(e) {{}}
     }}
 
+    // Pull shared reactions from the sheet and make them authoritative, so
+    // George's Love/Interesting/Not-for-me follow him across devices. On
+    // success the sheet wins (a reaction cleared elsewhere clears here too);
+    // on failure (endpoint not deployed / offline) we keep localStorage.
+    function loadServerReactions() {{
+        if (!NOTES_URL) return;
+        fetch(NOTES_URL + '?action=reactions')
+            .then(r => r.json())
+            .then(data => {{
+                // Guard: only go authoritative once the reaction endpoint is
+                // really deployed. The old script ignores the action and
+                // returns {{notes:[...]}} — treating that as "no reactions"
+                // would wipe local state, so bail and keep localStorage.
+                if (!data || !Array.isArray(data.reactions)) return;
+                const server = {{}};
+                (data.reactions || []).forEach(r => {{
+                    if (r && r.property_id && r.reaction) server[r.property_id] = r.reaction;
+                }});
+                // Clear any local reaction the sheet no longer has
+                Object.keys(state.feedback).forEach(pid => {{
+                    if (!(pid in server)) {{
+                        delete state.feedback[pid];
+                        const idx = cardIdxForPid(pid);
+                        if (idx !== null) applyFeedbackUI(idx, null);
+                    }}
+                }});
+                // Adopt the sheet's reactions
+                Object.entries(server).forEach(([pid, reaction]) => {{
+                    state.feedback[pid] = reaction;
+                    const idx = cardIdxForPid(pid);
+                    if (idx !== null) applyFeedbackUI(idx, reaction);
+                }});
+                state.reviewed = Object.keys(state.feedback).length;
+                updateProgress();
+                saveState();
+            }})
+            .catch(() => {{}});
+    }}
+
     // ── Feedback ──────────────────────────────────────────────────────
     function sendFeedback(idx, propertyId, reaction) {{
         // Clicking an already-selected reaction clears it (neutral)
@@ -1095,11 +1134,19 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         updateProgress();
         saveState();
 
-        if (FEEDBACK_URL) {{
-            const url = FEEDBACK_URL + '?action=feedback'
-                + '&property_id=' + encodeURIComponent(propertyId)
-                + '&reaction=' + encodeURIComponent(effective === null ? 'clear' : effective);
-            fetch(url, {{ mode: 'no-cors' }}).catch(() => {{}});
+        // Sync to the shared sheet (reuses the notes Apps Script). Like notes,
+        // POST the reaction as JSON; we can't read the response, so it's
+        // verified via the GET on next load. Silent-fails if the reaction
+        // endpoint isn't deployed yet — localStorage still holds it.
+        if (NOTES_URL) {{
+            fetch(NOTES_URL, {{
+                method: 'POST',
+                body: JSON.stringify({{
+                    action: 'reaction',
+                    property_id: propertyId,
+                    reaction: effective === null ? 'clear' : effective
+                }})
+            }}).catch(() => {{}});
         }}
     }}
 
@@ -1638,6 +1685,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     // ── Restore state on load ─────────────────────────────────────────
     loadState();
+    loadServerReactions();
     loadNotes();
     </script>
 </body>
