@@ -33,6 +33,36 @@ RESULTS_DIR = BASE_DIR / "data" / "listings"
 DOCS_DIR = BASE_DIR / "docs"
 DOCS_DIR.mkdir(exist_ok=True)
 
+# Baseline of what George last received. "New" = source_ids not in here.
+# Updated ONLY via `shortlist.py --mark-sent`, so preview re-renders don't
+# poison the new set. Seed once from the last shortlist George actually saw.
+LAST_SENT_FILE = BASE_DIR / "data" / "last_sent.json"
+
+# Marginal source suppressed from the published shortlist (see
+# out/rea_apify_marginal): REA via Apify returns few rural listings, with no
+# land size, and nets ~2 low-quality cards. Kept in the pipeline/sheet, hidden
+# from George's page.
+SUPPRESSED_SOURCES = {"rea_apify"}
+
+
+def _visible_props(properties, max_properties=None):
+    """The listings actually shown to George — drops suppressed sources."""
+    props = properties[:max_properties] if max_properties else properties
+    return [p for p in props if p.get("source") not in SUPPRESSED_SOURCES]
+
+
+def _load_last_sent_ids():
+    """Source_ids George last received; empty set if no baseline yet."""
+    if not LAST_SENT_FILE.exists():
+        print("WARNING: no data/last_sent.json baseline — '0 new' until --mark-sent",
+              file=sys.stderr)
+        return set()
+    try:
+        with open(LAST_SENT_FILE) as f:
+            return set(json.load(f).get("source_ids", []))
+    except (json.JSONDecodeError, IOError):
+        return set()
+
 FEEDBACK_URL = os.getenv("FEEDBACK_SCRIPT_URL", "")
 NOTES_URL = os.getenv(
     "NOTES_SCRIPT_URL",
@@ -143,25 +173,20 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     if output_path is None:
         output_path = DOCS_DIR / "index.html"
 
-    props = properties[:max_properties] if max_properties else properties
-    total_found = len(properties)
+    props = _visible_props(properties, max_properties)
+    total_found = len(props)
     total_shown = len(props)
-    sources_count = len({p.get("source") for p in properties if p.get("source")})
+    sources_count = len({p.get("source") for p in props if p.get("source")})
 
-    # Detect new listings by comparing against previous run
-    new_ids = set()
-    prev_files = sorted(RESULTS_DIR.glob("search_*.json"), reverse=True)
-    if len(prev_files) >= 2:
-        try:
-            with open(prev_files[1]) as f:
-                prev_data = json.load(f)
-            prev_ids = {p.get("source_id") or p.get("id") for p in prev_data.get("properties", [])}
-            for p in props:
-                pid = p.get("source_id") or p.get("id")
-                if pid and pid not in prev_ids:
-                    new_ids.add(pid)
-        except Exception:
-            pass
+    # "New" = anything George hasn't seen since his last send. Single source of
+    # truth (data/last_sent.json) so the count, the NEW badge, and the New sort
+    # all agree — unlike the old single-previous-file diff, which miscounted
+    # every carried-over/sheet listing as new.
+    last_sent_ids = _load_last_sent_ids()
+    new_ids = {
+        pid for p in props
+        if (pid := (p.get("source_id") or p.get("id"))) and pid not in last_sent_ids
+    }
 
     # ── Build cards HTML ──────────────────────────────────────────────────
     cards_html = []
@@ -277,7 +302,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             </div>'''
 
         stale_attr = 'data-stale="1"' if missing_from_latest else ''
-        is_new = 1 if (prop_id in new_ids and not missing_from_latest) else 0
+        # Badge matches the count: new = not seen since last send (a carried-over
+        # listing can still be genuinely new to George).
+        is_new = 1 if prop_id in new_ids else 0
         cards_html.append(f'''
         <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{is_new}" data-ppa="{ppa:.0f}" {stale_attr}>
             {photo_html}
@@ -1860,6 +1887,17 @@ if __name__ == "__main__":
             pass
 
     path = generate_shortlist(properties, search_date=search_date)
+
+    # `--mark-sent`: snapshot what George is receiving as the new baseline.
+    # Run this only when actually sending — normal renders leave it untouched.
+    if "--mark-sent" in sys.argv:
+        visible = _visible_props(properties)
+        ids = sorted({pid for p in visible
+                      if (pid := (p.get("source_id") or p.get("id")))})
+        with open(LAST_SENT_FILE, "w") as f:
+            json.dump({"marked_at": datetime.now().isoformat(), "source_ids": ids},
+                      f, indent=2)
+        print(f"Marked sent: baseline = {len(ids)} source_ids → {LAST_SENT_FILE}")
 
     if "--open" in sys.argv:
         import subprocess
