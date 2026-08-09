@@ -111,6 +111,7 @@ def main() -> int:
     ap.add_argument("--max-attempts", type=int, default=3, help="0 means retry indefinitely")
     ap.add_argument("--timeout", type=int, default=2700, help="per search timeout seconds")
     ap.add_argument("--shortlist", action="store_true", help="rebuild docs/index.html after healthy search")
+    ap.add_argument("--upsert", action="store_true", help="upsert healthy result to the sheet DB (attempts themselves always run with upsert suppressed)")
     args = ap.parse_args()
 
     if not PY.exists():
@@ -141,6 +142,18 @@ def main() -> int:
         (LOG_DIR / "guarded_domain_refresh_status.json").write_text(json.dumps({"updated": datetime.now().isoformat(), "attempt": attempt, **last}, indent=2))
         if ok:
             print(f"COMPLETE: healthy Domain scrape in {result}", flush=True)
+            if args.upsert:
+                # Attempts run with BOLT_SKIP_SHEET_UPSERT=1 so quarantined
+                # partials never pollute the sheet; only the verified-healthy
+                # result gets upserted, in a child env with the flag removed.
+                upsert_env = {k: v for k, v in os.environ.items() if k != "BOLT_SKIP_SHEET_UPSERT"}
+                code = (
+                    "import json, sys\n"
+                    "from search import _upsert_properties_to_sheet\n"
+                    f"data = json.load(open({json.dumps(str(result))}))\n"
+                    "_upsert_properties_to_sheet(data.get('properties', []))\n"
+                )
+                subprocess.run([str(PY), "-c", code], cwd=ROOT, check=False, env=upsert_env)
             if args.shortlist:
                 subprocess.run([str(PY), "shortlist.py"], cwd=ROOT, check=True)
                 print("Shortlist rebuilt: docs/index.html", flush=True)

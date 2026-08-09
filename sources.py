@@ -22,7 +22,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import requests
@@ -665,6 +665,67 @@ def _fetch_page_with_playwright(browser, url):
         page.close()
 
 
+# ── Sheet-backed description cache (new-listings-only optimisation) ───────
+#
+# The sheet's `properties` tab (Apps Script DB) already holds the full payload
+# for every listing we've ever scraped. Detail-page fetches are the expensive
+# part of a Domain scrape (~277 requests) and what triggers Akamai throttling,
+# so we hydrate descriptions for known source_ids from the sheet and only
+# fetch detail pages for genuinely new listings.
+
+SHEET_DB_URL = os.getenv(
+    "NOTES_SCRIPT_URL",
+    "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec",
+)
+
+
+def _load_sheet_description_cache(max_age_days=30):
+    """Known-property payloads from the sheet DB, keyed by source_id.
+
+    Rows are excluded when last_seen is older than max_age_days — a returning
+    listing with a stale sheet record gets a fresh live fetch instead (the
+    handoff's freshness guard). Never raises: returns {} on any failure,
+    which restores the old fetch-everything behaviour.
+
+    Set BOLT_FORCE_FULL_DESCRIPTIONS=1 to bypass the cache entirely
+    (e.g. after Domain rewrites listing pages or for a periodic full refresh).
+    """
+    if os.getenv("BOLT_FORCE_FULL_DESCRIPTIONS") == "1":
+        print("  Sheet description cache: bypassed (BOLT_FORCE_FULL_DESCRIPTIONS=1)")
+        return {}
+    if not SHEET_DB_URL:
+        return {}
+    try:
+        resp = requests.get(SHEET_DB_URL + "?action=properties", timeout=15)
+        data = resp.json()
+    except (requests.RequestException, ValueError):
+        print("  Sheet description cache: unavailable — fetching all descriptions live")
+        return {}
+    cutoff = datetime.now() - timedelta(days=max_age_days)
+    cache = {}
+    for row in data.get("properties", []):
+        sid = str(row.get("source_id") or "")
+        if not sid:
+            continue
+        try:
+            seen_dt = datetime.fromisoformat(
+                str(row.get("last_seen") or "").replace("Z", "+00:00")
+            ).replace(tzinfo=None)
+        except (TypeError, ValueError):
+            continue
+        if seen_dt < cutoff:
+            continue  # stale record — refetch its description live
+        payload = row.get("payload")
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except (json.JSONDecodeError, TypeError):
+                continue
+        if isinstance(payload, dict) and payload.get("description"):
+            cache[sid] = payload
+    return cache
+
+
 def fetch_domain_web(criteria):
     """Fetch Domain.com.au listings using browser-based JSON fetch.
 
@@ -808,7 +869,32 @@ def fetch_domain_web(criteria):
                     time.sleep(0.3)
 
             # ── Phase 2: Batch fetch detail pages for descriptions ──
-            need_details = [p for p in all_listings if not p.get("description")]
+            # New-listings-only: hydrate known listings from the sheet DB so
+            # only new source_ids cost a live detail fetch. Price/status come
+            # from the fresh search results above; the sheet supplies only
+            # description-level fields.
+            missing = [p for p in all_listings if not p.get("description")]
+            need_details = missing
+            if missing:
+                known = _load_sheet_description_cache()
+                if known:
+                    need_details = []
+                    hydrated = 0
+                    for prop in missing:
+                        cached = known.get(str(prop["source_id"]))
+                        if cached:
+                            prop["description"] = cached["description"]
+                            if not prop.get("headline") and cached.get("headline"):
+                                prop["headline"] = cached["headline"]
+                            if not prop.get("lat") and cached.get("lat"):
+                                prop["lat"] = cached["lat"]
+                            if not prop.get("lng") and cached.get("lng"):
+                                prop["lng"] = cached["lng"]
+                            hydrated += 1
+                        else:
+                            need_details.append(prop)
+                    if hydrated:
+                        print(f"  Sheet cache: hydrated {hydrated} known listings; {len(need_details)} new need a live fetch")
             if need_details:
                 print(f"  Fetching descriptions for {len(need_details)} listings (batches of 10)...")
                 detail_urls = [p["listing_url"] for p in need_details]

@@ -13,7 +13,15 @@ __pycache__/
 # Screenshots & working artifacts
 screenshots/
 *.png
+*.jpeg
+*.jpg
 !docs/**/*.png
+
+# Session deliverables (audit reports, plans — same treatment as .planning/)
+out/
+
+# Claude Code status cache (keep .claude/ visible for future project settings)
+.claude/.status-last.txt
 
 # Playwright cache
 .playwright-mcp/
