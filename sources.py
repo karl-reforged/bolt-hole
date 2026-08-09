@@ -802,6 +802,19 @@ def fetch_domain_web(criteria):
                         data, err = None, str(fetch_exc)
 
                 if err or not data:
+                    # The first JSON fetch after warm-up reliably eats an Akamai
+                    # challenge page (observed: postcode #1 failed identically on
+                    # every run). The failed attempt sets the challenge cookie, so
+                    # a single retry in the same session succeeds. Retry once.
+                    time.sleep(2)
+                    try:
+                        data, err = _fetch_json_via_browser(page, url)
+                    except Exception as retry_exc:
+                        data, err = None, str(retry_exc)
+                    if data and not err:
+                        print(f"  [{pc}] recovered on retry (Akamai challenge on first fetch)")
+
+                if err or not data:
                     print(f"  [{pc}] fetch failed: {err}")
                     consecutive_empty += 1
                     if consecutive_empty >= 5:
