@@ -19,6 +19,11 @@
  * match the existing NOTES_SCRIPT_URL; if URL changes, update .env).
  */
 
+// The backing spreadsheet (tabs: notes, properties, reactions). Pinned by ID
+// so this script deploys as a standalone project via clasp — no container
+// binding required. See apps_script/README.md.
+const SPREADSHEET_ID = '1JNOmQt3KWOVJTw96uMdENb1qkB4V34_i12YJ87Io9Lg';
+
 const NOTES_TAB = 'notes';
 const PROPERTIES_TAB = 'properties';
 const REACTIONS_TAB = 'reactions';
@@ -226,7 +231,7 @@ function _upsertReaction(body) {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function _sheet(name, expectedHeaders) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(name);
   if (!sheet) {
     sheet = ss.insertSheet(name);
