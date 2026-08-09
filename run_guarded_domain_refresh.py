@@ -33,7 +33,9 @@ def newest_search_after(start_ts: float) -> Path | None:
     for f in files:
         if f.stat().st_mtime >= start_ts - 2:
             return f
-    return files[0] if files else None
+    # No fallback to an older file: a run that produced nothing must fail,
+    # not get yesterday's results health-checked (and upserted) as today's.
+    return None
 
 
 def load(path: Path) -> dict:

@@ -595,9 +595,10 @@ def _batch_fetch_details(page, urls, batch_size=10):
                 const results = await Promise.allSettled(
                     urls.map(async (url) => {
                         const resp = await fetch(url, {
+                            // No X-Requested-With: Domain's own frontend doesn't
+                            // send it, so it marked these bursts as non-browser.
                             headers: {
-                                'Accept': 'application/json,text/html;q=0.9,*/*;q=0.8',
-                                'X-Requested-With': 'XMLHttpRequest'
+                                'Accept': 'application/json,text/html;q=0.9,*/*;q=0.8'
                             }
                         });
                         const text = await resp.text();
@@ -747,14 +748,22 @@ def fetch_domain_web(criteria):
     with sync_playwright() as p:
         browser = _launch_chrome_for_domain(p)
         try:
-            def _new_context():
+            def _new_page(old_page=None):
                 # Keep the default installed-Chrome fingerprint. Custom contexts
                 # and hard-coded user agents now trigger Domain/Akamai blocks.
+                # browser.new_page() gives a fresh implicit context (fresh cookie
+                # jar); closing the old page is what actually drops a poisoned
+                # Akamai session — the previous (None, page) tuple never did.
+                if old_page is not None:
+                    try:
+                        old_page.close()
+                    except Exception:
+                        pass
                 pg = browser.new_page()
                 pg.set_viewport_size({"width": 1280, "height": 800})
-                return None, pg
+                return pg
 
-            context, page = _new_context()
+            page = _new_page()
             context_recreates = 0
             MAX_CONTEXT_RECREATES = 3
 
@@ -762,12 +771,8 @@ def fetch_domain_web(criteria):
                 page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
             except Exception as e:
                 print(f"  Domain Web: initial page load failed — {e}")
-                # Try once more with fresh context
-                try:
-                    context.close()
-                except Exception:
-                    pass
-                context, page = _new_context()
+                # Try once more with a fresh page (fresh implicit context)
+                page = _new_page(page)
                 try:
                     page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
                 except Exception as e2:
@@ -783,23 +788,19 @@ def fetch_domain_web(criteria):
                 try:
                     data, err = _fetch_json_via_browser(page, url)
                 except Exception as fetch_exc:
-                    if ('Target page, context or browser has been closed' in str(fetch_exc)
-                            or 'browser has been closed' in str(fetch_exc)
-                            and context_recreates < MAX_CONTEXT_RECREATES):
-                        print(f"  [{pc}] browser context died, recreating (attempt {context_recreates + 1}/{MAX_CONTEXT_RECREATES})...")
-                        try:
-                            context.close()
-                        except Exception:
-                            pass
-                        context, page = _new_context()
+                    # NB: parenthesised so the recreate cap applies to BOTH match
+                    # strings (the old `A or B and C` never enforced the cap on A).
+                    page_died = ('Target page, context or browser has been closed' in str(fetch_exc)
+                                 or 'browser has been closed' in str(fetch_exc))
+                    if page_died and context_recreates < MAX_CONTEXT_RECREATES:
+                        print(f"  [{pc}] browser page died, recreating (attempt {context_recreates + 1}/{MAX_CONTEXT_RECREATES})...")
+                        page = _new_page(page)
                         context_recreates += 1
                         try:
                             page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
                         except Exception:
                             pass
-                        data, err = None, str(fetch_exc)
-                    else:
-                        data, err = None, str(fetch_exc)
+                    data, err = None, str(fetch_exc)
 
                 if err or not data:
                     # The first JSON fetch after warm-up reliably eats an Akamai
@@ -841,11 +842,7 @@ def fetch_domain_web(criteria):
                     except Exception as pag_exc:
                         if ('Target page, context or browser has been closed' in str(pag_exc)
                                 and context_recreates < MAX_CONTEXT_RECREATES):
-                            try:
-                                context.close()
-                            except Exception:
-                                pass
-                            context, page = _new_context()
+                            page = _new_page(page)
                             context_recreates += 1
                             try:
                                 page.goto("https://www.domain.com.au/", wait_until="domcontentloaded", timeout=30000)
@@ -908,7 +905,12 @@ def fetch_domain_web(criteria):
                             need_details.append(prop)
                     if hydrated:
                         print(f"  Sheet cache: hydrated {hydrated} known listings; {len(need_details)} new need a live fetch")
-            if need_details:
+            if need_details and consecutive_empty >= 5:
+                # Phase-1 circuit breaker tripped — the session is likely blocked
+                # or dead. Don't hammer it with concurrent detail bursts; the
+                # guarded runner will quarantine this run and retry after cooldown.
+                print(f"  Skipping detail fetch for {len(need_details)} listings — circuit breaker tripped in Phase 1")
+            elif need_details:
                 print(f"  Fetching descriptions for {len(need_details)} listings (batches of 10)...")
                 detail_urls = [p["listing_url"] for p in need_details]
                 details = _batch_fetch_details(page, detail_urls, batch_size=10)
