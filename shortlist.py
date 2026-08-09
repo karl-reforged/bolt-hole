@@ -66,7 +66,7 @@ def _load_last_sent_ids():
 FEEDBACK_URL = os.getenv("FEEDBACK_SCRIPT_URL", "")
 NOTES_URL = os.getenv(
     "NOTES_SCRIPT_URL",
-    "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec",
+    "https://bolt-hole-backend.karl-582.workers.dev",
 )
 
 # Readable labels for score breakdown keys
@@ -1719,7 +1719,7 @@ def _fetch_sheet_properties():
     """
     url = os.getenv(
         "NOTES_SCRIPT_URL",
-        "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec",
+        "https://bolt-hole-backend.karl-582.workers.dev",
     )
     if not url:
         return {}

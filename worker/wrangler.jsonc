@@ -1,0 +1,17 @@
+{
+  // Bolt Hole backend — Cloudflare Worker + D1.
+  // Replaces the Google Apps Script (apps_script/Code.gs) with the same API
+  // contract. Deploy: cd worker && npx wrangler deploy
+  // (If CLOUDFLARE_API_TOKEN is exported in your shell it shadows the OAuth
+  //  login — run as: env -u CLOUDFLARE_API_TOKEN npx wrangler deploy)
+  "name": "bolt-hole-backend",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-09",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bolt-hole",
+      "database_id": "901357da-160a-4962-9b47-951e6819b325"
+    }
+  ]
+}

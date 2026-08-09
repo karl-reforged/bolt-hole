@@ -36,3 +36,10 @@ Open the `properties` tab in the sheet — you can edit any of the first 7 colum
 - **address** / **suburb** → cleanups show up on the next scrape (scraper updates these fields, so your edits may be overwritten — edit `payload` instead if you want stable changes)
 
 The `payload` column is JSON — don't hand-edit unless you know what you're doing.
+
+---
+
+## ⚠️ SUPERSEDED (2026-08-09)
+
+This Apps Script backend has been replaced by a Cloudflare Worker + D1 — see `../worker/`.
+The deployment above remains live as a fallback but the pipeline no longer writes to the sheet.

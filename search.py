@@ -33,7 +33,7 @@ DOMAIN_CLIENT_SECRET = os.getenv("DOMAIN_CLIENT_SECRET")  # secret_... value
 
 NOTES_URL = os.getenv(
     "NOTES_SCRIPT_URL",
-    "https://script.google.com/macros/s/AKfycby1EpSp4aOX0UdSLwRgLyDOBCfL7VBRhr_AsIwLQw8gnE3ds37c9-ducakspntlKpPb/exec",
+    "https://bolt-hole-backend.karl-582.workers.dev",  # Cloudflare Worker + D1 (see worker/)
 )
 
 _cached_token = None
