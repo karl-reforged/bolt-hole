@@ -95,6 +95,14 @@ def _archived_props(properties):
     return archived
 
 
+def _partition_props(properties, max_properties=None):
+    """Split active and archived cards while preserving the top-N contract."""
+    all_active = _visible_props(properties)
+    if max_properties:
+        return all_active[:max_properties], [], len(all_active)
+    return all_active, _archived_props(properties), len(all_active)
+
+
 def _load_last_sent_ids():
     """Source_ids George last received; empty set if no baseline yet."""
     if not LAST_SENT_FILE.exists():
@@ -216,10 +224,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     if output_path is None:
         output_path = DOCS_DIR / "index.html"
 
-    active_props = _visible_props(properties, max_properties)
-    archived_props = _archived_props(properties)
+    active_props, archived_props, total_found = _partition_props(properties, max_properties)
     props = active_props + archived_props
-    total_found = len(active_props)
     total_shown = len(active_props)
     archived_count = len(archived_props)
     sources_count = len({p.get("source") for p in active_props if p.get("source")})

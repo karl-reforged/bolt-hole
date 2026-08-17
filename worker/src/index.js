@@ -177,7 +177,12 @@ export default {
           if (!isAdminRequest(request, env)) {
             return json(request, env, { ok: false, error: 'authentication_required' }, 401);
           }
-          const n = await upsertProperties(env, body.properties || [], body.full_snapshot === true);
+          const n = await upsertProperties(
+            env,
+            body.properties || [],
+            body.full_snapshot === true,
+            body.source_inventory,
+          );
           return json(request, env, { ok: true, upserted: n });
         }
         if (action === 'reaction') {
@@ -266,10 +271,10 @@ async function readProperties(env) {
   return results;
 }
 
-async function upsertProperties(env, properties, fullSnapshot = false) {
+async function upsertProperties(env, properties, fullSnapshot = false, sourceInventory = []) {
   if (!Array.isArray(properties)) throw new ApiError(422, 'invalid_properties');
   if (properties.length > 500) throw new ApiError(413, 'too_many_properties');
-  if (!properties.length) return 0;
+  if (!properties.length && !fullSnapshot) return 0;
   const nowIso = new Date().toISOString();
 
   const stmt = env.DB.prepare(`
@@ -315,10 +320,39 @@ async function upsertProperties(env, properties, fullSnapshot = false) {
     return { p, sid, listingUrl, payload, status };
   });
 
+  let inventoryIds = [];
+  let inventorySources = [];
+  if (fullSnapshot) {
+    if (!Array.isArray(sourceInventory) || !sourceInventory.length) {
+      throw new ApiError(422, 'invalid_source_inventory');
+    }
+    if (sourceInventory.length > 2000) throw new ApiError(413, 'source_inventory_too_large');
+    const byId = new Map();
+    for (const item of sourceInventory) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw new ApiError(422, 'invalid_source_inventory');
+      }
+      const sourceId = String(item.source_id || '').trim();
+      const source = String(item.source || '').trim();
+      if (!sourceId || sourceId.length > 200 || !source || source.length > 100) {
+        throw new ApiError(422, 'invalid_source_inventory');
+      }
+      byId.set(sourceId, source);
+    }
+    inventoryIds = [...byId.keys()];
+    inventorySources = [...new Set(byId.values())];
+    if (validated.some(({ p, sid }) => (
+      inventorySources.includes(String(p.source || '').trim()) && !byId.has(sid)
+    ))) {
+      throw new ApiError(422, 'incomplete_source_inventory');
+    }
+  }
+
   const batch = [];
   if (fullSnapshot) {
-    // Only a guarded, healthy full snapshot may mark absent listings. Present
-    // listings are restored to active/under-offer by the inserts below.
+    // Availability is based on the complete healthy source inventory, not the
+    // post-filter shortlist. json_each keeps this to two bound parameters even
+    // when the scrape contains hundreds of source IDs.
     batch.push(env.DB.prepare(`
       UPDATE properties
       SET status = CASE
@@ -326,7 +360,18 @@ async function upsertProperties(env, properties, fullSnapshot = false) {
         ELSE 'possibly_unavailable'
       END
       WHERE status NOT IN ('sold', 'withdrawn', 'under_offer')
-    `));
+        AND json_extract(payload, '$.source') IN (SELECT value FROM json_each(?1))
+        AND source_id NOT IN (SELECT value FROM json_each(?2))
+    `).bind(JSON.stringify(inventorySources), JSON.stringify(inventoryIds)));
+    batch.push(env.DB.prepare(`
+      UPDATE properties
+      SET last_seen = ?1,
+          status = CASE
+            WHEN status IN ('sold', 'withdrawn', 'under_offer') THEN status
+            ELSE 'active'
+          END
+      WHERE source_id IN (SELECT value FROM json_each(?2))
+    `).bind(nowIso, JSON.stringify(inventoryIds)));
   }
   for (const { p, sid, listingUrl, payload, status } of validated) {
     batch.push(stmt.bind(

@@ -114,12 +114,18 @@ test('property updates validate the full batch before writing', async () => {
 
 test('property refreshes warn, archive, reactivate, and preserve manual outcomes', async () => {
   const env = makeEnv();
-  const upsert = async (properties, fullSnapshot = true) => worker.fetch(request('/', {
+  const upsert = async (properties, fullSnapshot = true, sourceInventory) => worker.fetch(request('/', {
     method: 'POST', token: ADMIN_TOKEN,
-    body: { action: 'properties_upsert', properties, full_snapshot: fullSnapshot },
+    body: {
+      action: 'properties_upsert',
+      properties,
+      full_snapshot: fullSnapshot,
+      source_inventory: sourceInventory || properties.map(({ source_id, source }) => ({ source_id, source })),
+    },
   }), env);
   const prop = (source_id, status) => ({
     source_id,
+    source: 'domain_web',
     listing_url: `https://example.com/${source_id}`,
     ...(status ? { status } : {}),
   });
@@ -162,6 +168,58 @@ test('property refreshes warn, archive, reactivate, and preserve manual outcomes
 
   await upsert([{ ...prop('sold-prior'), display_price: 'Auction unless sold prior' }]);
   assert.equal((await statuses())['sold-prior'], 'active');
+});
+
+test('full snapshots use complete source inventory rather than the filtered shortlist', async () => {
+  const env = makeEnv();
+  const send = async (properties, fullSnapshot = false, sourceInventory = []) => worker.fetch(request('/', {
+    method: 'POST', token: ADMIN_TOKEN,
+    body: {
+      action: 'properties_upsert',
+      properties,
+      full_snapshot: fullSnapshot,
+      source_inventory: sourceInventory,
+    },
+  }), env);
+  const prop = (source_id, source = 'domain_web') => ({
+    source_id,
+    source,
+    listing_url: `https://example.com/${source_id}`,
+  });
+  const inventory = (...items) => items.map(({ source_id, source }) => ({ source_id, source }));
+
+  await send([prop('filtered'), prop('unmonitored-alert', 'cre')]);
+  env.DB.database.prepare(
+    "UPDATE properties SET last_seen = datetime('now', '-22 days') WHERE source_id = 'filtered'"
+  ).run();
+
+  const passing = prop('passing');
+  const filtered = prop('filtered');
+  const rollingAlert = prop('rolling-alert', 'cre');
+  let response = await send([passing, rollingAlert], true, inventory(passing, filtered));
+  assert.equal(response.status, 200);
+
+  let rows = (await (await worker.fetch(request('/?action=properties'), env)).json()).properties;
+  let statuses = Object.fromEntries(rows.map((row) => [row.source_id, row.status]));
+  assert.equal(statuses.filtered, 'active');
+  assert.equal(statuses['unmonitored-alert'], 'active');
+  assert.equal(statuses['rolling-alert'], 'active');
+
+  env.DB.database.prepare(
+    "UPDATE properties SET last_seen = datetime('now', '-22 days') WHERE source_id = 'filtered'"
+  ).run();
+  response = await send([passing], true, inventory(passing));
+  assert.equal(response.status, 200);
+  rows = (await (await worker.fetch(request('/?action=properties'), env)).json()).properties;
+  statuses = Object.fromEntries(rows.map((row) => [row.source_id, row.status]));
+  assert.equal(statuses.filtered, 'archived');
+  assert.equal(statuses['unmonitored-alert'], 'active');
+
+  response = await send([passing], true, []);
+  assert.equal(response.status, 422);
+
+  response = await send([passing, prop('authoritative-omitted')], true, inventory(passing));
+  assert.equal(response.status, 422);
 });
 
 test('notes accept an encouraged name, default to Anonymous, and retry safely', async () => {

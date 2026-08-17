@@ -590,6 +590,7 @@ def run_search(domain_only=False):
     criteria = load_criteria()
 
     source_report = {}
+    source_inventory = []
 
     if domain_only:
         # Legacy mode — Domain API only (uses Domain-specific listing format)
@@ -618,7 +619,10 @@ def run_search(domain_only=False):
     else:
         # Multi-source mode — fetch from all sources
         from sources import fetch_all, enrich_with_descriptions
-        all_normalized, source_report = fetch_all(criteria)
+        all_normalized, source_report, source_inventory = fetch_all(
+            criteria,
+            include_inventory=True,
+        )
 
         if not all_normalized:
             print("No listings from any source.")
@@ -697,6 +701,7 @@ def run_search(domain_only=False):
             "passed_gates": len(properties),
             "rejected": rejected,
             "source_report": source_report if not domain_only else {},
+            "source_inventory": source_inventory,
             "properties": properties,
         }, f, indent=2, default=str)
     print(f"\nSaved to {outfile}")
@@ -721,7 +726,7 @@ def run_search(domain_only=False):
 
 # ── Resilience: sanity gate + cache fallback ─────────────────────────────
 
-def _upsert_properties_to_sheet(properties, *, full_snapshot=False):
+def _upsert_properties_to_sheet(properties, *, full_snapshot=False, source_inventory=None):
     """
     Mirror scraped properties to the D1 database using the private admin token.
 
@@ -738,10 +743,14 @@ def _upsert_properties_to_sheet(properties, *, full_snapshot=False):
     if not BOLT_ADMIN_TOKEN:
         print("Database upsert failed: BOLT_ADMIN_TOKEN is not configured")
         return False
+    if full_snapshot and not source_inventory:
+        print("Database upsert failed: full snapshot source inventory is missing")
+        return False
     body = json.dumps({
         "action": "properties_upsert",
         "properties": properties,
         "full_snapshot": bool(full_snapshot),
+        "source_inventory": source_inventory or [],
     })
     try:
         resp = requests.post(

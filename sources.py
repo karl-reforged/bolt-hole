@@ -3010,18 +3010,24 @@ def _parse_str_detail(url, rex_id, target_postcodes):
 
 # ── Fetch all sources ──────────────────────────────────────────────────────
 
-def fetch_all(criteria=None):
+AUTHORITATIVE_SNAPSHOT_SOURCES = frozenset({"domain_web", "farmbuy", "elders"})
+
+
+def fetch_all(criteria=None, *, include_inventory=False):
     """Fetch from all sources, normalize, and deduplicate.
 
     Each source is wrapped in try/except so one failure doesn't kill the pipeline.
     Returns (deduped_properties, source_report) — report is a dict of
     {source_name: {"count": N, "error": str|None}} for downstream health checks.
+    When include_inventory is true, also returns the complete pre-dedup identity
+    inventory for sources that provide authoritative full snapshots.
     """
     if criteria is None:
         criteria = load_criteria()
 
     all_properties = []
     source_report = {}
+    source_inventory = {}
 
     sources = [
         ("Domain API", fetch_domain),
@@ -3041,6 +3047,14 @@ def fetch_all(criteria=None):
         try:
             props = fetcher(criteria)
             all_properties.extend(props)
+            for prop in props:
+                source_id = str(prop.get("source_id") or "").strip()
+                source = str(prop.get("source") or "").strip()
+                if source_id and source in AUTHORITATIVE_SNAPSHOT_SOURCES:
+                    source_inventory[(source, source_id)] = {
+                        "source_id": source_id,
+                        "source": source,
+                    }
             source_report[name] = {"count": len(props), "error": None}
         except Exception as e:
             print(f"ERROR: {name} failed: {e}")
@@ -3054,6 +3068,8 @@ def fetch_all(criteria=None):
     deduped = deduplicate(all_properties)
     print(f"After dedup: {len(deduped)}")
 
+    if include_inventory:
+        return deduped, source_report, list(source_inventory.values())
     return deduped, source_report
 
 

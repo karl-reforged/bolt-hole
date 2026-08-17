@@ -8,8 +8,13 @@ The production backend is a Cloudflare Worker backed by D1 (SQLite). It stores:
 - stable idempotency keys so retrying a note cannot create duplicates.
 
 Property availability follows one small lifecycle. Only a guarded upload marked
-as a complete, healthy snapshot can change absent listings. A listing missing
-from that snapshot is marked `possibly_unavailable`; after 21 days it is
+as a complete, healthy snapshot can change absent listings. The upload carries
+the complete pre-dedup source inventory separately from the filtered shortlist,
+so a live listing is not marked missing merely because it falls outside the
+price or land gates. Only authoritative full-page sources—Domain Web, Farmbuy,
+and Elders—participate; rolling email alerts cannot age out older listings. A
+listing missing from the full inventory is marked
+`possibly_unavailable`; after 21 days it is
 `archived`. A listing that reappears becomes `active` again. Clear source labels
 such as “Under Offer” are archived immediately, while human-set `sold` and
 `withdrawn` outcomes survive ordinary refreshes. Archiving never deletes the

@@ -84,6 +84,11 @@ class SiteIntegrityTests(unittest.TestCase):
         self.assertIn('<button type="button" class="map-toggle', html)
         self.assertIn("'<button type=\"button\" class=\"corridor-card\"", html)
 
+    def test_historical_page_links_back_to_the_current_shortlist(self):
+        html = (ROOT / "docs" / "top10.html").read_text()
+
+        self.assertIn('<a href="./">current Shortlist</a>', html)
+
 
 if __name__ == "__main__":
     unittest.main()

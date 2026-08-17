@@ -1,6 +1,7 @@
 import unittest
 
 from availability import availability_status, is_archived_status, status_label
+from shortlist import _partition_props
 
 
 class AvailabilityTests(unittest.TestCase):
@@ -50,6 +51,18 @@ class AvailabilityTests(unittest.TestCase):
                 self.assertEqual(availability_status({"status": status}), status)
                 self.assertTrue(is_archived_status(status))
                 self.assertTrue(status_label(status))
+
+    def test_top_n_view_does_not_append_the_archive(self):
+        properties = [
+            {"source_id": "active-1"},
+            {"source_id": "active-2"},
+            {"source_id": "sold", "status": "sold"},
+        ]
+        active, archived, total_found = _partition_props(properties, max_properties=1)
+
+        self.assertEqual([p["source_id"] for p in active], ["active-1"])
+        self.assertEqual(archived, [])
+        self.assertEqual(total_found, 2)
 
 
 if __name__ == "__main__":

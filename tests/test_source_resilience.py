@@ -87,6 +87,37 @@ class SourceResilienceTests(unittest.TestCase):
         self.assertEqual(report["Farmbuy"]["count"], 0)
         self.assertEqual(report["Farmbuy"]["error"], "upstream unavailable")
 
+    def test_inventory_is_pre_dedup_and_excludes_rolling_alert_sources(self):
+        domain = {
+            "source": "domain_web", "source_id": "domain-1",
+            "address": "1 Test Road", "suburb": "Testville", "postcode": "2787",
+        }
+        farmbuy = {
+            "source": "farmbuy", "source_id": "farmbuy-1",
+            "address": "1 Test Road", "suburb": "Testville", "postcode": "2787",
+        }
+        email = {
+            "source": "cre", "source_id": "cre-1",
+            "address": "2 Test Road", "suburb": "Testville", "postcode": "2787",
+        }
+
+        with (
+            patch.object(sources, "fetch_domain", return_value=[]),
+            patch.object(sources, "fetch_domain_web", return_value=[domain]),
+            patch.object(sources, "fetch_farmbuy", return_value=[farmbuy]),
+            patch.object(sources, "fetch_elders", return_value=[]),
+            patch.object(sources, "fetch_rea_apify", return_value=[]),
+            patch.object(sources, "fetch_rea_manual", return_value=[]),
+            patch.object(sources, "fetch_email_alerts", return_value=[email]),
+        ):
+            properties, _, inventory = sources.fetch_all({}, include_inventory=True)
+
+        self.assertEqual(len(properties), 2)
+        self.assertEqual(
+            {(item["source"], item["source_id"]) for item in inventory},
+            {("domain_web", "domain-1"), ("farmbuy", "farmbuy-1")},
+        )
+
     def test_missing_email_credentials_are_a_source_failure(self):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(sources.SourceFetchError, "credentials are missing"):
