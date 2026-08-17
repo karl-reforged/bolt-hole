@@ -2107,8 +2107,20 @@ def _parse_listing_loop_alert(html, criteria):
         id_match = re.search(r'/propert(?:y|ies)/([a-f0-9-]+|\d+)', url)
         listing_id = id_match.group(1) if id_match else url.split("/")[-1]
 
-        # Search full email HTML for context (single-property emails from Listing Loop)
-        full_text = re.sub(r'<[^>]+>', ' ', html)
+        # ListingLoop emails are table-based. Keep extraction local to the table
+        # cell containing this link so one card cannot borrow another card's
+        # address, price or photograph. Fall back to a bounded nearby window for
+        # single-property/non-table variants.
+        link_pos = html.find(url)
+        cell_start = html.rfind("<td", 0, link_pos)
+        previous_cell_end = html.rfind("</td>", 0, link_pos)
+        cell_end = html.find("</td>", link_pos)
+        if cell_start > previous_cell_end and cell_end >= 0:
+            card_html = html[cell_start:cell_end + len("</td>")]
+        else:
+            card_html = html[max(0, link_pos - 2500):link_pos + len(url) + 1000]
+
+        full_text = re.sub(r'<[^>]+>', ' ', card_html)
         full_text = re.sub(r'\s+', ' ', full_text)
 
         # Try to extract address from full email
@@ -2138,7 +2150,7 @@ def _parse_listing_loop_alert(html, criteria):
         land_acres = _extract_land_from_text(full_text)
 
         photo = None
-        img_match = re.search(r'<img[^>]+src="(https?://[^"]+\.(?:jpg|jpeg|png|webp))', html)
+        img_match = re.search(r'<img[^>]+src="(https?://[^"]+\.(?:jpg|jpeg|png|webp))', card_html)
         if img_match:
             photo = img_match.group(1)
 

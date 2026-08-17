@@ -53,6 +53,13 @@ def _is_suppressed_property(prop):
     """Hide known-low-quality sources and CRE records without a real listing id."""
     if prop.get("source") in SUPPRESSED_SOURCES:
         return True
+    if prop.get("source") == "listing_loop":
+        has_address = bool(str(prop.get("address") or "").strip())
+        has_property_detail = any(
+            prop.get(field) not in (None, "", 0)
+            for field in ("price", "land_acres", "bedrooms", "headline", "description")
+        )
+        return not (has_address and has_property_detail)
     if prop.get("source") == "cre":
         path = urlparse(prop.get("listing_url") or "").path.rstrip("/")
         # CRE's canonical property pages end in a numeric listing id. Older
@@ -382,9 +389,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     <div class="card-header">
                         {rank_control}
                         <span class="price">{price_str}</span>
-                        {status_badge}{"<span class='new-badge'>NEW</span>" if is_new else ""}<button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
+                        {status_badge}{"<span class='new-badge'>NEW</span>" if is_new else ""}<button type="button" class="score-badge" id="score-{i}" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown" aria-expanded="false" aria-controls="breakdown-{i}">{pct:.0f}% match</button>
                     </div>
-                    <button class="fav-btn" id="fav-{i}" onclick="toggleFavourite({i}, '{prop_id}')" title="Favourite">
+                    <button type="button" class="fav-btn" id="fav-{i}" onclick="toggleFavourite({i}, '{prop_id}')" title="Favourite" aria-label="Favourite property {i + 1}" aria-pressed="false">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     </button>
                 </div>
@@ -405,16 +412,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     </div>
                 </div>
                 <div class="notes-section" id="notes-section-{i}" data-property-id="{prop_id}">
-                    <button class="notes-pill notes-pill-empty" onclick="toggleNotes({i})">+ note</button>
+                    <button type="button" class="notes-pill notes-pill-empty" onclick="toggleNotes({i})" aria-expanded="false" aria-controls="notes-drawer-{i}">+ note</button>
                     <div class="notes-drawer" id="notes-drawer-{i}" style="display:none;">
                         <div class="notes-list" id="notes-list-{i}"></div>
                         <div class="notes-input-row">
-                            <input type="text" class="notes-input" id="notes-input-{i}" name="property-note-{i}" autocomplete="off" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, {i}, '{prop_id}')">
-                            <button class="notes-post" id="notes-post-{i}" onclick="submitNote({i}, '{prop_id}')">Post</button>
+                            <input type="text" class="notes-input" id="notes-input-{i}" name="property-note-{i}" autocomplete="off" aria-label="Add a note for this property" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, {i}, '{prop_id}')">
+                            <button type="button" class="notes-post" id="notes-post-{i}" onclick="submitNote({i}, '{prop_id}')">Post</button>
                         </div>
                     </div>
                 </div>
-                <div class="feedback-confirmation" id="confirm-{i}" style="display:none;"></div>
+                <div class="feedback-confirmation" id="confirm-{i}" role="status" aria-live="polite" style="display:none;"></div>
             </div>
         </div>''')
 
@@ -503,9 +510,15 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bolt Hole — Weekly Shortlist</title>
+    <link rel="icon" href="design-system/assets/logo-mark.png" />
     <script>if (new URLSearchParams(location.search).get('view') === 'archived') document.documentElement.classList.add('archive-view');</script>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -519,6 +532,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
 
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        button, a, select {{ touch-action: manipulation; }}
+        :focus-visible {{ outline: 3px solid var(--eucalyptus); outline-offset: 3px; }}
 
         body {{
             font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -713,6 +728,14 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
             cursor: pointer; transition: transform 0.2s;
         }}
+        .property-cluster {{
+            display: flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; border-radius: 50%;
+            background: var(--eucalyptus); color: #fff;
+            border: 3px solid rgba(255,255,255,0.92);
+            box-shadow: 0 2px 8px rgba(15,23,42,0.28);
+            font-size: 12px; font-weight: 700;
+        }}
         .map-pin.pulse {{
             animation: pinPulse 0.6s ease;
         }}
@@ -734,7 +757,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             background: #fff; border: 1px solid var(--light-border);
             border-radius: 10px; margin-bottom: 24px; overflow: hidden;
             transition: box-shadow 0.2s, opacity 0.4s, border-color 0.3s;
-            content-visibility: auto; contain-intrinsic-size: 520px;
+            content-visibility: auto; contain-intrinsic-size: auto 720px;
+            scroll-margin-top: 64px;
         }}
         .card:hover {{ box-shadow: 0 4px 12px rgba(0,0,0,0.06); }}
         .card.dismissed {{ opacity: 0.35; display: none; }}
@@ -990,6 +1014,24 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .feedback-access-button.secondary {{ background: var(--slate); }}
         @media (max-width: 520px) {{
             .feedback-access-controls {{ justify-content: stretch; width: 100%; }}
+            .sort-bar {{ flex-wrap: wrap; overflow-x: visible; }}
+            .sort-label {{ flex-basis: 100%; margin-bottom: 2px; }}
+            .sort-btn {{ min-height: 44px; }}
+            .view-switch a, .map-expand-btn, .rank-badge, .score-badge,
+            .fav-btn, .notes-post, .map-modal-close {{ min-height: 44px; }}
+            .rank-badge {{ min-width: 44px; }}
+            .fav-btn {{ width: 44px; height: 44px; padding: 6px; }}
+            .feedback .btn, .notes-pill {{ min-height: 44px; }}
+            body > nav > div {{
+                padding-inline: 4px !important;
+                scrollbar-width: auto !important;
+            }}
+            body > nav > div::-webkit-scrollbar {{ height: 3px; }}
+            body > nav::after {{
+                content: ''; position: absolute; top: 0; right: 0; bottom: 3px;
+                width: 22px; pointer-events: none;
+                background: linear-gradient(90deg, transparent, rgba(245,240,232,0.95));
+            }}
         }}
 
         .feedback-confirmation {{
@@ -1487,7 +1529,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const card = document.getElementById('card-' + idx);
         const btn = document.getElementById('fav-' + idx);
         if (card) card.classList.add('favourited');
-        if (btn) btn.classList.add('active');
+        if (btn) {{
+            btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
+        }}
         // Update map pin
         const pinEl = document.querySelector('.map-pin[data-idx="' + idx + '"]');
         if (pinEl) pinEl.classList.add('fav-pin');
@@ -1497,7 +1542,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const card = document.getElementById('card-' + idx);
         const btn = document.getElementById('fav-' + idx);
         if (card) card.classList.remove('favourited');
-        if (btn) btn.classList.remove('active');
+        if (btn) {{
+            btn.classList.remove('active');
+            btn.setAttribute('aria-pressed', 'false');
+        }}
         const pinEl = document.querySelector('.map-pin[data-idx="' + idx + '"]');
         if (pinEl) pinEl.classList.remove('fav-pin');
     }}
@@ -1505,7 +1553,11 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     // ── Score breakdown toggle ────────────────────────────────────────
     function toggleBreakdown(idx) {{
         const el = document.getElementById('breakdown-' + idx);
-        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        const btn = document.getElementById('score-' + idx);
+        if (!el) return;
+        const open = el.style.display === 'none';
+        el.style.display = open ? 'block' : 'none';
+        if (btn) btn.setAttribute('aria-expanded', String(open));
     }}
 
     // ── Attributed shared notes ───────────────────────────────────────
@@ -1573,6 +1625,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (!drawer) return;
         const isOpen = drawer.style.display === 'block';
         drawer.style.display = isOpen ? 'none' : 'block';
+        const pill = document.querySelector('#notes-section-' + idx + ' .notes-pill');
+        if (pill) pill.setAttribute('aria-expanded', String(!isOpen));
         if (!isOpen) {{
             const input = document.getElementById('notes-input-' + idx);
             if (input) input.focus();
@@ -1714,6 +1768,27 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         return '#64748b';
     }}
 
+    function createPropertyClusterGroup() {{
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return L.markerClusterGroup({{
+            maxClusterRadius: 44,
+            disableClusteringAtZoom: 11,
+            showCoverageOnHover: false,
+            spiderfyOnMaxZoom: true,
+            chunkedLoading: true,
+            animate: !reducedMotion,
+            iconCreateFunction(cluster) {{
+                const count = cluster.getChildCount();
+                return L.divIcon({{
+                    className: '',
+                    html: '<div class="property-cluster" aria-label="' + count + ' nearby properties">' + count + '</div>',
+                    iconSize: [38, 38],
+                    iconAnchor: [19, 19]
+                }});
+            }}
+        }});
+    }}
+
     function wireMarkerAccessibility(marker, m) {{
         const decorate = () => {{
             const el = marker.getElement();
@@ -1733,7 +1808,29 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     function scrollToCard(idx) {{
         const card = document.getElementById('card-' + idx);
-        if (card) card.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+        if (!card) return;
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        card.style.contentVisibility = 'visible';
+        let attempts = 0;
+
+        function alignCard() {{
+            const behavior = reducedMotion || attempts === 0 ? 'auto' : 'smooth';
+            card.scrollIntoView({{ behavior, block: 'start' }});
+            attempts += 1;
+            window.setTimeout(() => {{
+                const stickyOffset = 64;
+                const distance = Math.abs(card.getBoundingClientRect().top - stickyOffset);
+                if (distance > 16 && attempts < 4) {{
+                    alignCard();
+                    return;
+                }}
+                const focusTarget = card.querySelector('button, a');
+                if (focusTarget) focusTarget.focus({{ preventScroll: true }});
+                card.style.removeProperty('content-visibility');
+            }}, reducedMotion ? 0 : 180);
+        }}
+
+        window.requestAnimationFrame(alignCard);
     }}
 
     function pulsePin(idx) {{
@@ -1750,26 +1847,32 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const marker = mapMarkers[idx];
         if (!marker || !map) return;
         const mapEl = document.getElementById('shortlist-map');
-        if (mapEl) mapEl.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (mapEl) mapEl.scrollIntoView({{ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' }});
         // Defer pan/zoom until the smooth-scroll has settled so the popup
         // anchors correctly relative to the now-visible map viewport.
         setTimeout(() => {{
-            // Softer zoom on small touch viewports — at zoom 11 a phone
-            // shows only one suburb, which can feel disorienting. Phones
-            // get zoom 9 (regional), tablets/desktops get zoom 11.
-            const isPhone = window.innerWidth < 600;
-            const floorZoom = isPhone ? 9 : 11;
-            const targetZoom = Math.max(map.getZoom(), floorZoom);
-            map.flyTo(marker.getLatLng(), targetZoom, {{ duration: 0.7 }});
-            marker.openPopup();
-            pulsePin(idx);
+            const revealMarker = () => {{
+                marker.openPopup();
+                pulsePin(idx);
+            }};
+            if (propertyClusters) {{
+                propertyClusters.zoomToShowLayer(marker, revealMarker);
+            }} else {{
+                map.setView(marker.getLatLng(), Math.max(map.getZoom(), 11), {{ animate: !reducedMotion }});
+                revealMarker();
+            }}
         }}, 350);
     }}
 
     function resetMapView() {{
         if (!map || !initialMapBounds) return;
         map.closePopup();
-        map.flyToBounds(initialMapBounds, {{ padding: [30, 30], duration: 0.6 }});
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {{
+            map.fitBounds(initialMapBounds, {{ padding: [30, 30], animate: false }});
+        }} else {{
+            map.flyToBounds(initialMapBounds, {{ padding: [30, 30], duration: 0.6 }});
+        }}
     }}
 
     function updateMapPin(idx, reaction) {{
@@ -1777,10 +1880,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const pin = mapPinEls[idx];
         if (reaction === 'pass') {{
             // Remove from map entirely
-            if (marker && map) map.removeLayer(marker);
+            if (marker && propertyClusters) propertyClusters.removeLayer(marker);
         }} else {{
             // Add back if was removed
-            if (marker && map && !map.hasLayer(marker)) map.addLayer(marker);
+            if (marker && propertyClusters && !propertyClusters.hasLayer(marker)) propertyClusters.addLayer(marker);
             if (pin) {{
                 if (reaction === 'love') {{
                     pin.style.background = '#166534';
@@ -1793,7 +1896,19 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
     }}
 
+    function restoreMapPinState(idx, pct, pin) {{
+        const card = document.getElementById('card-' + idx);
+        const propertyId = card?.dataset.propertyId;
+        if (!pin || !propertyId) return;
+        pin.classList.toggle('fav-pin', Boolean(state.favourites[propertyId]));
+        pin.style.background = state.feedback[propertyId] === 'love'
+            ? '#166534'
+            : pinColor(pct);
+        pin.style.opacity = '1';
+    }}
+
     let map;
+    let propertyClusters;
     if (markersData.length > 0) {{
         map = L.map('shortlist-map', {{ zoomControl: true, attributionControl: false }});
         L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}@2x.png', {{
@@ -1808,6 +1923,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}).addTo(map).bindPopup('<strong>Sydney</strong><br>Reference point');
 
         const bounds = [[-33.8688, 151.2653]];
+        propertyClusters = createPropertyClusterGroup().addTo(map);
 
         markersData.forEach(m => {{
             const color = pinColor(m.pct);
@@ -1819,7 +1935,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 popupAnchor: [0, -16]
             }});
 
-            const marker = L.marker([m.lat, m.lng], {{ icon: icon }}).addTo(map);
+            const marker = L.marker([m.lat, m.lng], {{ icon: icon }});
             marker.bindPopup(
                 '<strong>' + m.suburb + '</strong><br>' +
                 m.price + (m.acres ? ' &middot; ' + m.acres : '') +
@@ -1827,6 +1943,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 '<button type="button" class="popup-link" onclick="scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
             );
             wireMarkerAccessibility(marker, m);
+            propertyClusters.addLayer(marker);
 
             mapMarkers[m.idx] = marker;
             bounds.push([m.lat, m.lng]);
@@ -1835,7 +1952,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             marker.on('add', () => {{
                 setTimeout(() => {{
                     const el = document.querySelector('.map-pin[data-idx="' + m.idx + '"]');
-                    if (el) mapPinEls[m.idx] = el;
+                    if (el) {{
+                        mapPinEls[m.idx] = el;
+                        restoreMapPinState(m.idx, m.pct, el);
+                    }}
                 }}, 50);
             }});
         }});
@@ -1864,11 +1984,15 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     // ── Expanded-map modal ───────────────────────────────────────────
     let expandedMap = null;
+    let expandedMapTrigger = null;
     function openExpandedMap() {{
         const modal = document.getElementById('map-modal');
         if (!modal) return;
+        expandedMapTrigger = document.activeElement;
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        const closeButton = modal.querySelector('.map-modal-close');
+        if (closeButton) closeButton.focus();
         if (!expandedMap && typeof markersData !== 'undefined' && markersData.length > 0) {{
             expandedMap = L.map('expanded-map', {{ zoomControl: true, attributionControl: false }});
             L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}@2x.png', {{
@@ -1878,6 +2002,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 radius: 5, fillColor: '#ef4444', fillOpacity: 0.9, color: '#fff', weight: 2
             }}).addTo(expandedMap).bindPopup('<strong>Sydney</strong><br>Reference point');
             const eb = [[-33.8688, 151.2653]];
+            const expandedClusters = createPropertyClusterGroup().addTo(expandedMap);
             markersData.forEach(m => {{
                 const color = pinColor(m.pct);
                 const icon = L.divIcon({{
@@ -1885,7 +2010,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     html: '<div class="map-pin" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
                     iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
                 }});
-                const marker = L.marker([m.lat, m.lng], {{ icon: icon }}).addTo(expandedMap);
+                const marker = L.marker([m.lat, m.lng], {{ icon: icon }});
                 marker.bindPopup(
                     '<strong>' + m.suburb + '</strong><br>' +
                     m.price + (m.acres ? ' &middot; ' + m.acres : '') +
@@ -1893,6 +2018,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     '<button type="button" class="popup-link" onclick="closeExpandedMap(); scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
                 );
                 wireMarkerAccessibility(marker, m);
+                expandedClusters.addLayer(marker);
                 eb.push([m.lat, m.lng]);
             }});
             expandedMap.fitBounds(eb, {{ padding: [40, 40] }});
@@ -1904,6 +2030,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (!modal) return;
         modal.classList.add('hidden');
         document.body.style.overflow = '';
+        if (expandedMapTrigger && typeof expandedMapTrigger.focus === 'function') expandedMapTrigger.focus();
+        expandedMapTrigger = null;
     }}
     (function wireExpandedMap() {{
         const modal = document.getElementById('map-modal');
@@ -1911,6 +2039,19 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         modal.addEventListener('click', e => {{ if (e.target === modal) closeExpandedMap(); }});
         document.addEventListener('keydown', e => {{
             if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeExpandedMap();
+            if (e.key !== 'Tab' || modal.classList.contains('hidden')) return;
+            const focusable = Array.from(modal.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])'))
+                .filter(el => !el.disabled && el.offsetParent !== null);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {{
+                e.preventDefault();
+                last.focus();
+            }} else if (!e.shiftKey && document.activeElement === last) {{
+                e.preventDefault();
+                first.focus();
+            }}
         }});
     }})();
 

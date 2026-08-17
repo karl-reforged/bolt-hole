@@ -111,6 +111,12 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertIn('<button type="button" class="popup-link"', self.html)
         self.assertIn("wireMarkerAccessibility(marker, m)", self.html)
 
+    def test_dense_property_map_uses_clusters(self):
+        self.assertIn("L.markerClusterGroup", self.html)
+        self.assertIn("zoomToShowLayer", self.html)
+        self.assertIn('class="property-cluster"', self.html)
+        self.assertIn("restoreMapPinState(m.idx, m.pct, el)", self.html)
+
     def test_unavailable_properties_have_a_separate_archive_view(self):
         self.assertIn('href="?view=archived">Archived (', self.html)
         self.assertIn('class="card archived-card"', self.html)

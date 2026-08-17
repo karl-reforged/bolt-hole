@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bolt Hole — Price Reality Dashboard</title>
+<link rel="icon" href="design-system/assets/logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -169,6 +170,20 @@
     padding-bottom: var(--space-sm);
     border-bottom: 1px solid var(--fence);
   }
+  .detail-map-button {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin-bottom: var(--space-md);
+    padding: 8px 14px;
+    border: 1px solid var(--eucalyptus);
+    border-radius: var(--radius-btn);
+    background: var(--lichen);
+    color: var(--canopy);
+    font: 600 13px/1.2 'Inter', sans-serif;
+    cursor: pointer;
+  }
 
   /* Detail prose sections */
   .detail-section { margin-bottom: 20px; }
@@ -243,6 +258,20 @@
     border: 1px solid var(--fence);
     z-index: 1000;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .map-legend-toggle {
+    display: none;
+    position: absolute;
+    z-index: 1001;
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 1px solid var(--fence);
+    border-radius: var(--radius-btn);
+    background: rgba(255,255,255,0.96);
+    color: var(--bark);
+    font: 600 13px/1.2 'Inter', sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    cursor: pointer;
   }
   .legend-title { font-size: 12px; font-weight: 600; color: var(--bark); margin-bottom: 8px; font-family: 'Inter', sans-serif; }
   .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px; color: var(--shale); font-family: 'Inter', sans-serif; }
@@ -338,8 +367,22 @@
     .map-container { order: -1; flex: none; width: 100%; height: 52vh; min-height: 360px; }
     .map-topbar { top: 10px; left: 10px; right: 52px; flex-wrap: wrap; gap: 6px; }
     .map-chip { padding: 6px 10px; font-size: 11px; }
-    .map-toggle { min-height: 40px; padding: 8px 12px; }
-    .map-legend { right: 10px; bottom: 18px; padding: 8px 10px; }
+    body > nav::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 28px;
+      background: linear-gradient(90deg, transparent, rgba(244,241,236,0.96));
+      pointer-events: none;
+    }
+    body > nav > div { padding-inline: 4px !important; scrollbar-width: thin !important; }
+    .map-toggle { min-height: 44px; padding: 8px 12px; }
+    .map-legend-toggle { display: inline-flex; right: 10px; bottom: 16px; }
+    .map-legend { right: 10px; bottom: 68px; padding: 8px 10px; }
+    .map-legend:not(.open) { display: none; }
+    .detail-map-button { display: inline-flex; }
     .corridor-card { width: 100%; text-align: left; }
   }
 
@@ -392,6 +435,7 @@
 
       <div class="detail-panel" id="detail-panel">
         <div class="detail-title" id="detail-title"></div>
+        <button type="button" class="detail-map-button" onclick="showSelectedCorridorOnMap()">Show on map</button>
         <div id="detail-content"></div>
         <div class="sales-list" id="sales-list"></div>
       </div>
@@ -408,7 +452,8 @@
         <span class="toggle-dot"></span> Drive times
       </button>
     </div>
-    <div class="map-legend">
+    <button type="button" class="map-legend-toggle" aria-expanded="false" aria-controls="map-legend" onclick="toggleMapLegend(this)">Legend</button>
+    <div class="map-legend" id="map-legend">
       <div class="legend-title">Corridor fit</div>
       <div class="legend-item"><div class="legend-dot" style="background:#3D8B6E"></div> Sweet Spot</div>
       <div class="legend-item"><div class="legend-dot" style="background:#4A7C6B"></div> Good Value</div>
@@ -694,10 +739,35 @@ function selectCorridor(name) {
 
   // Pan to it
   const mk = mapMarkers.find(m => m.name === name);
-  if (mk) { const b = mk.marker.getBounds(); map.flyToBounds(b.pad(0.3), { duration: 0.5 }); }
+  if (mk) {
+    const b = mk.marker.getBounds();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      map.fitBounds(b.pad(0.3), { animate: false });
+    } else {
+      map.flyToBounds(b.pad(0.3), { duration: 0.5 });
+    }
+  }
 
   // Scroll detail panel into view
-  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  const scrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  setTimeout(() => panel.scrollIntoView({ behavior: scrollBehavior, block: 'nearest' }), 100);
+}
+
+function toggleMapLegend(button) {
+  const legend = document.getElementById('map-legend');
+  const open = legend.classList.toggle('open');
+  button.setAttribute('aria-expanded', String(open));
+  button.textContent = open ? 'Hide legend' : 'Legend';
+}
+
+function showSelectedCorridorOnMap() {
+  if (!selectedCorridor) return;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelector('.map-container').scrollIntoView({
+    behavior: reducedMotion ? 'auto' : 'smooth',
+    block: 'start'
+  });
+  window.setTimeout(() => map.invalidateSize(), reducedMotion ? 0 : 350);
 }
 
 // Map

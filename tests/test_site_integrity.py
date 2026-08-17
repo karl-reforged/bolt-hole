@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from email_template import render_email
 from email_sender import _build_link_email
-from shortlist import _fetch_sheet_properties
+from shortlist import _fetch_sheet_properties, _visible_props
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +14,33 @@ LIVE_SHORTLIST_URL = "https://karl-reforged.github.io/bolt-hole/"
 
 
 class SiteIntegrityTests(unittest.TestCase):
+    def test_incomplete_listingloop_property_is_not_published_as_a_normal_card(self):
+        incomplete = {
+            "source": "listing_loop",
+            "source_id": "ll_incomplete",
+            "suburb": "Tapitallee",
+            "postcode": "2540",
+            "listing_url": "https://buyer.listingloop.com.au/buyer/#/properties/incomplete",
+            "price": None,
+            "land_acres": None,
+            "bedrooms": None,
+        }
+
+        self.assertEqual(_visible_props([incomplete]), [])
+
+    def test_enriched_listingloop_property_can_be_published(self):
+        enriched = {
+            "source": "listing_loop",
+            "source_id": "ll_enriched",
+            "address": "12 Example Road",
+            "suburb": "Tapitallee",
+            "postcode": "2540",
+            "listing_url": "https://buyer.listingloop.com.au/buyer/#/properties/enriched",
+            "price": 900_000,
+        }
+
+        self.assertEqual([p["source_id"] for p in _visible_props([enriched])], ["ll_enriched"])
+
     def test_database_overlay_uses_an_explicit_application_identity(self):
         body = json.dumps({"properties": [{"source_id": "archived-1"}]}).encode()
 
@@ -77,12 +104,39 @@ class SiteIntegrityTests(unittest.TestCase):
         self.assertIn("flex-direction: column", html)
         self.assertIn("height: 52vh", html)
 
+    def test_shortlist_phone_controls_wrap_and_have_touch_sized_targets(self):
+        html = (ROOT / "docs" / "index.html").read_text()
+
+        self.assertIn(".sort-bar { flex-wrap: wrap; overflow-x: visible; }", html)
+        self.assertIn(".sort-btn { min-height: 44px; }", html)
+        self.assertIn(".feedback .btn, .notes-pill { min-height: 44px; }", html)
+        self.assertIn("body > nav::after", html)
+
+    def test_shortlist_feedback_controls_expose_state_to_assistive_technology(self):
+        html = (ROOT / "docs" / "index.html").read_text()
+
+        self.assertIn('aria-label="Add a note for this property"', html)
+        self.assertIn('role="status" aria-live="polite"', html)
+        self.assertIn('aria-pressed="false"', html)
+        self.assertIn('aria-expanded="false"', html)
+        self.assertIn("btn.setAttribute('aria-pressed'", html)
+        self.assertIn("pill.setAttribute('aria-expanded'", html)
+
     def test_market_map_controls_are_keyboard_accessible(self):
         html = (ROOT / "docs" / "dashboard.html").read_text()
 
         self.assertNotIn('<div class="map-toggle', html)
         self.assertIn('<button type="button" class="map-toggle', html)
         self.assertIn("'<button type=\"button\" class=\"corridor-card\"", html)
+
+    def test_market_map_phone_can_collapse_legend_and_return_to_map(self):
+        html = (ROOT / "docs" / "dashboard.html").read_text()
+
+        self.assertIn('class="map-legend-toggle"', html)
+        self.assertIn('aria-controls="map-legend"', html)
+        self.assertIn(".map-legend:not(.open) { display: none; }", html)
+        self.assertIn('class="detail-map-button"', html)
+        self.assertIn("function showSelectedCorridorOnMap()", html)
 
     def test_historical_page_links_back_to_the_current_shortlist(self):
         html = (ROOT / "docs" / "top10.html").read_text()
