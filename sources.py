@@ -54,6 +54,10 @@ CHROME_EXECUTABLE_CANDIDATES = [
 _GAZETTEER_INDEX = None  # lazy-loaded: (locality+state → row, postcode → row)
 
 
+class SourceFetchError(RuntimeError):
+    """A configured source could not complete a trustworthy fetch."""
+
+
 def _geocode_from_gazetteer(suburb, postcode, state):
     """Suburb-centroid lat/lng from bundled AU postcode gazetteer.
 
@@ -1010,11 +1014,9 @@ def fetch_farmbuy(criteria):
         resp = session.get(FARMBUY_URL, params=params, timeout=30,
                            headers={"User-Agent": "Mozilla/5.0 (property search tool)"})
         if resp.status_code != 200:
-            print(f"Farmbuy: HTTP {resp.status_code}")
-            return []
+            raise SourceFetchError(f"Farmbuy returned HTTP {resp.status_code}")
     except requests.RequestException as e:
-        print(f"Farmbuy: request failed: {e}")
-        return []
+        raise SourceFetchError(f"Farmbuy request failed: {e}") from e
 
     # Farmbuy embeds property data in <script type="application/json"> blocks
     properties_raw = []
@@ -1033,6 +1035,11 @@ def fetch_farmbuy(criteria):
                 properties_raw.append(data)
         except json.JSONDecodeError:
             continue
+
+    if not properties_raw:
+        raise SourceFetchError(
+            "Farmbuy returned no parseable listings; its page structure may have changed"
+        )
 
     print(f"Farmbuy: {len(properties_raw)} listings parsed from page")
 
@@ -1594,8 +1601,7 @@ def fetch_rea_apify(criteria):
     """
     token = os.getenv("APIFY_API_TOKEN")
     if not token:
-        print("REA (Apify): skipped — set APIFY_API_TOKEN in .env")
-        return []
+        raise SourceFetchError("REA (Apify) is configured but APIFY_API_TOKEN is missing")
 
     actor = os.getenv("APIFY_REA_ACTOR", APIFY_DEFAULT_ACTOR)
     gates = criteria["gates"]
@@ -1616,6 +1622,7 @@ def fetch_rea_apify(criteria):
     # Apify API uses ~ not / as separator: "user/actor" → "user~actor"
     actor_api_id = actor.replace("/", "~")
     session = _retry_session(retries=2, backoff=2.0)
+    auth_headers = {"Authorization": f"Bearer {token}"}
 
     # Actor input — location mode with filters matching our gates
     actor_input = {
@@ -1635,7 +1642,6 @@ def fetch_rea_apify(criteria):
     run_url = f"{APIFY_API_BASE}/acts/{actor_api_id}/runs"
     try:
         run_params = {
-            "token": token,
             # Pay-per-result Actors now require a positive platform-side charge
             # ceiling. This is separate from the actor input's maxListings.
             "maxItems": str(actor_input["maxListings"]),
@@ -1643,24 +1649,25 @@ def fetch_rea_apify(criteria):
         resp = session.post(
             run_url,
             params=run_params,
+            headers=auth_headers,
             json=actor_input,
             timeout=30,
         )
     except requests.RequestException as e:
-        print(f"REA (Apify): failed to start actor — {e}")
-        return []
+        raise SourceFetchError(f"REA (Apify) failed to start actor: {e}") from e
 
     if resp.status_code not in (200, 201):
-        print(f"REA (Apify): HTTP {resp.status_code} starting run — {resp.text[:200]}")
-        return []
+        raise SourceFetchError(f"REA (Apify) returned HTTP {resp.status_code} starting run")
 
-    run_data = resp.json().get("data", {})
+    try:
+        run_data = resp.json().get("data", {})
+    except (ValueError, AttributeError) as e:
+        raise SourceFetchError("REA (Apify) returned an invalid run response") from e
     run_id = run_data.get("id")
     dataset_id = run_data.get("defaultDatasetId")
 
     if not run_id:
-        print("REA (Apify): no run ID returned")
-        return []
+        raise SourceFetchError("REA (Apify) returned no run ID")
 
     print(f"REA (Apify): run started (ID: {run_id}), polling for completion...")
 
@@ -1670,13 +1677,20 @@ def fetch_rea_apify(criteria):
     max_wait = 1800  # 30 minutes
     poll_interval = 15
     waited = 0
+    status = None
+    poll_resp = None
 
     while waited < max_wait:
         time.sleep(poll_interval)
         waited += poll_interval
 
         try:
-            poll_resp = session.get(poll_url, params={"token": token}, timeout=15)
+            poll_resp = session.get(
+                poll_url,
+                params={},
+                headers=auth_headers,
+                timeout=15,
+            )
             if poll_resp.status_code != 200:
                 continue
             status = poll_resp.json().get("data", {}).get("status")
@@ -1691,44 +1705,47 @@ def fetch_rea_apify(criteria):
             print(f"REA (Apify): still running... ({waited}s)")
 
     else:
-        print(f"REA (Apify): timed out after {max_wait}s waiting for run to complete")
-        return []
+        raise SourceFetchError(
+            f"REA (Apify) timed out after {max_wait}s waiting for the run"
+        )
 
     if status != "SUCCEEDED":
-        print(f"REA (Apify): run {status} — no results")
-        return []
+        raise SourceFetchError(f"REA (Apify) run finished with status {status}")
 
     # ── Step 3: Fetch dataset items ──
     if not dataset_id:
-        dataset_id = poll_resp.json().get("data", {}).get("defaultDatasetId")
+        try:
+            dataset_id = poll_resp.json().get("data", {}).get("defaultDatasetId")
+        except (ValueError, AttributeError) as e:
+            raise SourceFetchError("REA (Apify) returned an invalid completion response") from e
     if not dataset_id:
-        print("REA (Apify): no dataset ID found")
-        return []
+        raise SourceFetchError("REA (Apify) returned no dataset ID")
 
     items_url = f"{APIFY_API_BASE}/datasets/{dataset_id}/items"
     try:
         items_resp = session.get(
             items_url,
-            params={"token": token, "format": "json"},
+            params={"format": "json"},
+            headers=auth_headers,
             timeout=60,
         )
     except requests.RequestException as e:
-        print(f"REA (Apify): failed to fetch results — {e}")
-        return []
+        raise SourceFetchError(f"REA (Apify) failed to fetch results: {e}") from e
 
     if items_resp.status_code != 200:
-        print(f"REA (Apify): HTTP {items_resp.status_code} fetching dataset")
-        return []
+        raise SourceFetchError(
+            f"REA (Apify) returned HTTP {items_resp.status_code} fetching the dataset"
+        )
 
     try:
         items = items_resp.json()
     except (json.JSONDecodeError, ValueError):
-        print("REA (Apify): invalid JSON in dataset")
-        return []
+        raise SourceFetchError("REA (Apify) returned invalid JSON in the dataset")
 
     if not isinstance(items, list):
-        print(f"REA (Apify): unexpected dataset type: {type(items)}")
-        return []
+        raise SourceFetchError(
+            f"REA (Apify) returned unexpected dataset type {type(items).__name__}"
+        )
 
     print(f"REA (Apify): {len(items)} raw items returned")
 
@@ -1914,15 +1931,14 @@ def _connect_gmail_imap():
     user = os.getenv("GMAIL_USER")
     password = os.getenv("GMAIL_APP_PASSWORD")
     if not user or not password:
-        return None
+        raise SourceFetchError("Email Alerts credentials are missing")
 
     try:
         mail = imaplib.IMAP4_SSL(GMAIL_IMAP_HOST, timeout=30)
         mail.login(user, password)
         return mail
     except Exception as e:
-        print(f"Gmail IMAP login failed: {e}")
-        return None
+        raise SourceFetchError(f"Email Alerts Gmail login failed: {e}") from e
 
 
 def _search_emails_from(mail, senders, days_back=8):
@@ -1934,19 +1950,29 @@ def _search_emails_from(mail, senders, days_back=8):
     since = (datetime.now() - timedelta(days=days_back)).strftime("%d-%b-%Y")
     results = []
 
-    mail.select("INBOX")
+    status, _ = mail.select("INBOX")
+    if status != "OK":
+        raise SourceFetchError(f"Email Alerts could not select INBOX (IMAP {status})")
 
     for sender in senders:
         query = f'(FROM "{sender}" SINCE {since})'
         status, data = mail.search(None, query)
-        if status != "OK" or not data[0]:
+        if status != "OK":
+            raise SourceFetchError(
+                f"Email Alerts search failed for {sender} (IMAP {status})"
+            )
+        if not data or not data[0]:
             continue
 
         msg_ids = data[0].split()
         for msg_id in msg_ids:
             status, msg_data = mail.fetch(msg_id, "(RFC822)")
             if status != "OK":
-                continue
+                raise SourceFetchError(
+                    f"Email Alerts message fetch failed (IMAP {status})"
+                )
+            if not msg_data or not msg_data[0] or len(msg_data[0]) < 2:
+                raise SourceFetchError("Email Alerts returned a malformed message response")
             raw = msg_data[0][1]
             msg = email_mod.message_from_bytes(raw)
 
@@ -2372,12 +2398,10 @@ def fetch_email_alerts(criteria):
     """Fetch property listings from email alerts (REA, Listing Loop, Property Whispers, CRE).
 
     Connects to Gmail IMAP, reads recent alert emails, parses property data,
-    and returns normalized listings. Gracefully returns empty if Gmail not configured.
+    and returns normalized listings. Configuration or transport failures are
+    surfaced so the guarded publisher cannot mistake them for a clean zero-result run.
     """
     mail = _connect_gmail_imap()
-    if not mail:
-        print("Email alerts: skipped (Gmail credentials not configured)")
-        return []
 
     all_properties = []
     parsers = {
@@ -2407,7 +2431,7 @@ def fetch_email_alerts(criteria):
                 print(f"Email alerts ({source_key}): {source_count} listings from {len(emails)} emails")
 
     except Exception as e:
-        print(f"Email alert fetch error: {e}")
+        raise SourceFetchError(f"Email Alerts fetch failed: {e}") from e
     finally:
         try:
             mail.logout()
@@ -2453,17 +2477,16 @@ def fetch_elders(criteria):
                 headers={"User-Agent": "Mozilla/5.0 (property search tool)"},
             )
             if resp.status_code != 200:
-                print(f"  Elders: HTTP {resp.status_code} on page {page}")
-                break
+                raise SourceFetchError(
+                    f"Elders returned HTTP {resp.status_code} on page {page}"
+                )
         except requests.RequestException as e:
-            print(f"  Elders: request failed on page {page}: {e}")
-            break
+            raise SourceFetchError(f"Elders request failed on page {page}: {e}") from e
 
         try:
             raw_data = resp.json()
         except (json.JSONDecodeError, ValueError):
-            print(f"  Elders: invalid JSON on page {page}")
-            break
+            raise SourceFetchError(f"Elders returned invalid JSON on page {page}")
 
         # API wraps results in {"data": [...], "last_page": N, ...}
         if isinstance(raw_data, dict):
@@ -2473,9 +2496,15 @@ def fetch_elders(criteria):
             items = raw_data
             last_page = page
         else:
-            break
+            raise SourceFetchError(
+                f"Elders returned unexpected data type {type(raw_data).__name__} on page {page}"
+            )
 
         if not items:
+            if page == 1:
+                raise SourceFetchError(
+                    "Elders returned no listings on its first page; the API may have changed"
+                )
             break
 
         for item in items:

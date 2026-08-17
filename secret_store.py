@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import getpass
 import os
 import subprocess
 import sys
@@ -16,7 +17,7 @@ def get_admin_token() -> str:
         return token
     try:
         result = subprocess.run(
-            ["security", "find-generic-password", "-a", os.getenv("USER", ""),
+            ["security", "find-generic-password", "-a", getpass.getuser(),
              "-s", KEYCHAIN_SERVICE, "-w"],
             check=True,
             capture_output=True,

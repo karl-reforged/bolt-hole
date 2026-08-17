@@ -1,5 +1,6 @@
 python-dotenv
 playwright
+pdfplumber
 requests
 resend
 urllib3
