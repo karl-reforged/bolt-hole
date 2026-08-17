@@ -7,8 +7,10 @@ Usage:
     html = render_email(properties, search_date="2026-03-10")
 """
 
+import os
 from datetime import datetime
 
+from site_config import DEFAULT_SHORTLIST_URL
 
 
 def _score_bar(pct):
@@ -210,8 +212,7 @@ def render_email(properties, search_date=None, card_count=10):
         </div>"""
 
     # Build the shortlist URL
-    import os
-    shortlist_url = os.getenv("SHORTLIST_URL", "https://karl-reforged.github.io/edm-shortlist/")
+    shortlist_url = os.getenv("SHORTLIST_URL", DEFAULT_SHORTLIST_URL)
 
     return f"""<!DOCTYPE html>
 <html>

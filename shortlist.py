@@ -19,6 +19,7 @@ Standalone:
 import json
 import html as html_mod
 import os
+import re
 import sys
 import tempfile
 from datetime import datetime, timedelta
@@ -26,6 +27,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
+
+from availability import availability_status, is_archived_status, status_label
 
 load_dotenv()
 
@@ -46,10 +49,50 @@ LAST_SENT_FILE = BASE_DIR / "data" / "last_sent.json"
 SUPPRESSED_SOURCES = {"rea_apify"}
 
 
+def _is_suppressed_property(prop):
+    """Hide known-low-quality sources and CRE records without a real listing id."""
+    if prop.get("source") in SUPPRESSED_SOURCES:
+        return True
+    if prop.get("source") == "cre":
+        path = urlparse(prop.get("listing_url") or "").path.rstrip("/")
+        # CRE's canonical property pages end in a numeric listing id. Older
+        # alert parsing fabricated slug-only URLs, which lead to a 404.
+        return not bool(re.search(r"-\d{7,}$", path))
+    return False
+
+
 def _visible_props(properties, max_properties=None):
-    """The listings actually shown to George — drops suppressed sources."""
-    props = properties[:max_properties] if max_properties else properties
-    return [p for p in props if p.get("source") not in SUPPRESSED_SOURCES]
+    """Current listings shown in the main shortlist."""
+    visible = []
+    for original in properties:
+        if _is_suppressed_property(original):
+            continue
+        prop = dict(original)
+        prop["status"] = availability_status(
+            prop,
+            missing_from_latest=bool(prop.get("missing_from_latest")),
+            missing_days=prop.get("last_seen_days") or 0,
+        )
+        if not is_archived_status(prop["status"]):
+            visible.append(prop)
+    return visible[:max_properties] if max_properties else visible
+
+
+def _archived_props(properties):
+    """Unavailable listings retained so their history and feedback stay useful."""
+    archived = []
+    for original in properties:
+        if _is_suppressed_property(original):
+            continue
+        prop = dict(original)
+        prop["status"] = availability_status(
+            prop,
+            missing_from_latest=bool(prop.get("missing_from_latest")),
+            missing_days=prop.get("last_seen_days") or 0,
+        )
+        if is_archived_status(prop["status"]):
+            archived.append(prop)
+    return archived
 
 
 def _load_last_sent_ids():
@@ -173,10 +216,13 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     if output_path is None:
         output_path = DOCS_DIR / "index.html"
 
-    props = _visible_props(properties, max_properties)
-    total_found = len(props)
-    total_shown = len(props)
-    sources_count = len({p.get("source") for p in props if p.get("source")})
+    active_props = _visible_props(properties, max_properties)
+    archived_props = _archived_props(properties)
+    props = active_props + archived_props
+    total_found = len(active_props)
+    total_shown = len(active_props)
+    archived_count = len(archived_props)
+    sources_count = len({p.get("source") for p in active_props if p.get("source")})
 
     # "New" = anything George hasn't seen since his last send. Single source of
     # truth (data/last_sent.json) so the count, the NEW badge, and the New sort
@@ -184,13 +230,19 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     # every carried-over/sheet listing as new.
     last_sent_ids = _load_last_sent_ids()
     new_ids = {
-        pid for p in props
+        pid for p in active_props
         if (pid := (p.get("source_id") or p.get("id"))) and pid not in last_sent_ids
     }
 
     # ── Build cards HTML ──────────────────────────────────────────────────
     cards_html = []
     for i, p in enumerate(props):
+        archived = is_archived_status(p.get("status"))
+        if archived and i == len(active_props):
+            cards_html.append(
+                '<div class="archive-heading"><strong>Archived properties</strong>'
+                '<span>Kept here with their notes and reactions for future learning.</span></div>'
+            )
         score = p.get("score", {})
         pct = score.get("pct", 0)
         breakdown = score.get("breakdown", {})
@@ -222,8 +274,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
         headline = _escape(p.get("headline", ""))
         address = _escape(p.get("address", ""))
-        description = _escape(p.get("description", "")[:400])
-        if len(p.get("description", "")) > 400:
+        normalized_description = re.sub(r"\s+", " ", p.get("description", "")).strip()
+        description = _escape(normalized_description[:400])
+        if len(normalized_description) > 400:
             description += "..."
 
         listing_url = _escape(p.get("listing_url", "#"))
@@ -231,7 +284,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
         photo_html = ""
         if photo_url:
-            photo_html = f'<div class="card-photo"><img src="{_escape(photo_url)}" alt="" loading="lazy" /></div>'
+            photo_html = f'<div class="card-photo"><img src="{_escape(photo_url)}" alt="" loading="lazy" width="720" height="540" /></div>'
 
         tags = p.get("tags", [])
         tags_html = ""
@@ -302,18 +355,28 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             </div>'''
 
         stale_attr = 'data-stale="1"' if missing_from_latest else ''
+        archive_class = " archived-card" if archived else ""
+        status_badge = (
+            f'<span class="availability-badge">{_escape(status_label(p.get("status")))}</span>'
+            if archived else ""
+        )
+        rank_control = (
+            f'<span class="rank-badge archived-rank" style="background:{sc_color};">#{i + 1}</span>'
+            if archived else
+            f'<button type="button" class="rank-badge" style="background:{sc_color};" onclick="panMapToCard({i})" title="Find property {i+1} on the map" aria-label="Find property {i+1} on the map">#{i+1}</button>'
+        )
         # Badge matches the count: new = not seen since last send (a carried-over
         # listing can still be genuinely new to George).
         is_new = 1 if prop_id in new_ids else 0
         cards_html.append(f'''
-        <div class="card" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{is_new}" data-ppa="{ppa:.0f}" {stale_attr}>
+        <div class="card{archive_class}" id="card-{i}" data-idx="{i}" data-property-id="{prop_id}" data-score="{pct:.1f}" data-price="{price or 0}" data-acres="{acres or 0}" data-drive="{drive_mins or 9999}" data-new="{is_new}" data-ppa="{ppa:.0f}" {stale_attr}>
             {photo_html}
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
-                        <span class="rank-badge" style="background:{sc_color};" onclick="panMapToCard({i})" title="Tap to find on map">#{i+1}</span>
+                        {rank_control}
                         <span class="price">{price_str}</span>
-                        {"<span class='new-badge'>NEW</span>" if is_new else ""}<button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
+                        {status_badge}{"<span class='new-badge'>NEW</span>" if is_new else ""}<button class="score-badge" style="color:{sc_color};background:{sc_bg};" onclick="toggleBreakdown({i})" title="Tap to see score breakdown">{pct:.0f}% match</button>
                     </div>
                     <button class="fav-btn" id="fav-{i}" onclick="toggleFavourite({i}, '{prop_id}')" title="Favourite">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -328,7 +391,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <div class="description">{description}</div>
                 {tags_html}
                 <div class="actions">
-                    <a href="{listing_url}" target="_blank" rel="noopener" class="btn btn-view">View Listing</a>
+                    <a href="{listing_url}" target="_blank" rel="noopener" class="btn btn-view">{"Last listing" if archived else "View listing"}</a>
                     <div class="feedback" id="feedback-{i}">
                         <button class="btn btn-love" onclick="sendFeedback({i}, '{prop_id}', 'love')">Love it</button>
                         <button class="btn btn-interesting" onclick="sendFeedback({i}, '{prop_id}', 'interesting')">Interesting</button>
@@ -340,7 +403,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     <div class="notes-drawer" id="notes-drawer-{i}" style="display:none;">
                         <div class="notes-list" id="notes-list-{i}"></div>
                         <div class="notes-input-row">
-                            <input type="text" class="notes-input" id="notes-input-{i}" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, {i}, '{prop_id}')">
+                            <input type="text" class="notes-input" id="notes-input-{i}" name="property-note-{i}" autocomplete="off" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, {i}, '{prop_id}')">
                             <button class="notes-post" id="notes-post-{i}" onclick="submitNote({i}, '{prop_id}')">Post</button>
                         </div>
                     </div>
@@ -392,7 +455,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         status_bits.append(f'<span class="scrape-status-warn" title="Source reported an error this run">{", ".join(errored_sources)} errored</span>')
     scrape_status_html = " &middot; ".join(status_bits)
 
-    best = props[0] if props else None
+    best = active_props[0] if active_props else None
     top_match = ""
     if best:
         top_match = f'Top match: {_escape(best.get("headline", "")[:60])} ({best["score"]["pct"]:.0f}%)'
@@ -402,8 +465,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     notes_url_js = _escape(NOTES_URL) if NOTES_URL else ""
 
     # ── Map markers JSON ──────────────────────────────────────────────────
-    mapped_props = [(i, p) for i, p in enumerate(props) if p.get("lat") and p.get("lng")]
-    total_count = len(props)
+    mapped_props = [(i, p) for i, p in enumerate(active_props) if p.get("lat") and p.get("lng")]
+    total_count = len(active_props)
     mapped_count = len(mapped_props)
     missing_count = total_count - mapped_count
     markers_json = json.dumps([
@@ -434,6 +497,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bolt Hole — Weekly Shortlist</title>
+    <script>if (new URLSearchParams(location.search).get('view') === 'archived') document.documentElement.classList.add('archive-view');</script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -484,6 +548,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
         .summary .count {{ font-size: 15px; color: var(--bark); font-weight: 500; }}
         .summary .top {{ font-size: 13px; color: var(--slate); margin-top: 4px; }}
+        .view-switch {{ display: flex; gap: 6px; margin: -14px 0 22px; }}
+        .view-switch a {{
+            flex: 1; min-height: 42px; display: inline-flex; align-items: center;
+            justify-content: center; padding: 8px 12px; border-radius: 8px;
+            border: 1px solid var(--light-border); background: #fff;
+            color: var(--slate); text-decoration: none; font-size: 13px; font-weight: 600;
+        }}
+        .view-switch .active-link {{ background: var(--eucalyptus); border-color: var(--eucalyptus); color: #fff; }}
+        html.archive-view .view-switch .active-link {{ background: #fff; border-color: var(--light-border); color: var(--slate); }}
+        html.archive-view .view-switch .archive-link {{ background: var(--eucalyptus); border-color: var(--eucalyptus); color: #fff; }}
 
         /* ── Scrape status strip ─────────────────── */
         .scrape-status {{
@@ -513,7 +587,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             font-size: 12px; font-weight: 500; padding: 6px 14px;
             border-radius: 20px; border: 1px solid var(--light-border);
             background: #fff; color: var(--slate); cursor: pointer;
-            white-space: nowrap; transition: all 0.15s;
+            white-space: nowrap; transition: background-color 0.15s, border-color 0.15s, color 0.15s;
         }}
         .sort-btn:hover {{ border-color: var(--eucalyptus); color: var(--bark); }}
         .sort-btn.active {{
@@ -533,9 +607,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         /* ── Rank badge (matches map pin number/colour) ─── */
         .rank-badge {{
             display: inline-flex; align-items: center; justify-content: center;
-            min-width: 24px; height: 24px; padding: 0 7px;
+            min-width: 40px; height: 40px; padding: 0 9px; border: 0;
             font-size: 12px; font-weight: 700; color: #fff;
-            border-radius: 12px; margin-right: 8px;
+            border-radius: 20px; margin-right: 4px; font-family: inherit;
             cursor: pointer; user-select: none;
             box-shadow: 0 1px 2px rgba(0,0,0,0.15);
             transition: transform 0.15s, box-shadow 0.15s;
@@ -643,18 +717,42 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
         .map-pin.fav-pin {{ border-color: var(--fav-gold); box-shadow: 0 0 0 3px rgba(234,179,8,0.3), 0 2px 6px rgba(0,0,0,0.25); }}
         .leaflet-popup-content {{ font-family: Inter, sans-serif; font-size: 13px; line-height: 1.4; }}
-        .popup-link {{ color: var(--eucalyptus); font-weight: 600; text-decoration: none; cursor: pointer; }}
+        .popup-link {{
+            color: var(--eucalyptus); font: inherit; font-weight: 600;
+            text-decoration: none; cursor: pointer; background: none; border: 0;
+            padding: 8px 0; min-height: 40px;
+        }}
 
         /* ── Cards ───────────────────────────────── */
         .card {{
             background: #fff; border: 1px solid var(--light-border);
             border-radius: 10px; margin-bottom: 24px; overflow: hidden;
             transition: box-shadow 0.2s, opacity 0.4s, border-color 0.3s;
+            content-visibility: auto; contain-intrinsic-size: 520px;
         }}
         .card:hover {{ box-shadow: 0 4px 12px rgba(0,0,0,0.06); }}
         .card.dismissed {{ opacity: 0.35; display: none; }}
         .card.dismissed.show-dismissed {{ display: block; }}
         .card.dismissed:hover {{ opacity: 0.6; }}
+        .card.archived-card {{ display: none; border-color: #d6c7ad; }}
+        .archive-heading {{ display: none; padding: 16px 4px 12px; color: var(--bark); }}
+        .archive-heading strong, .archive-heading span {{ display: block; }}
+        .archive-heading span {{ margin-top: 4px; color: var(--slate); font-size: 13px; }}
+        .availability-badge {{
+            display: inline-block; padding: 3px 8px; border-radius: 4px;
+            background: #fef3c7; color: #92400e; font-size: 10px;
+            font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase;
+        }}
+        .archived-rank {{ cursor: default; opacity: 0.72; }}
+        html.archive-view .card:not(.archived-card),
+        html.archive-view .sort-bar,
+        html.archive-view .map-container,
+        html.archive-view .map-modal,
+        html.archive-view .scrape-status,
+        html.archive-view .dismissed-divider {{ display: none; }}
+        html.archive-view .card.archived-card,
+        html.archive-view .archive-heading {{ display: block; }}
+        html.archive-view .progress-bar {{ display: none !important; }}
 
         /* ── Dismissed section ─────────────────── */
         .dismissed-divider {{
@@ -675,8 +773,11 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .dismissed-toggle:hover {{ border-color: var(--eucalyptus); color: var(--bark); }}
         .card.favourited {{ border-color: var(--fav-gold); border-width: 2px; }}
 
-        .card-photo {{ overflow: hidden; }}
-        .card-photo img {{ width: 100%; max-height: 240px; object-fit: cover; display: block; }}
+        .card-photo {{
+            height: clamp(180px, 40vw, 240px); overflow: hidden;
+            background: #e2e8f0;
+        }}
+        .card-photo img {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
         .card-body {{ padding: 16px 20px 20px; }}
 
         .card-top-row {{
@@ -846,6 +947,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             border-radius: 8px; max-height: 280px; overflow-y: auto;
         }}
         .activity-item {{
+            display: block; width: 100%; text-align: left; color: inherit;
+            font: inherit;
             padding: 8px 10px; margin-bottom: 6px; background: #fff;
             border: 1px solid var(--light-border); border-radius: 7px;
             cursor: pointer; transition: border-color 0.15s;
@@ -961,6 +1064,11 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <div class="top">{top_match}</div>
         </div>
 
+        <div class="view-switch" aria-label="Property availability">
+            <a class="active-link" href="./">Available ({total_found})</a>
+            <a class="archive-link" href="?view=archived">Archived ({archived_count})</a>
+        </div>
+
         <div class="scrape-status">{scrape_status_html}</div>
         <div class="feedback-access" id="feedback-access">
             <div class="feedback-access-copy">
@@ -968,7 +1076,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <span id="feedback-access-status">Choose a name to carry reactions and favourites across devices, or stay anonymous.</span>
             </div>
             <div class="feedback-access-controls">
-                <select class="feedback-access-input" id="feedback-name" aria-label="Who are you?" onchange="saveFeedbackName()">
+                <select class="feedback-access-input" id="feedback-name" name="feedback-name" autocomplete="off" aria-label="Who are you?" onchange="saveFeedbackName()">
                     <option value="">Anonymous</option>
                     <option value="George">George</option>
                     <option value="Mary">Mary</option>
@@ -1042,7 +1150,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     <script>
     function sortCards(by) {{
         const container = document.querySelector('.container');
-        const cards = Array.from(container.querySelectorAll('.card'));
+        const cards = Array.from(container.querySelectorAll('.card:not(.archived-card)'));
         const sortFns = {{
             score: (a, b) => parseFloat(b.dataset.score) - parseFloat(a.dataset.score),
             price: (a, b) => {{
@@ -1277,7 +1385,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             card.parentNode.insertBefore(card, divider);
             // Re-sort: find the right position by score
             const container = card.parentNode;
-            const activeCards = Array.from(container.querySelectorAll('.card:not(.dismissed)'));
+            const activeCards = Array.from(container.querySelectorAll('.card:not(.dismissed):not(.archived-card)'));
             const myScore = parseFloat(card.dataset.score) || 0;
             const insertBefore = activeCards.find(c => c !== card && (parseFloat(c.dataset.score) || 0) < myScore);
             if (insertBefore) {{
@@ -1287,7 +1395,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     function updateDismissedCount() {{
-        const dismissed = document.querySelectorAll('.card.dismissed');
+        const dismissed = document.querySelectorAll('.card.dismissed:not(.archived-card)');
         const divider = document.getElementById('dismissed-divider');
         const count = dismissed.length;
         if (count > 0 && !divider) {{
@@ -1312,7 +1420,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     function toggleDismissedVisibility() {{
-        const dismissed = document.querySelectorAll('.card.dismissed');
+        const dismissed = document.querySelectorAll('.card.dismissed:not(.archived-card)');
         const btn = document.querySelector('.dismissed-toggle');
         const showing = btn.textContent === 'Hide';
         dismissed.forEach(c => c.classList.toggle('show-dismissed', !showing));
@@ -1527,12 +1635,12 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             const card = section ? section.closest('.card') : null;
             const addr = card ? (card.querySelector('.address')?.textContent || '').split(',')[0].trim() : n.property_id;
             const pidAttr = escapeHtml(n.property_id);
-            return '<div class="activity-item" onclick="scrollToProperty(\\'' + pidAttr.replace(/'/g, "\\\\'") + '\\')">' +
+            return '<button type="button" class="activity-item" onclick="scrollToProperty(\\'' + pidAttr.replace(/'/g, "\\\\'") + '\\')">' +
                 '<div class="activity-meta">' +
                     '<span class="activity-author">' + escapeHtml(n.author || 'Unknown') + '</span> · ' +
                     '<span class="activity-suburb">' + escapeHtml(addr || '—') + '</span> · ' +
                     '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
-                '</div><div class="activity-body">' + escapeHtml(n.note) + '</div></div>';
+                '</div><div class="activity-body">' + escapeHtml(n.note) + '</div></button>';
         }}).join('');
     }}
 
@@ -1547,6 +1655,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (!section) return;
         const card = section.closest('.card');
         if (!card) return;
+        if (card.classList.contains('archived-card')) {{
+            document.documentElement.classList.add('archive-view');
+            history.replaceState(null, '', '?view=archived');
+        }}
         card.scrollIntoView({{behavior:'smooth', block:'start'}});
         const idx = section.id.replace('notes-section-', '');
         const drawer = document.getElementById('notes-drawer-' + idx);
@@ -1594,6 +1706,23 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (pct >= 55) return '#1e40af';
         if (pct >= 40) return '#92400e';
         return '#64748b';
+    }}
+
+    function wireMarkerAccessibility(marker, m) {{
+        const decorate = () => {{
+            const el = marker.getElement();
+            if (!el) return;
+            el.setAttribute('aria-label', 'Property ' + (m.idx + 1) + ' in ' + m.suburb + '. Open map details.');
+            if (el.dataset.keyboardWired === '1') return;
+            el.dataset.keyboardWired = '1';
+            el.addEventListener('keydown', event => {{
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                marker.openPopup();
+            }});
+        }};
+        decorate();
+        marker.on('add', decorate);
     }}
 
     function scrollToCard(idx) {{
@@ -1689,8 +1818,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 '<strong>' + m.suburb + '</strong><br>' +
                 m.price + (m.acres ? ' &middot; ' + m.acres : '') +
                 ' &middot; ' + m.pct.toFixed(0) + '%<br>' +
-                '<a class="popup-link" onclick="scrollToCard(' + m.idx + ')">Jump to card &darr;</a>'
+                '<button type="button" class="popup-link" onclick="scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
             );
+            wireMarkerAccessibility(marker, m);
 
             mapMarkers[m.idx] = marker;
             bounds.push([m.lat, m.lng]);
@@ -1754,8 +1884,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     '<strong>' + m.suburb + '</strong><br>' +
                     m.price + (m.acres ? ' &middot; ' + m.acres : '') +
                     ' &middot; ' + m.pct.toFixed(0) + '%<br>' +
-                    '<a class="popup-link" onclick="closeExpandedMap(); scrollToCard(' + m.idx + ')">Jump to card &darr;</a>'
+                    '<button type="button" class="popup-link" onclick="closeExpandedMap(); scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
                 );
+                wireMarkerAccessibility(marker, m);
                 eb.push([m.lat, m.lng]);
             }});
             expandedMap.fitBounds(eb, {{ padding: [40, 40] }});
@@ -1783,6 +1914,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 </body>
 </html>'''
 
+    page_html = "\n".join(line.rstrip() for line in page_html.splitlines()) + "\n"
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
@@ -1826,7 +1958,11 @@ def _fetch_sheet_properties():
     import urllib.request
     import urllib.error
     try:
-        with urllib.request.urlopen(url + "?action=properties", timeout=8) as resp:
+        request = urllib.request.Request(
+            url + "?action=properties",
+            headers={"User-Agent": "bolt-hole-shortlist/1.0"},
+        )
+        with urllib.request.urlopen(request, timeout=8) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, OSError):
         return {}
@@ -1932,14 +2068,12 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21, rea_new_days=9):
     for sid, row in sheet_props.items():
         if sid in union:
             continue
-        # Status column supports manual age-out (set to "withdrawn"/"sold")
-        if row.get("status") and row["status"] not in ("active", "", None):
-            continue
         payload = row.get("payload")
         if isinstance(payload, dict) and payload:
-            prop = payload
+            prop = dict(payload)
         else:
             continue
+        prop["status"] = row.get("status") or prop.get("status") or "active"
         # Age-out using last_seen from sheet
         last_seen_iso = row.get("last_seen")
         if last_seen_iso:
@@ -1966,21 +2100,26 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21, rea_new_days=9):
     if sheet_added:
         print(f"Sheet overlay: +{sheet_added} properties not in local runs")
 
-    # Sheet may know an older first_seen than our 3-run window covers — overlay
-    # backwards for properties already present from local JSONs.
+    # The database may know an older first_seen or a human-set terminal status.
+    # Only sold/withdrawn are treated as manual overrides when a listing appears
+    # in the latest scrape; transient archive warnings reactivate automatically.
     for sid, record in union.items():
         sheet_row = sheet_props.get(sid)
-        if not sheet_row or not sheet_row.get("first_seen"):
+        if not sheet_row:
             continue
-        try:
-            sheet_first = datetime.fromisoformat(
-                str(sheet_row["first_seen"]).replace("Z", "+00:00"))
-            if sheet_first.tzinfo:
-                sheet_first = sheet_first.replace(tzinfo=None)
-            if sheet_first < record["first_seen"]:
-                record["first_seen"] = sheet_first
-        except ValueError:
-            pass
+        if sheet_row.get("first_seen"):
+            try:
+                sheet_first = datetime.fromisoformat(
+                    str(sheet_row["first_seen"]).replace("Z", "+00:00"))
+                if sheet_first.tzinfo:
+                    sheet_first = sheet_first.replace(tzinfo=None)
+                if sheet_first < record["first_seen"]:
+                    record["first_seen"] = sheet_first
+            except ValueError:
+                pass
+        if sheet_row.get("status") in ("sold", "withdrawn"):
+            record["prop"] = dict(record["prop"])
+            record["prop"]["status"] = sheet_row["status"]
 
     props = []
     rea_new_cutoff = latest_ts - timedelta(days=rea_new_days)
@@ -1993,8 +2132,6 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21, rea_new_days=9):
             and listed_at is not None
             and listed_at >= rea_new_cutoff
         )
-        if days_ago > age_out_days and not is_recent_rea:
-            continue
         p = dict(p0)
         if is_recent_rea:
             p["recent_realestate_com"] = True
@@ -2004,6 +2141,11 @@ def _load_union_of_runs(runs_to_union=3, age_out_days=21, rea_new_days=9):
         if sid not in latest_ids:
             p["missing_from_latest"] = True
             p["last_seen_days"] = days_ago
+        p["status"] = availability_status(
+            p,
+            missing_from_latest=sid not in latest_ids,
+            missing_days=days_ago,
+        )
         p["first_seen_days"] = max(0, (now - record["first_seen"]).days)
         props.append(p)
 

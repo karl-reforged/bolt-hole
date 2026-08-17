@@ -721,7 +721,7 @@ def run_search(domain_only=False):
 
 # ── Resilience: sanity gate + cache fallback ─────────────────────────────
 
-def _upsert_properties_to_sheet(properties):
+def _upsert_properties_to_sheet(properties, *, full_snapshot=False):
     """
     Mirror scraped properties to the D1 database using the private admin token.
 
@@ -738,7 +738,11 @@ def _upsert_properties_to_sheet(properties):
     if not BOLT_ADMIN_TOKEN:
         print("Database upsert failed: BOLT_ADMIN_TOKEN is not configured")
         return False
-    body = json.dumps({"action": "properties_upsert", "properties": properties})
+    body = json.dumps({
+        "action": "properties_upsert",
+        "properties": properties,
+        "full_snapshot": bool(full_snapshot),
+    })
     try:
         resp = requests.post(
             NOTES_URL,

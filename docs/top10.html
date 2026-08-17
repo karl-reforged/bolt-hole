@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bolt Hole — Top 10 Shortlist</title>
+<meta name="robots" content="noindex">
+<title>Bolt Hole — Historical Top 10</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -29,6 +30,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
 .header-sub { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
 
 .context-box { background: var(--card); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+.historical-banner { background: #fef3c7; color: #78350f; border: 1px solid #f59e0b; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px; }
 .context-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 .context-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 .weight-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
@@ -40,6 +42,8 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
 .card { background: var(--card); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px; transition: box-shadow 0.2s; }
 .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
 .card.highlight { box-shadow: 0 0 0 3px #3b82f6, 0 4px 12px rgba(0,0,0,0.12); }
+.card.unavailable { border: 2px solid #f59e0b; }
+.availability-flag { position: absolute; left: 12px; bottom: 12px; z-index: 2; background: #fef3c7; color: #78350f; border-radius: 5px; padding: 5px 9px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
 .card-media { position: relative; }
 .card-img { width: 100%; height: 200px; object-fit: cover; display: block; }
@@ -94,9 +98,11 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
 
     <div class="header">
         <div class="header-brand">Reforged</div>
-        <div class="header-title">Bolt Hole — Top 10</div>
+        <div class="header-title">Bolt Hole — Historical Top 10</div>
         <div class="header-sub">13 March 2026 — George & Mary's weights applied</div>
     </div>
+
+    <div class="historical-banner"><strong>Archived snapshot:</strong> This page records the 13 March 2026 ranking for comparison only. Use the current Shortlist for live availability. Listings marked under offer or deposit taken below were not active choices.</div>
 
     <div class="context-box">
         <div class="context-title">What changed</div>
@@ -124,7 +130,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); c
     
     <div class="card" id="card-1" data-lat="-33.320293" data-lng="150.112">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/pPcGX9gjSDvJ21DSol7SywEuJ_Y=/660x440/filters:format(jpeg):quality(80)/2020418267_1_1_251112_070156-w2048-h1365" alt="LIDSDALE" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/pPcGX9gjSDvJ21DSol7SywEuJ_Y=/660x440/filters:format(jpeg):quality(80)/2020418267_1_1_251112_070156-w2048-h1365" alt="LIDSDALE" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#1</div>
             <div class="card-score">85%</div>
         </div>
@@ -165,7 +171,7 @@ The ultimate privacy, abundant native flora and fauna, no neighbours and boundar
     
     <div class="card" id="card-2" data-lat="-34.969357" data-lng="149.92012">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/t4d6sfpA2pyKVP2--9lq7TnqEfY=/660x440/filters:format(jpeg):quality(80)/2020274325_1_1_250916_114925-w1200-h900" alt="WINDELLAMA" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/t4d6sfpA2pyKVP2--9lq7TnqEfY=/660x440/filters:format(jpeg):quality(80)/2020274325_1_1_250916_114925-w1200-h900" alt="WINDELLAMA" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#2</div>
             <div class="card-score">85%</div>
         </div>
@@ -221,11 +227,12 @@ Disclaimer: "All information contained herein is gathered from sources we deem t
         </div>
     </div>
     
-    <div class="card" id="card-3" data-lat="-35.015343" data-lng="149.84944">
+    <div class="card unavailable" id="card-3" data-lat="-35.015343" data-lng="149.84944">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/eiQfpunLrZ20YgJl7HNernNd0hM=/660x440/filters:format(jpeg):quality(80)/2020317550_1_1_251003_053751-w3000-h2247" alt="WINDELLAMA" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/eiQfpunLrZ20YgJl7HNernNd0hM=/660x440/filters:format(jpeg):quality(80)/2020317550_1_1_251003_053751-w3000-h2247" alt="WINDELLAMA" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#3</div>
             <div class="card-score">85%</div>
+            <div class="availability-flag">Deposit taken — archived</div>
         </div>
         <div class="card-body">
             <div class="card-header">
@@ -268,7 +275,7 @@ Inspections by Private Appointment - please contact exclusive agents</span>
     
     <div class="card" id="card-4" data-lat="-34.407658" data-lng="149.60205">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/ARGAPlp9s9g9VDnUJV3yc0jHJOg=/660x440/filters:format(jpeg):quality(80)/2020421794_1_1_251113_044730-w2500-h1667" alt="CROOKWELL" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/ARGAPlp9s9g9VDnUJV3yc0jHJOg=/660x440/filters:format(jpeg):quality(80)/2020421794_1_1_251113_044730-w2500-h1667" alt="CROOKWELL" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#4</div>
             <div class="card-score">84%</div>
         </div>
@@ -308,7 +315,7 @@ Offering peace, productivity, and proximity to town, 2522 Laggan Taralga Road de
     
     <div class="card" id="card-5" data-lat="-35.12757" data-lng="149.94038">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/c0Yi3Jb66PwFe2Z5qwJAORMho5A=/660x440/filters:format(jpeg):quality(80)/2020481588_1_1_251210_103404-w1200-h800" alt="OALLEN" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/c0Yi3Jb66PwFe2Z5qwJAORMho5A=/660x440/filters:format(jpeg):quality(80)/2020481588_1_1_251210_103404-w1200-h800" alt="OALLEN" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#5</div>
             <div class="card-score">83%</div>
         </div>
@@ -360,7 +367,7 @@ Call Michael Lees from Southern Tablelands Realty on 0409915491 to organise your
     
     <div class="card" id="card-6" data-lat="-34.339405" data-lng="150.12868">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/he0NAWsyrujX2_0k-qaEW0O7LUs=/660x440/filters:format(jpeg):quality(80)/2020298974_1_1_250926_022602-w2000-h1500" alt="BULLIO" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/he0NAWsyrujX2_0k-qaEW0O7LUs=/660x440/filters:format(jpeg):quality(80)/2020298974_1_1_250926_022602-w2000-h1500" alt="BULLIO" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#6</div>
             <div class="card-score">82%</div>
         </div>
@@ -410,11 +417,12 @@ This property is ideal for those seeking a tranquil rural lifestyle with the con
         </div>
     </div>
     
-    <div class="card" id="card-7" data-lat="-34.51101" data-lng="150.02887">
+    <div class="card unavailable" id="card-7" data-lat="-34.51101" data-lng="150.02887">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/sAwgOvPXNt_cTi-L-l-lJYjkGw8=/660x440/filters:format(jpeg):quality(80)/2020454098_1_1_251127_015155-w2000-h1500" alt="BIG HILL" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/sAwgOvPXNt_cTi-L-l-lJYjkGw8=/660x440/filters:format(jpeg):quality(80)/2020454098_1_1_251127_015155-w2000-h1500" alt="BIG HILL" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#7</div>
             <div class="card-score">82%</div>
+            <div class="availability-flag">Under offer — archived</div>
         </div>
         <div class="card-body">
             <div class="card-header">
@@ -460,7 +468,7 @@ Orchard and large chook/dog run with dam-fed irrigation
     
     <div class="card" id="card-8" data-lat="-34.617554" data-lng="150.08467">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/tXBJ5FhYJaD8u5RXbUI5X3nvwzY=/660x440/filters:format(jpeg):quality(80)/2017765079_11_1_220428_023939-w4002-h3000" alt="BRAYTON" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/tXBJ5FhYJaD8u5RXbUI5X3nvwzY=/660x440/filters:format(jpeg):quality(80)/2017765079_11_1_220428_023939-w4002-h3000" alt="BRAYTON" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#8</div>
             <div class="card-score">82%</div>
         </div>
@@ -502,7 +510,7 @@ For more information or to arrange a private inspection, please contact Damien O
     
     <div class="card" id="card-9" data-lat="-35.12079" data-lng="149.5891">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/6lvhg7r76IsWhlwtuVlQ0bHwpME=/660x440/filters:format(jpeg):quality(80)/2020441371_1_1_251120_103655-w1600-h1067" alt="TARAGO" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/6lvhg7r76IsWhlwtuVlQ0bHwpME=/660x440/filters:format(jpeg):quality(80)/2020441371_1_1_251120_103655-w1600-h1067" alt="TARAGO" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#9</div>
             <div class="card-score">82%</div>
         </div>
@@ -544,7 +552,7 @@ DISCLAIMER. We have in preparing this document used our best endeavours to ensur
     
     <div class="card" id="card-10" data-lat="-34.880203" data-lng="148.94876">
         <div class="card-media">
-            <img src="https://rimh2.domainstatic.com.au/JMyYkjrA4RaLV2DzdNJTgUXQwhg=/660x440/filters:format(jpeg):quality(80)/2017877723_2_1_220912_122311-w1024-h767" alt="YASS" loading="lazy" class="card-img">
+            <img src="https://rimh2.domainstatic.com.au/JMyYkjrA4RaLV2DzdNJTgUXQwhg=/660x440/filters:format(jpeg):quality(80)/2017877723_2_1_220912_122311-w1024-h767" alt="YASS" loading="lazy" width="660" height="440" class="card-img">
             <div class="card-rank">#10</div>
             <div class="card-score">80%</div>
         </div>

@@ -155,7 +155,7 @@ def main() -> int:
                         "import json, sys\n"
                         "from search import _upsert_properties_to_sheet\n"
                         f"data = json.load(open({json.dumps(str(result))}))\n"
-                        "sys.exit(0 if _upsert_properties_to_sheet(data.get('properties', [])) else 1)\n"
+                        "sys.exit(0 if _upsert_properties_to_sheet(data.get('properties', []), full_snapshot=True) else 1)\n"
                     )
                     subprocess.run([str(PY), "-c", code], cwd=ROOT, check=True, env=upsert_env)
                 if args.shortlist:

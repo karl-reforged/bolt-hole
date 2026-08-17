@@ -21,12 +21,15 @@ from datetime import datetime
 import resend
 from dotenv import load_dotenv
 
+from site_config import DEFAULT_SHORTLIST_URL
+from shortlist import _visible_props
+
 
 load_dotenv()
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 GEORGE_EMAIL = os.getenv("GEORGE_EMAIL")
-SHORTLIST_URL = os.getenv("SHORTLIST_URL", "")
+SHORTLIST_URL = os.getenv("SHORTLIST_URL", DEFAULT_SHORTLIST_URL)
 
 # Resend's test address — works without a custom domain
 FROM_ADDRESS = os.getenv("FROM_ADDRESS", "Bolt Hole <onboarding@resend.dev>")
@@ -34,6 +37,7 @@ FROM_ADDRESS = os.getenv("FROM_ADDRESS", "Bolt Hole <onboarding@resend.dev>")
 
 def _build_link_email(properties, search_date, shortlist_url):
     """Build a short, punchy email pointing George to the shortlist page."""
+    properties = _visible_props(properties)
     count = len(properties)
     top = properties[0] if properties else None
 
@@ -122,8 +126,9 @@ def send_digest(properties, search_date=None, recipient=None, dry_run=False):
         search_date = datetime.now().strftime("%d %B %Y")
 
     to_addr = recipient or GEORGE_EMAIL
-    shortlist_url = SHORTLIST_URL or "(shortlist URL not configured — set SHORTLIST_URL in .env)"
+    shortlist_url = SHORTLIST_URL
 
+    properties = _visible_props(properties)
     plain, html = _build_link_email(properties, search_date, shortlist_url)
 
     if dry_run:

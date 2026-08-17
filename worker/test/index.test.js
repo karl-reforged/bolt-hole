@@ -112,6 +112,58 @@ test('property updates validate the full batch before writing', async () => {
   assert.deepEqual(await (await worker.fetch(request('/?action=properties'), env)).json(), { properties: [] });
 });
 
+test('property refreshes warn, archive, reactivate, and preserve manual outcomes', async () => {
+  const env = makeEnv();
+  const upsert = async (properties, fullSnapshot = true) => worker.fetch(request('/', {
+    method: 'POST', token: ADMIN_TOKEN,
+    body: { action: 'properties_upsert', properties, full_snapshot: fullSnapshot },
+  }), env);
+  const prop = (source_id, status) => ({
+    source_id,
+    listing_url: `https://example.com/${source_id}`,
+    ...(status ? { status } : {}),
+  });
+  const statuses = async () => {
+    const response = await worker.fetch(request('/?action=properties'), env);
+    return Object.fromEntries((await response.json()).properties.map((p) => [p.source_id, p.status]));
+  };
+
+  assert.equal((await upsert([prop('present'), prop('missing')])).status, 200);
+  assert.equal((await upsert([prop('present')], false)).status, 200);
+  assert.equal((await statuses()).missing, 'active');
+  assert.equal((await upsert([prop('present')])).status, 200);
+  assert.equal((await statuses()).missing, 'possibly_unavailable');
+
+  env.DB.database.prepare(
+    "UPDATE properties SET last_seen = datetime('now', '-22 days') WHERE source_id = 'missing'"
+  ).run();
+  await upsert([prop('present')]);
+  assert.equal((await statuses()).missing, 'archived');
+
+  await upsert([prop('missing')]);
+  assert.equal((await statuses()).missing, 'active');
+
+  env.DB.database.prepare("UPDATE properties SET status = 'sold' WHERE source_id = 'missing'").run();
+  await upsert([prop('missing')]);
+  assert.equal((await statuses()).missing, 'sold');
+
+  assert.equal((await upsert([prop('bad', 'invented')])).status, 422);
+
+  await upsert([{ ...prop('offer'), display_price: 'UNDER OFFER' }]);
+  assert.equal((await statuses()).offer, 'under_offer');
+  await upsert([{ ...prop('offer'), display_price: '$1,200,000' }]);
+  assert.equal((await statuses()).offer, 'active');
+
+  await upsert([{ ...prop('sold-label'), display_price: 'SOLD' }]);
+  assert.equal((await statuses())['sold-label'], 'sold');
+
+  await upsert([{ ...prop('withdrawn-label'), badge: 'Withdrawn' }]);
+  assert.equal((await statuses())['withdrawn-label'], 'withdrawn');
+
+  await upsert([{ ...prop('sold-prior'), display_price: 'Auction unless sold prior' }]);
+  assert.equal((await statuses())['sold-prior'], 'active');
+});
+
 test('notes accept an encouraged name, default to Anonymous, and retry safely', async () => {
   const env = makeEnv();
   await saveProperty(env);

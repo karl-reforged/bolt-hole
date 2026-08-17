@@ -7,6 +7,14 @@ The production backend is a Cloudflare Worker backed by D1 (SQLite). It stores:
 - one reaction and favourite per feedback identity and property;
 - stable idempotency keys so retrying a note cannot create duplicates.
 
+Property availability follows one small lifecycle. Only a guarded upload marked
+as a complete, healthy snapshot can change absent listings. A listing missing
+from that snapshot is marked `possibly_unavailable`; after 21 days it is
+`archived`. A listing that reappears becomes `active` again. Clear source labels
+such as “Under Offer” are archived immediately, while human-set `sold` and
+`withdrawn` outcomes survive ordinary refreshes. Archiving never deletes the
+property, notes, reactions or favourites.
+
 Property reads and shared notes are public to the shortlist. Property writes and
 the full feedback export require the private `ADMIN_TOKEN`. Feedback writes are
 rate-limited, validated and accepted only from the configured production web

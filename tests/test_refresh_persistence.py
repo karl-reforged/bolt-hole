@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -21,6 +22,7 @@ class RefreshPersistenceTests(unittest.TestCase):
 
         self.assertEqual(post.call_args.kwargs["headers"]["Authorization"], "Bearer private-admin-token")
         self.assertEqual(post.call_args.kwargs["headers"]["Content-Type"], "application/json")
+        self.assertFalse(json.loads(post.call_args.kwargs["data"])["full_snapshot"])
 
     def test_database_upsert_fails_closed_without_admin_token(self):
         with (
@@ -35,6 +37,8 @@ class RefreshPersistenceTests(unittest.TestCase):
     def test_refresh_command_enables_database_upsert(self):
         refresh = Path("refresh.sh").read_text()
         self.assertIn("--upsert", refresh)
+        guarded = Path("run_guarded_domain_refresh.py").read_text()
+        self.assertIn("full_snapshot=True", guarded)
 
 
 if __name__ == "__main__":

@@ -14,8 +14,9 @@
  *
  * Upsert semantics preserved from Code.gs:
  *   - existing first_seen is kept on update
- *   - a manually-set non-'active' status survives unless the incoming property
- *     carries an explicit status (the scraper never sends one)
+ *   - sold/withdrawn outcomes survive ordinary scraper refreshes
+ *   - absent listings are warned, then archived after 21 days
+ *   - listings that reappear automatically become active again
  *
  * Feedback names are optional labels, not authenticated identities. Named
  * reactions/favourites follow that label across devices; anonymous feedback
@@ -65,6 +66,23 @@ const ALLOWED_AUTHORS = new Map(
   ['George', 'Mary', 'Alex', 'Greg', 'Justin', 'Anonymous']
     .map((name) => [name.toLocaleLowerCase('en-AU'), name])
 );
+
+const ALLOWED_PROPERTY_STATUSES = new Set([
+  'active', 'possibly_unavailable', 'under_offer', 'sold', 'withdrawn', 'archived',
+]);
+
+function listingStatus(property) {
+  const explicit = String(property.status || '').trim().toLowerCase().replace(/[ -]+/g, '_');
+  if (explicit) return explicit;
+  const labels = ['listing_status', 'badge', 'display_price', 'headline']
+    .map((key) => String(property[key] || '').trim());
+  if (labels.some((label) => /\b(under offer|under contract|deposit taken)\b/i.test(label))) {
+    return 'under_offer';
+  }
+  if (labels.some((label) => /^\W*sold\W*$/i.test(label))) return 'sold';
+  if (labels.some((label) => /^\W*(withdrawn|off market)\W*$/i.test(label))) return 'withdrawn';
+  return 'active';
+}
 
 function cleanAuthor(value) {
   const author = String(value || '').trim().replace(/\s+/g, ' ');
@@ -159,7 +177,7 @@ export default {
           if (!isAdminRequest(request, env)) {
             return json(request, env, { ok: false, error: 'authentication_required' }, 401);
           }
-          const n = await upsertProperties(env, body.properties || []);
+          const n = await upsertProperties(env, body.properties || [], body.full_snapshot === true);
           return json(request, env, { ok: true, upserted: n });
         }
         if (action === 'reaction') {
@@ -248,7 +266,7 @@ async function readProperties(env) {
   return results;
 }
 
-async function upsertProperties(env, properties) {
+async function upsertProperties(env, properties, fullSnapshot = false) {
   if (!Array.isArray(properties)) throw new ApiError(422, 'invalid_properties');
   if (properties.length > 500) throw new ApiError(413, 'too_many_properties');
   if (!properties.length) return 0;
@@ -266,7 +284,7 @@ async function upsertProperties(env, properties) {
       -- property carried an explicit status (?9 = 1 when explicit)
       status      = CASE
                       WHEN ?9 = 1 THEN excluded.status
-                      WHEN properties.status IS NOT NULL AND properties.status != 'active' THEN properties.status
+                      WHEN properties.status IN ('sold', 'withdrawn') THEN properties.status
                       ELSE excluded.status
                     END,
       listing_url = excluded.listing_url,
@@ -292,18 +310,32 @@ async function upsertProperties(env, properties) {
     let payload;
     try { payload = JSON.stringify(p); } catch { throw new ApiError(422, 'invalid_property'); }
     if (payload.length > 100_000) throw new ApiError(413, 'property_too_large');
-    return { p, sid, listingUrl, payload };
+    const status = listingStatus(p);
+    if (!ALLOWED_PROPERTY_STATUSES.has(status)) throw new ApiError(422, 'invalid_property_status');
+    return { p, sid, listingUrl, payload, status };
   });
 
   const batch = [];
-  for (const { p, sid, listingUrl, payload } of validated) {
+  if (fullSnapshot) {
+    // Only a guarded, healthy full snapshot may mark absent listings. Present
+    // listings are restored to active/under-offer by the inserts below.
+    batch.push(env.DB.prepare(`
+      UPDATE properties
+      SET status = CASE
+        WHEN datetime(last_seen) < datetime('now', '-21 days') THEN 'archived'
+        ELSE 'possibly_unavailable'
+      END
+      WHERE status NOT IN ('sold', 'withdrawn', 'under_offer')
+    `));
+  }
+  for (const { p, sid, listingUrl, payload, status } of validated) {
     batch.push(stmt.bind(
       sid,
       String(p.suburb || ''),
       String(p.address || ''),
       String(p.first_seen || nowIso),
       nowIso,
-      String(p.status || 'active'),
+      status,
       listingUrl,
       payload,
       p.status ? 1 : 0

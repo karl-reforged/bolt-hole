@@ -19,6 +19,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from site_config import DEFAULT_SHORTLIST_URL
+
 BASE_DIR = Path(__file__).parent
 RESULTS_DIR = BASE_DIR / "data" / "listings"
 
@@ -68,7 +70,7 @@ def generate_email_preview(properties, search_date, top_n=20, card_count=10):
     from email_template import render_email
     from email_sender import _build_link_email
 
-    shortlist_url = os.getenv("SHORTLIST_URL", "https://karl-reforged.github.io/edm-shortlist/")
+    shortlist_url = os.getenv("SHORTLIST_URL", DEFAULT_SHORTLIST_URL)
 
     # Sort by score descending, filter out sold/under offer
     _sold_words = ("sold", "deposit taken", "under offer", "under contract")

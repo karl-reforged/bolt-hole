@@ -117,6 +117,11 @@
 
   /* Corridor cards */
   .corridor-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: inherit;
+    font: inherit;
     background: var(--paper);
     border-radius: var(--radius-card);
     padding: var(--space-md) var(--space-md) var(--space-md) 20px;
@@ -124,7 +129,7 @@
     border: 1px solid var(--fence);
     border-left: 3px solid var(--fence);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
   .corridor-card:hover { border-color: var(--eucalyptus); border-left-color: var(--eucalyptus); background: var(--wire); }
   .corridor-card.active { border-color: var(--eucalyptus); border-left-color: var(--eucalyptus); background: var(--lichen); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
@@ -260,6 +265,7 @@
 
   /* Layer toggle chips */
   .map-toggle {
+    appearance: none;
     pointer-events: auto;
     background: rgba(255,255,255,0.95);
     border: 1px solid var(--fence);
@@ -271,7 +277,7 @@
     font-family: 'Inter', sans-serif;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -319,6 +325,24 @@
   /* Budget line label */
   .budget-label { font-size: 12px; color: var(--ironbark); position: absolute; }
 
+  @media (max-width: 720px) {
+    body { height: auto; min-height: 100vh; overflow: auto; }
+    .layout { flex-direction: column; height: auto; min-height: 100vh; }
+    .panel {
+      width: 100%; min-width: 0; height: auto; overflow: visible;
+      border-right: 0; border-top: 1px solid var(--fence);
+    }
+    .panel::after { display: none; }
+    .panel-header { padding: 16px; }
+    .panel-scroll { overflow: visible; padding: 16px; }
+    .map-container { order: -1; flex: none; width: 100%; height: 52vh; min-height: 360px; }
+    .map-topbar { top: 10px; left: 10px; right: 52px; flex-wrap: wrap; gap: 6px; }
+    .map-chip { padding: 6px 10px; font-size: 11px; }
+    .map-toggle { min-height: 40px; padding: 8px 12px; }
+    .map-legend { right: 10px; bottom: 18px; padding: 8px 10px; }
+    .corridor-card { width: 100%; text-align: left; }
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     .corridor-card { transition: none; }
@@ -328,17 +352,17 @@
 <body>
 <nav style="position:sticky;top:0;z-index:9999;background:rgba(244,241,236,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:1200px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;">
-    <a href="/bolt-hole/bolt-hole-overview.html" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">Overview</a>
-    <a href="/bolt-hole/dashboard.html" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:600;color:#4A7C6B;text-decoration:none;white-space:nowrap;border-bottom:2px solid #4A7C6B;min-height:48px;">Market Map</a>
-    <a href="/bolt-hole/" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">Shortlist</a>
-    <a href="/bolt-hole/system-map.html" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">How It Works</a>
+    <a href="bolt-hole-overview.html" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">Overview</a>
+    <a href="dashboard.html" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:600;color:#4A7C6B;text-decoration:none;white-space:nowrap;border-bottom:2px solid #4A7C6B;min-height:48px;">Market Map</a>
+    <a href="./" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">Shortlist</a>
+    <a href="system-map.html" style="display:inline-flex;align-items:center;padding:14px 16px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">How It Works</a>
   </div>
 </nav>
 <div class="layout">
   <div class="panel">
     <div class="panel-header">
       <div style="display:flex;align-items:center;gap:12px">
-        <img src="design-system/assets/logo-mark.png" alt="Bolt Hole" style="height:28px;opacity:0.85;" onerror="this.style.display='none'">
+        <img src="design-system/assets/logo-mark.png" alt="Bolt Hole" width="28" height="28" style="height:28px;opacity:0.85;" onerror="this.style.display='none'">
         <h1>Bolt Hole</h1>
       </div>
       <div class="subtitle">Rural retreat search &middot; $2M budget &middot; 30-200 acres with house</div>
@@ -377,12 +401,12 @@
   <div class="map-container">
     <div id="map"></div>
     <div class="map-topbar">
-      <div class="map-toggle active" id="toggle-boundaries" onclick="toggleLayer('boundaries')">
+      <button type="button" class="map-toggle active" id="toggle-boundaries" aria-pressed="true" onclick="toggleLayer('boundaries')">
         <span class="toggle-dot"></span> Boundaries
-      </div>
-      <div class="map-toggle active" id="toggle-drivetimes" onclick="toggleLayer('drivetimes')">
+      </button>
+      <button type="button" class="map-toggle active" id="toggle-drivetimes" aria-pressed="true" onclick="toggleLayer('drivetimes')">
         <span class="toggle-dot"></span> Drive times
-      </div>
+      </button>
     </div>
     <div class="map-legend">
       <div class="legend-title">Corridor fit</div>
@@ -546,7 +570,7 @@ function renderCorridorCard(name, s) {
   const p25 = pn > 3 ? prices[Math.floor(pn * 0.25)] : s.min;
   const p75 = pn > 3 ? prices[Math.floor(pn * 0.75)] : s.max;
 
-  return '<div class="corridor-card" data-council="'+name+'" style="border-left-color:'+tierColors[s.tier]+'" onclick="selectCorridor(\''+name.replace(/'/g, "\\'")+'\')">' +
+  return '<button type="button" class="corridor-card" data-council="'+name+'" style="border-left-color:'+tierColors[s.tier]+'" onclick="selectCorridor(\''+name.replace(/'/g, "\\'")+'\')">' +
     '<div class="corridor-header">' +
       '<span class="corridor-name">'+name+'</span>' +
       '<span class="corridor-tier '+tierClass+'">'+tierLabels[s.tier]+'</span>' +
@@ -557,7 +581,7 @@ function renderCorridorCard(name, s) {
       '<div class="corridor-stat"><div class="cs-label">Drive</div><div class="cs-value" style="color:'+dClr+'">'+driveStr+'</div></div>' +
     '</div>' +
     '<div class="corridor-median-note">Median '+fmtK(s.median)+' · avg '+(avgAcres[name]||'—')+' acres</div>' +
-  '</div>';
+  '</button>';
 }
 
 const tierContainers = { strong: 'tier-strong', good: 'tier-good', tight: 'tier-tight', thin: 'tier-thin', out: 'tier-out' };
@@ -684,6 +708,12 @@ const map = L.map('map', {
   attributionControl: false
 });
 
+let mapResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(mapResizeTimer);
+  mapResizeTimer = setTimeout(() => map.invalidateSize(), 100);
+});
+
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   subdomains: 'abcd',
@@ -724,10 +754,13 @@ const boundaryLayer = L.geoJSON(LGA_BOUNDARIES, {
 
     const dtInfo = driveTimes[name];
     const dtStr = dtInfo ? '<br><span style="color:'+driveColor(name)+';font-weight:600">'+fmtDrive(name)+'</span> from South Bondi ('+dtInfo.km+'km)' : '';
+    const popupPrices = DATA.records.filter(r => r.c === name).map(r => r.p).sort((a,b) => a-b);
+    const popupP25 = popupPrices.length > 3 ? popupPrices[Math.floor(popupPrices.length * 0.25)] : s.min;
+    const popupP75 = popupPrices.length > 3 ? popupPrices[Math.floor(popupPrices.length * 0.75)] : s.max;
     layer.bindPopup(
       '<strong>'+name+'</strong><br>' +
       '<span class="popup-stat">Median: '+fmt(s.median)+'</span><br>' +
-      'Range: '+fmtK(s.p25)+' \u2013 '+fmtK(s.p75) +
+      'Range: '+fmtK(popupP25)+' \u2013 '+fmtK(popupP75) +
       dtStr
     );
 
@@ -823,6 +856,7 @@ function toggleLayer(layerName) {
   const chip = document.getElementById('toggle-' + layerName);
   layerState[layerName] = !layerState[layerName];
   chip.classList.toggle('active', layerState[layerName]);
+  chip.setAttribute('aria-pressed', String(layerState[layerName]));
 
   if (layerName === 'boundaries') {
     if (layerState[layerName]) {

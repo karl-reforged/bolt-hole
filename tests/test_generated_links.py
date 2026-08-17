@@ -55,6 +55,7 @@ class GeneratedLinkTests(unittest.TestCase):
                     compact_path = re.sub(r"[^a-z0-9]", "", parsed.path.lower())
                     self.assertIn(postcode, compact_path)
                     self.assertIn(slug, compact_path)
+        self.assertNotIn("www.commercialrealestate.com.au", self.html)
 
     def test_internal_navigation_targets_exist(self):
         parser = LinkCollector()
@@ -68,6 +69,54 @@ class GeneratedLinkTests(unittest.TestCase):
                 target = "index.html"
             with self.subTest(link=link):
                 self.assertTrue((DOCS / target).exists(), f"missing internal target: {link}")
+
+    def test_every_published_page_has_valid_internal_links(self):
+        for page in DOCS.glob("*.html"):
+            parser = LinkCollector()
+            parser.feed(page.read_text())
+            for link in parser.links:
+                parsed = urlparse(link)
+                if parsed.scheme or parsed.netloc or link.startswith(("#", "mailto:", "tel:")):
+                    continue
+                target = parsed.path
+                if not target or target == "./":
+                    target = "index.html"
+                with self.subTest(page=page.name, link=link):
+                    self.assertTrue(
+                        (page.parent / target).resolve().is_file(),
+                        f"{page.name} points to missing internal target: {link}",
+                    )
+
+    def test_published_pages_reserve_image_space_and_use_semantic_controls(self):
+        for page in DOCS.glob("*.html"):
+            source = page.read_text()
+            with self.subTest(page=page.name):
+                self.assertNotRegex(source, r'<(?:div|span)[^>]+onclick=')
+                self.assertNotIn("transition: all", source)
+                for image in re.findall(r"<img\b([^>]*)>", source):
+                    self.assertIn("width=", image)
+                    self.assertIn("height=", image)
+
+    def test_property_photos_reserve_space_before_loading(self):
+        photos = re.findall(r'<div class="card-photo"><img ([^>]+)>', self.html)
+        self.assertGreater(len(photos), 100)
+        for attrs in photos:
+            self.assertIn('width="720"', attrs)
+            self.assertIn('height="540"', attrs)
+        self.assertIn("height: clamp(180px, 40vw, 240px)", self.html)
+
+    def test_map_and_card_navigation_uses_keyboard_controls(self):
+        self.assertNotIn('<span class="rank-badge"', self.html)
+        self.assertIn('<button type="button" class="rank-badge"', self.html)
+        self.assertIn('<button type="button" class="popup-link"', self.html)
+        self.assertIn("wireMarkerAccessibility(marker, m)", self.html)
+
+    def test_unavailable_properties_have_a_separate_archive_view(self):
+        self.assertIn('href="?view=archived">Archived (', self.html)
+        self.assertIn('class="card archived-card"', self.html)
+        self.assertIn('class="availability-badge">Under offer</span>', self.html)
+        self.assertIn("document.documentElement.classList.add('archive-view')", self.html)
+        self.assertIn("html.archive-view .dismissed-divider", self.html)
 
 
 if __name__ == "__main__":
