@@ -406,9 +406,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <div class="actions">
                     <a href="{listing_url}" target="_blank" rel="noopener" class="btn btn-view">{"Last listing" if archived else "View listing"}</a>
                     <div class="feedback" id="feedback-{i}">
-                        <button class="btn btn-love" onclick="sendFeedback({i}, '{prop_id}', 'love')">Love it</button>
-                        <button class="btn btn-interesting" onclick="sendFeedback({i}, '{prop_id}', 'interesting')">Interesting</button>
-                        <button class="btn btn-pass" onclick="sendFeedback({i}, '{prop_id}', 'pass')">Not for me</button>
+                        <button type="button" class="btn btn-love" aria-pressed="false" data-reaction="love" onclick="sendFeedback({i}, '{prop_id}', 'love')">Love it</button>
+                        <button type="button" class="btn btn-interesting" aria-pressed="false" data-reaction="interesting" onclick="sendFeedback({i}, '{prop_id}', 'interesting')">Interesting</button>
+                        <button type="button" class="btn btn-pass" aria-pressed="false" data-reaction="pass" onclick="sendFeedback({i}, '{prop_id}', 'pass')">Not for me</button>
                     </div>
                 </div>
                 <div class="notes-section" id="notes-section-{i}" data-property-id="{prop_id}">
@@ -1384,13 +1384,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         // Button highlighting — reaction of null clears all
         const buttons = container.querySelectorAll('button');
         buttons.forEach(btn => {{
-            btn.classList.remove('selected');
-            const text = btn.textContent.toLowerCase();
-            if ((reaction === 'love' && text.includes('love')) ||
-                (reaction === 'interesting' && text.includes('interesting')) ||
-                (reaction === 'pass' && text.includes('not'))) {{
-                btn.classList.add('selected');
-            }}
+            const selected = btn.dataset.reaction === reaction;
+            btn.classList.toggle('selected', selected);
+            btn.setAttribute('aria-pressed', String(selected));
         }});
 
         // Dismissed section membership only when reaction === 'pass'

@@ -103,6 +103,7 @@ class SiteIntegrityTests(unittest.TestCase):
         self.assertIn("@media (max-width: 720px)", html)
         self.assertIn("flex-direction: column", html)
         self.assertIn("height: 52vh", html)
+        self.assertIn("height: calc(100vh - 52px)", html)
 
     def test_shortlist_phone_controls_wrap_and_have_touch_sized_targets(self):
         html = (ROOT / "docs" / "index.html").read_text()
@@ -121,6 +122,8 @@ class SiteIntegrityTests(unittest.TestCase):
         self.assertIn('aria-expanded="false"', html)
         self.assertIn("btn.setAttribute('aria-pressed'", html)
         self.assertIn("pill.setAttribute('aria-expanded'", html)
+        self.assertIn('class="btn btn-love" aria-pressed="false"', html)
+        self.assertIn("btn.setAttribute('aria-pressed', String(selected))", html)
 
     def test_market_map_controls_are_keyboard_accessible(self):
         html = (ROOT / "docs" / "dashboard.html").read_text()

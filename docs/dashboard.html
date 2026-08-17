@@ -62,7 +62,7 @@
     line-height: 1.6;
   }
 
-  .layout { display: flex; height: 100vh; }
+  .layout { display: flex; height: calc(100vh - 52px); }
 
   /* Left panel */
   .panel { width: 420px; min-width: 420px; background: var(--paper); border-right: 1px solid var(--fence); display: flex; flex-direction: column; overflow: hidden; }
@@ -763,9 +763,12 @@ function toggleMapLegend(button) {
 function showSelectedCorridorOnMap() {
   if (!selectedCorridor) return;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelector('.map-container').scrollIntoView({
-    behavior: reducedMotion ? 'auto' : 'smooth',
-    block: 'start'
+  const mapContainer = document.querySelector('.map-container');
+  const navHeight = document.querySelector('body > nav')?.offsetHeight || 0;
+  const targetTop = window.scrollY + mapContainer.getBoundingClientRect().top - navHeight;
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: reducedMotion ? 'auto' : 'smooth'
   });
   window.setTimeout(() => map.invalidateSize(), reducedMotion ? 0 : 350);
 }
