@@ -61,12 +61,20 @@ class ApiError extends Error {
   }
 }
 
+const ALLOWED_AUTHORS = new Map(
+  ['George', 'Mary', 'Alex', 'Greg', 'Justin', 'Anonymous']
+    .map((name) => [name.toLocaleLowerCase('en-AU'), name])
+);
+
 function cleanAuthor(value) {
   const author = String(value || '').trim().replace(/\s+/g, ' ');
   if (author.length > 80 || /[\u0000-\u001f\u007f]/.test(author)) {
     throw new ApiError(422, 'invalid_author');
   }
-  return author || 'Anonymous';
+  if (!author) return 'Anonymous';
+  const canonical = ALLOWED_AUTHORS.get(author.toLocaleLowerCase('en-AU'));
+  if (!canonical) throw new ApiError(422, 'invalid_author');
+  return canonical;
 }
 
 function feedbackIdentity(authorValue, actorValue) {

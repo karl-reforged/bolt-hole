@@ -964,12 +964,18 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         <div class="scrape-status">{scrape_status_html}</div>
         <div class="feedback-access" id="feedback-access">
             <div class="feedback-access-copy">
-                <strong id="feedback-access-title">Add your name (optional)</strong>
-                <span id="feedback-access-status">Using the same name carries reactions and favourites across devices. Without one, they stay with this browser.</span>
+                <strong id="feedback-access-title">Who are you?</strong>
+                <span id="feedback-access-status">Choose a name to carry reactions and favourites across devices, or stay anonymous.</span>
             </div>
             <div class="feedback-access-controls">
-                <input class="feedback-access-input" id="feedback-name" type="text" autocomplete="name" maxlength="80" placeholder="Your name" aria-label="Your optional feedback name" onkeydown="if(event.key === 'Enter') saveFeedbackName()">
-                <button class="feedback-access-button" id="feedback-access-button" onclick="saveFeedbackName()">Save name</button>
+                <select class="feedback-access-input" id="feedback-name" aria-label="Who are you?" onchange="saveFeedbackName()">
+                    <option value="">Anonymous</option>
+                    <option value="George">George</option>
+                    <option value="Mary">Mary</option>
+                    <option value="Alex">Alex</option>
+                    <option value="Greg">Greg</option>
+                    <option value="Justin">Justin</option>
+                </select>
             </div>
         </div>
         <div class="notes-activity" id="notes-activity" style="display:none;">
@@ -1018,7 +1024,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         {all_cards}
 
         <div class="footer">
-            <p>Notes are shared. Add your name if you want reactions and favourites to follow you across devices.</p>
+            <p>Notes are shared. Select your name if you want reactions and favourites to follow you across devices.</p>
             <p>Prepared by Karl Howard &middot; Reforged</p>
         </div>
 
@@ -1077,7 +1083,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         reviewed: 0,
         favCount: 0,
     }};
-    const feedbackIdentity = {{ actorId: '', author: '' }};
+    const feedbackIdentity = {{ actorId: '', author: '', version: 0 }};
+    const KNOWN_FEEDBACK_NAMES = ['George', 'Mary', 'Alex', 'Greg', 'Justin'];
     const ACTOR_KEY = 'blh_feedback_actor_v1';
     const NAME_KEY = 'blh_feedback_name_v1';
 
@@ -1105,15 +1112,19 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         return '?' + params.toString();
     }}
 
+    function identityVersionIsCurrent(version) {{
+        return version === feedbackIdentity.version;
+    }}
+
     function setIdentityStatus() {{
         const titleEl = document.getElementById('feedback-access-title');
         const statusEl = document.getElementById('feedback-access-status');
         if (feedbackIdentity.author) {{
-            if (titleEl) titleEl.textContent = 'Feedback name: ' + feedbackIdentity.author;
-            if (statusEl) statusEl.textContent = 'Reactions and favourites using this exact name follow you across devices.';
+            if (titleEl) titleEl.textContent = 'Using Bolt Hole as ' + feedbackIdentity.author;
+            if (statusEl) statusEl.textContent = 'Your reactions and favourites follow this name across devices.';
         }} else {{
-            if (titleEl) titleEl.textContent = 'Add your name (optional)';
-            if (statusEl) statusEl.textContent = 'Without a name, reactions and favourites stay with this browser. Notes are still shared as Anonymous.';
+            if (titleEl) titleEl.textContent = 'Using Bolt Hole anonymously';
+            if (statusEl) statusEl.textContent = 'Reactions and favourites stay with this browser. Notes are shared as Anonymous.';
         }}
     }}
 
@@ -1133,13 +1144,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     async function saveFeedbackName() {{
         const input = document.getElementById('feedback-name');
-        const author = (input?.value || '').trim().replace(/\\s+/g, ' ').slice(0, 80);
+        const selected = input?.value || '';
+        const author = KNOWN_FEEDBACK_NAMES.includes(selected) ? selected : '';
+        feedbackIdentity.version += 1;
+        const version = feedbackIdentity.version;
         clearPersonalUI();
         feedbackIdentity.author = author;
         if (author) localStorage.setItem(NAME_KEY, author);
         else localStorage.removeItem(NAME_KEY);
         setIdentityStatus();
-        await Promise.allSettled([loadServerReactions(), loadServerFavourites()]);
+        await Promise.allSettled([loadServerReactions(version), loadServerFavourites(version)]);
     }}
 
     async function initFeedbackIdentity() {{
@@ -1149,17 +1163,22 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             localStorage.setItem(ACTOR_KEY, actorId);
         }}
         feedbackIdentity.actorId = actorId;
-        feedbackIdentity.author = localStorage.getItem(NAME_KEY) || '';
+        const storedName = localStorage.getItem(NAME_KEY) || '';
+        feedbackIdentity.author = KNOWN_FEEDBACK_NAMES.includes(storedName) ? storedName : '';
+        feedbackIdentity.version += 1;
+        const version = feedbackIdentity.version;
+        if (storedName && !feedbackIdentity.author) localStorage.removeItem(NAME_KEY);
         const input = document.getElementById('feedback-name');
         if (input) input.value = feedbackIdentity.author;
         setIdentityStatus();
-        await Promise.allSettled([loadServerReactions(), loadServerFavourites(), loadNotes()]);
+        await Promise.allSettled([loadServerReactions(version), loadServerFavourites(version), loadNotes()]);
     }}
 
-    async function loadServerReactions() {{
+    async function loadServerReactions(version = feedbackIdentity.version) {{
         const response = await apiFetch(identityQuery('reactions'));
         if (!response.ok) throw new Error('Could not load reactions');
         const data = await response.json();
+        if (!identityVersionIsCurrent(version)) return;
         const server = {{}};
         (data.reactions || []).forEach(r => {{
             if (r?.property_id && r?.reaction) server[r.property_id] = r.reaction;
@@ -1175,6 +1194,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     // ── Feedback ──────────────────────────────────────────────────────
     async function sendFeedback(idx, propertyId, reaction) {{
+        const version = feedbackIdentity.version;
         // Clicking an already-selected reaction clears it (neutral)
         const effective = state.feedback[propertyId] === reaction ? null : reaction;
         try {{
@@ -1187,13 +1207,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 }}))
             }});
             if (!response.ok) throw new Error('Save rejected');
+            if (!identityVersionIsCurrent(version)) return;
             if (effective === null) delete state.feedback[propertyId];
             else state.feedback[propertyId] = effective;
             state.reviewed = Object.keys(state.feedback).length;
             applyFeedbackUI(idx, effective, true);
             updateProgress();
         }} catch {{
-            showConfirmation(idx, 'Could not save — please try again.');
+            if (identityVersionIsCurrent(version)) {{
+                showConfirmation(idx, 'Could not save — please try again.');
+            }}
         }}
     }}
 
@@ -1297,10 +1320,11 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     // ── Favourites ────────────────────────────────────────────────────
-    async function loadServerFavourites() {{
+    async function loadServerFavourites(version = feedbackIdentity.version) {{
         const response = await apiFetch(identityQuery('favourites'));
         if (!response.ok) throw new Error('Could not load favourites');
         const data = await response.json();
+        if (!identityVersionIsCurrent(version)) return;
         const server = {{}};
         (data.favourites || []).forEach(favourite => {{
             if (favourite?.property_id) server[favourite.property_id] = true;
@@ -1315,6 +1339,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     async function toggleFavourite(idx, propertyId) {{
+        const version = feedbackIdentity.version;
         const isFav = !state.favourites[propertyId];
         try {{
             const response = await apiFetch('', {{
@@ -1326,6 +1351,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 }}))
             }});
             if (!response.ok) throw new Error('Save rejected');
+            if (!identityVersionIsCurrent(version)) return;
             if (isFav) {{
                 state.favourites[propertyId] = true;
                 applyFavouriteUI(idx);
@@ -1337,7 +1363,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             updateProgress();
             showConfirmation(idx, isFav ? 'Saved to your favourites.' : 'Removed from your favourites.');
         }} catch {{
-            showConfirmation(idx, 'Could not save — please try again.');
+            if (identityVersionIsCurrent(version)) {{
+                showConfirmation(idx, 'Could not save — please try again.');
+            }}
         }}
     }}
 

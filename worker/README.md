@@ -14,13 +14,13 @@ origin in browsers.
 
 ## Identity and multiple devices
 
-A display name is optional. A named reaction or favourite is keyed by the
-normalised name, so entering the same name on another device loads the same
-choices. Without a name, the page creates a random ID in that browser and the
-choices remain device-specific. Notes are shared everywhere and show either the
-entered name or `Anonymous`.
+A name is optional. The page offers George, Mary, Alex, Greg, Justin and
+Anonymous. A named reaction or favourite is keyed by that selection, so choosing
+the same person on another device loads the same choices. Anonymous feedback
+uses a random browser ID and remains device-specific. Notes are shared
+everywhere and show the selected name or `Anonymous`.
 
-Names are labels, not verified accounts. Anyone who enters the same name can
+Names are labels, not verified accounts. Anyone who selects the same name can
 see or change that name's reactions and favourites. This is appropriate for the
 small trusted audience, but it should be replaced with real authentication if
 the shortlist becomes broadly shared.

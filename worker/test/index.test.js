@@ -152,6 +152,12 @@ test('invalid notes and malformed JSON return client errors', async () => {
     action: 'note', property_id: 'property-1', idempotency_key: crypto.randomUUID(), note: ' '.repeat(4),
   } }), env);
   assert.equal(invalid.status, 422);
+  const unknownName = await worker.fetch(request('/', { method: 'POST', body: {
+    action: 'note', property_id: 'property-1', idempotency_key: crypto.randomUUID(),
+    author: 'Mallory', note: 'Unknown selector value.',
+  } }), env);
+  assert.equal(unknownName.status, 422);
+  assert.deepEqual(await unknownName.json(), { ok: false, error: 'invalid_author' });
   const malformed = new Request('https://worker.example/', { method: 'POST', body: '{bad' });
   assert.equal((await worker.fetch(malformed, env)).status, 400);
   assert.equal((await worker.fetch(request('/', { method: 'POST', body: { action: 'surprise' } }), env)).status, 404);

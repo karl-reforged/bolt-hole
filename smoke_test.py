@@ -100,10 +100,18 @@ def main():
         check("render contains one card per visible property", card_count == len(visible),
               f"{card_count} cards for {len(visible)} visible properties")
         check("render wires reactions loader", "loadServerReactions" in html)
-        check("optional participant name is wired",
-              "feedback-name" in html and "actor_id" in html)
+        expected_people = ["George", "Mary", "Alex", "Greg", "Justin"]
+        check("known people use a simple optional selector",
+              '<select class="feedback-access-input" id="feedback-name"' in html
+              and all(f'<option value="{name}">{name}</option>' in html
+                      for name in expected_people)
+              and '<option value="">Anonymous</option>' in html
+              and "KNOWN_FEEDBACK_NAMES.includes(storedName)" in html)
         check("cross-device behaviour is explained",
               "across devices" in html and "this browser" in html)
+        check("stale identity reads and writes are discarded",
+              "feedbackIdentity.version" in html
+              and html.count("identityVersionIsCurrent(version)") >= 5)
         check("notes use idempotent confirmed writes",
               "idempotency_key" in html and "response.ok" in html)
         check("note double-submits are blocked",
