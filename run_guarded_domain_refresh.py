@@ -144,21 +144,31 @@ def main() -> int:
         (LOG_DIR / "guarded_domain_refresh_status.json").write_text(json.dumps({"updated": datetime.now().isoformat(), "attempt": attempt, **last}, indent=2))
         if ok:
             print(f"COMPLETE: healthy Domain scrape in {result}", flush=True)
-            if args.upsert:
-                # Attempts run with BOLT_SKIP_SHEET_UPSERT=1 so quarantined
-                # partials never pollute the sheet; only the verified-healthy
-                # result gets upserted, in a child env with the flag removed.
-                upsert_env = {k: v for k, v in os.environ.items() if k != "BOLT_SKIP_SHEET_UPSERT"}
-                code = (
-                    "import json, sys\n"
-                    "from search import _upsert_properties_to_sheet\n"
-                    f"data = json.load(open({json.dumps(str(result))}))\n"
-                    "_upsert_properties_to_sheet(data.get('properties', []))\n"
-                )
-                subprocess.run([str(PY), "-c", code], cwd=ROOT, check=False, env=upsert_env)
-            if args.shortlist:
-                subprocess.run([str(PY), "shortlist.py"], cwd=ROOT, check=True)
-                print("Shortlist rebuilt: docs/index.html", flush=True)
+            try:
+                if args.upsert:
+                    # Attempts run with BOLT_SKIP_SHEET_UPSERT=1 so quarantined
+                    # partials never pollute the database; only the verified
+                    # result gets upserted, with the suppression flag removed.
+                    upsert_env = {k: v for k, v in os.environ.items() if k != "BOLT_SKIP_SHEET_UPSERT"}
+                    subprocess.run([str(PY), "feedback_report.py"], cwd=ROOT, check=True, env=upsert_env)
+                    code = (
+                        "import json, sys\n"
+                        "from search import _upsert_properties_to_sheet\n"
+                        f"data = json.load(open({json.dumps(str(result))}))\n"
+                        "sys.exit(0 if _upsert_properties_to_sheet(data.get('properties', [])) else 1)\n"
+                    )
+                    subprocess.run([str(PY), "-c", code], cwd=ROOT, check=True, env=upsert_env)
+                if args.shortlist:
+                    subprocess.run([str(PY), "shortlist.py"], cwd=ROOT, check=True)
+                    print("Shortlist rebuilt: docs/index.html", flush=True)
+            except subprocess.CalledProcessError as exc:
+                last["ok"] = False
+                last["problems"] = [f"publish step failed with exit code {exc.returncode}"]
+                (LOG_DIR / "guarded_domain_refresh_status.json").write_text(json.dumps({
+                    "updated": datetime.now().isoformat(), "attempt": attempt, **last,
+                }, indent=2))
+                print(f"FAILED: publish step exited {exc.returncode}; existing shortlist left unchanged", file=sys.stderr)
+                return 1
             return 0
         wait = args.cooldown
         print(f"Retrying in {wait}s. Problems: {'; '.join(problems)}", flush=True)

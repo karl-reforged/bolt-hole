@@ -668,7 +668,7 @@ def _fetch_page_with_playwright(browser, url):
 
 # ── Sheet-backed description cache (new-listings-only optimisation) ───────
 #
-# The sheet's `properties` tab (Apps Script DB) already holds the full payload
+# The D1 `properties` table already holds the full payload
 # for every listing we've ever scraped. Detail-page fetches are the expensive
 # part of a Domain scrape (~277 requests) and what triggers Akamai throttling,
 # so we hydrate descriptions for known source_ids from the sheet and only

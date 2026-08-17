@@ -19,6 +19,8 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from secret_store import get_admin_token
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).parent
@@ -35,6 +37,7 @@ NOTES_URL = os.getenv(
     "NOTES_SCRIPT_URL",
     "https://bolt-hole-backend.karl-582.workers.dev",  # Cloudflare Worker + D1 (see worker/)
 )
+BOLT_ADMIN_TOKEN = get_admin_token()
 
 _cached_token = None
 
@@ -720,28 +723,49 @@ def run_search(domain_only=False):
 
 def _upsert_properties_to_sheet(properties):
     """
-    Mirror the scraped properties to the Apps Script `properties` tab so the
-    project stays self-contained (sheet is the canonical DB, local JSONs are
-    snapshots). Non-fatal: logs on failure and moves on — the scrape has
-    already been saved to disk.
+    Mirror scraped properties to the D1 database using the private admin token.
+
+    Returns True only when the server confirms every property. The direct
+    search command may treat this as non-fatal because its local snapshot is
+    already saved; the guarded refresh runner treats False as a failed publish.
     """
     if os.getenv("BOLT_SKIP_SHEET_UPSERT") == "1":
-        print("Sheet upsert skipped: BOLT_SKIP_SHEET_UPSERT=1")
-        return
+        print("Database upsert skipped: BOLT_SKIP_SHEET_UPSERT=1")
+        return False
     if not NOTES_URL or not properties:
-        return
+        print("Database upsert skipped: endpoint or properties missing")
+        return False
+    if not BOLT_ADMIN_TOKEN:
+        print("Database upsert failed: BOLT_ADMIN_TOKEN is not configured")
+        return False
     body = json.dumps({"action": "properties_upsert", "properties": properties})
     try:
-        resp = requests.post(NOTES_URL, data=body, timeout=60)
-        status = resp.status_code
+        resp = requests.post(
+            NOTES_URL,
+            data=body,
+            headers={
+                "Authorization": f"Bearer {BOLT_ADMIN_TOKEN}",
+                "Content-Type": "application/json",
+            },
+            timeout=60,
+        )
+        result = resp.json()
     except requests.RequestException as exc:
-        print(f"Sheet upsert skipped: {exc}")
-        return
-    # Apps Script 302s to userContent then 200s; treat any 2xx/3xx as success.
-    if status < 400:
-        print(f"Sheet upsert: queued {len(properties)} properties to sheet")
-    else:
-        print(f"Sheet upsert: endpoint returned HTTP {status}")
+        print(f"Database upsert failed: {exc}")
+        return False
+    except ValueError:
+        print(f"Database upsert failed: HTTP {resp.status_code} returned invalid JSON")
+        return False
+    confirmed = (
+        200 <= resp.status_code < 300
+        and result.get("ok") is True
+        and result.get("upserted") == len(properties)
+    )
+    if confirmed:
+        print(f"Database upsert: confirmed {len(properties)} properties")
+        return True
+    print(f"Database upsert failed: HTTP {resp.status_code}, response={result}")
+    return False
 
 
 def _load_previous_results():

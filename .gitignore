@@ -33,6 +33,7 @@ client-materials/
 data/listings/
 data/logs/
 data/psi/
+data/feedback/
 
 # Planning docs
 .planning/

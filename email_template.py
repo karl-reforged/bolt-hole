@@ -10,6 +10,7 @@ Usage:
 from datetime import datetime
 
 
+
 def _score_bar(pct):
     """Render a score as a coloured bar."""
     if pct >= 70:

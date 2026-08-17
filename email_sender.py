@@ -21,6 +21,7 @@ from datetime import datetime
 import resend
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
@@ -85,7 +86,7 @@ def _build_link_email(properties, search_date, shortlist_url):
     </div>
 
     <div style="text-align:center;font-size:12px;color:#94a3b8;">
-        <div>Tap Love it, Interesting, or Not for me on each property — your feedback sharpens next week's results.</div>
+        <div>Add your name on the shortlist (optional) to carry reactions and favourites across devices.</div>
         <div style="margin-top:8px;">Prepared by Karl Howard &middot; Reforged</div>
     </div>
 
@@ -100,7 +101,7 @@ def _build_link_email(properties, search_date, shortlist_url):
     plain += f"\nView your shortlist: {shortlist_url}\n\n"
     for i, line in enumerate(preview_lines):
         plain += f"  {i+1}. {line}\n"
-    plain += "\nTap Love it, Interesting, or Not for me — your feedback sharpens next week's results.\n"
+    plain += "\nAdd your name on the shortlist (optional) to carry reactions and favourites across devices.\n"
 
     return plain, html
 

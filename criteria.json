@@ -132,7 +132,7 @@
   },
 
   "feedback": {
-    "_note": "George's reactions to surfaced properties. Each entry captures what he liked, disliked, or flagged. Over time this builds a preference profile that sharpens the search.",
+    "_note": "Reactions to surfaced properties. Treat legacy entries as anonymous; review attributed feedback before deliberately changing the search criteria.",
     "entries": [
       {
         "date": "2026-03-10",

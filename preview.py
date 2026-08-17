@@ -84,7 +84,7 @@ def generate_email_preview(properties, search_date, top_n=20, card_count=10):
     full_html = render_email(top_props, search_date=search_date, card_count=card_count)
 
     # Wire up feedback placeholder URLs
-    # Until the Google Apps Script is deployed, use the shortlist URL as base
+    # Use the configured feedback endpoint, with the shortlist URL as fallback.
     feedback_base = os.getenv("FEEDBACK_SCRIPT_URL", "")
     if feedback_base:
         for i, prop in enumerate(top_props):

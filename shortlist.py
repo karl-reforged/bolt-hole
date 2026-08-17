@@ -2,8 +2,8 @@
 """
 Shortlist page generator — renders scored properties into a self-contained
 HTML page hosted on GitHub Pages. George opens the link, browses, taps
-feedback, favourites properties, leaves comments. All interactions log to
-Google Sheet via Apps Script.
+feedback, favourites properties, and leaves comments. Saves are confirmed by
+the Cloudflare D1 backend, with an optional display name and no login.
 
 Usage:
     from shortlist import generate_shortlist
@@ -20,6 +20,7 @@ import json
 import html as html_mod
 import os
 import sys
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
@@ -63,7 +64,6 @@ def _load_last_sent_ids():
     except (json.JSONDecodeError, IOError):
         return set()
 
-FEEDBACK_URL = os.getenv("FEEDBACK_SCRIPT_URL", "")
 NOTES_URL = os.getenv(
     "NOTES_SCRIPT_URL",
     "https://bolt-hole-backend.karl-582.workers.dev",
@@ -341,7 +341,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                         <div class="notes-list" id="notes-list-{i}"></div>
                         <div class="notes-input-row">
                             <input type="text" class="notes-input" id="notes-input-{i}" placeholder="Add a note…" maxlength="500" onkeydown="noteKeydown(event, {i}, '{prop_id}')">
-                            <button class="notes-post" onclick="submitNote({i}, '{prop_id}')">Post</button>
+                            <button class="notes-post" id="notes-post-{i}" onclick="submitNote({i}, '{prop_id}')">Post</button>
                         </div>
                     </div>
                 </div>
@@ -399,7 +399,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     new_count = len(new_ids)
 
-    feedback_url_js = _escape(FEEDBACK_URL) if FEEDBACK_URL else ""
     notes_url_js = _escape(NOTES_URL) if NOTES_URL else ""
 
     # ── Map markers JSON ──────────────────────────────────────────────────
@@ -829,6 +828,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             font-weight: 500; cursor: pointer; font-family: inherit;
         }}
         .notes-post:hover {{ filter: brightness(1.08); }}
+        .notes-post:disabled {{ opacity: 0.55; cursor: wait; }}
 
         /* ── Activity strip (page header) ────────── */
         .notes-activity {{
@@ -858,6 +858,30 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .activity-author {{ font-weight: 600; color: var(--eucalyptus); text-transform: capitalize; }}
         .activity-suburb {{ color: var(--bark); }}
         .activity-body {{ font-size: 12px; color: var(--bark); line-height: 1.4; }}
+
+        /* ── Optional shared feedback identity ────── */
+        .feedback-access {{
+            margin: -4px 0 18px; padding: 12px 16px;
+            background: #fafaf7; border: 1px solid var(--light-border);
+            border-radius: 9px; display: flex; align-items: center;
+            justify-content: space-between; gap: 12px; flex-wrap: wrap;
+        }}
+        .feedback-access-copy {{ font-size: 12px; color: var(--bark); line-height: 1.45; }}
+        .feedback-access-copy strong {{ display: block; color: var(--eucalyptus); }}
+        .feedback-access-controls {{ display: flex; gap: 6px; flex: 1; justify-content: flex-end; }}
+        .feedback-access-input {{
+            min-width: 180px; max-width: 280px; flex: 1; padding: 8px 10px;
+            border: 1px solid var(--light-border); border-radius: 7px;
+            font: inherit; font-size: 12px;
+        }}
+        .feedback-access-button {{
+            border: 0; border-radius: 7px; padding: 8px 12px; cursor: pointer;
+            background: var(--eucalyptus); color: #fff; font: inherit; font-size: 12px;
+        }}
+        .feedback-access-button.secondary {{ background: var(--slate); }}
+        @media (max-width: 520px) {{
+            .feedback-access-controls {{ justify-content: stretch; width: 100%; }}
+        }}
 
         .feedback-confirmation {{
             font-size: 12px; color: var(--eucalyptus); font-weight: 500; padding: 4px 0;
@@ -938,6 +962,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         </div>
 
         <div class="scrape-status">{scrape_status_html}</div>
+        <div class="feedback-access" id="feedback-access">
+            <div class="feedback-access-copy">
+                <strong id="feedback-access-title">Add your name (optional)</strong>
+                <span id="feedback-access-status">Using the same name carries reactions and favourites across devices. Without one, they stay with this browser.</span>
+            </div>
+            <div class="feedback-access-controls">
+                <input class="feedback-access-input" id="feedback-name" type="text" autocomplete="name" maxlength="80" placeholder="Your name" aria-label="Your optional feedback name" onkeydown="if(event.key === 'Enter') saveFeedbackName()">
+                <button class="feedback-access-button" id="feedback-access-button" onclick="saveFeedbackName()">Save name</button>
+            </div>
+        </div>
         <div class="notes-activity" id="notes-activity" style="display:none;">
             <button class="notes-activity-toggle" onclick="toggleActivity()">💬 <span id="notes-activity-count">0</span> recent notes</button>
             <div class="notes-activity-panel" id="notes-activity-panel" style="display:none;"></div>
@@ -984,7 +1018,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         {all_cards}
 
         <div class="footer">
-            <p>Tap <strong>Love it</strong>, <strong>Interesting</strong>, or <strong>Not for me</strong> &mdash; your feedback sharpens next week's results.</p>
+            <p>Notes are shared. Add your name if you want reactions and favourites to follow you across devices.</p>
             <p>Prepared by Karl Howard &middot; Reforged</p>
         </div>
 
@@ -1035,122 +1069,135 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === by));
     }}
 
-    const FEEDBACK_URL = "{feedback_url_js}";
     const NOTES_URL = "{notes_url_js}";
     const TOTAL = {total_shown};
     const state = {{
-        feedback: {{}},    // propertyId -> reaction (was idx-keyed before v2;
-        favourites: {{}},  // propertyId -> true   the v2 key prevents misread)
+        feedback: {{}},
+        favourites: {{}},
         reviewed: 0,
         favCount: 0,
     }};
+    const feedbackIdentity = {{ actorId: '', author: '' }};
+    const ACTOR_KEY = 'blh_feedback_actor_v1';
+    const NAME_KEY = 'blh_feedback_name_v1';
 
-    // ── Persist to localStorage so scroll-back shows state ──────────
-    // Storage key bumped to v2 when state moved from idx-keyed to
-    // propertyId-keyed — old data would silently misassign reactions
-    // to whichever property happened to land at the same list position
-    // in a later scrape.
-    const STATE_KEY = 'blh_state_v2';
-    function saveState() {{
-        try {{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }} catch(e) {{}}
-    }}
     function cardIdxForPid(pid) {{
         const card = document.querySelector('.card[data-property-id="' + CSS.escape(pid) + '"]');
         return card ? parseInt(card.dataset.idx) : null;
     }}
-    function loadState() {{
-        try {{
-            const s = localStorage.getItem(STATE_KEY);
-            if (s) {{
-                const saved = JSON.parse(s);
-                Object.assign(state, saved);
-                // Restore UI — look each propertyId up in the current scrape;
-                // unknown ones (aged out, sold) just stay in state silently.
-                Object.entries(state.feedback).forEach(([pid, reaction]) => {{
-                    const idx = cardIdxForPid(pid);
-                    if (idx !== null) applyFeedbackUI(idx, reaction);
-                }});
-                Object.entries(state.favourites).forEach(([pid, isFav]) => {{
-                    if (!isFav) return;
-                    const idx = cardIdxForPid(pid);
-                    if (idx !== null) applyFavouriteUI(idx);
-                }});
-                updateProgress();
-            }}
-        }} catch(e) {{}}
+
+    function apiFetch(query, options = {{}}) {{
+        const headers = new Headers(options.headers || {{}});
+        if (options.body) headers.set('Content-Type', 'application/json');
+        return fetch(NOTES_URL + query, {{...options, headers}});
     }}
 
-    // Pull shared reactions from the sheet and make them authoritative, so
-    // George's Love/Interesting/Not-for-me follow him across devices. On
-    // success the sheet wins (a reaction cleared elsewhere clears here too);
-    // on failure (endpoint not deployed / offline) we keep localStorage.
-    function loadServerReactions() {{
-        if (!NOTES_URL) return;
-        fetch(NOTES_URL + '?action=reactions')
-            .then(r => r.json())
-            .then(data => {{
-                // Guard: only go authoritative once the reaction endpoint is
-                // really deployed. The old script ignores the action and
-                // returns {{notes:[...]}} — treating that as "no reactions"
-                // would wipe local state, so bail and keep localStorage.
-                if (!data || !Array.isArray(data.reactions)) return;
-                const server = {{}};
-                (data.reactions || []).forEach(r => {{
-                    if (r && r.property_id && r.reaction) server[r.property_id] = r.reaction;
-                }});
-                // Clear any local reaction the sheet no longer has
-                Object.keys(state.feedback).forEach(pid => {{
-                    if (!(pid in server)) {{
-                        delete state.feedback[pid];
-                        const idx = cardIdxForPid(pid);
-                        if (idx !== null) applyFeedbackUI(idx, null);
-                    }}
-                }});
-                // Adopt the sheet's reactions
-                Object.entries(server).forEach(([pid, reaction]) => {{
-                    state.feedback[pid] = reaction;
-                    const idx = cardIdxForPid(pid);
-                    if (idx !== null) applyFeedbackUI(idx, reaction);
-                }});
-                state.reviewed = Object.keys(state.feedback).length;
-                updateProgress();
-                saveState();
-            }})
-            .catch(() => {{}});
+    function identityPayload(extra = {{}}) {{
+        return {{...extra, author: feedbackIdentity.author, actor_id: feedbackIdentity.actorId}};
+    }}
+
+    function identityQuery(action) {{
+        const params = new URLSearchParams({{
+            action,
+            author: feedbackIdentity.author,
+            actor_id: feedbackIdentity.actorId,
+        }});
+        return '?' + params.toString();
+    }}
+
+    function setIdentityStatus() {{
+        const titleEl = document.getElementById('feedback-access-title');
+        const statusEl = document.getElementById('feedback-access-status');
+        if (feedbackIdentity.author) {{
+            if (titleEl) titleEl.textContent = 'Feedback name: ' + feedbackIdentity.author;
+            if (statusEl) statusEl.textContent = 'Reactions and favourites using this exact name follow you across devices.';
+        }} else {{
+            if (titleEl) titleEl.textContent = 'Add your name (optional)';
+            if (statusEl) statusEl.textContent = 'Without a name, reactions and favourites stay with this browser. Notes are still shared as Anonymous.';
+        }}
+    }}
+
+    function clearPersonalUI() {{
+        Object.entries(state.feedback).forEach(([pid]) => {{
+            const idx = cardIdxForPid(pid);
+            if (idx !== null) applyFeedbackUI(idx, null, false);
+        }});
+        Object.entries(state.favourites).forEach(([pid]) => {{
+            const idx = cardIdxForPid(pid);
+            if (idx !== null) removeFavouriteUI(idx);
+        }});
+        state.feedback = {{}};
+        state.favourites = {{}};
+        updateProgress();
+    }}
+
+    async function saveFeedbackName() {{
+        const input = document.getElementById('feedback-name');
+        const author = (input?.value || '').trim().replace(/\\s+/g, ' ').slice(0, 80);
+        clearPersonalUI();
+        feedbackIdentity.author = author;
+        if (author) localStorage.setItem(NAME_KEY, author);
+        else localStorage.removeItem(NAME_KEY);
+        setIdentityStatus();
+        await Promise.allSettled([loadServerReactions(), loadServerFavourites()]);
+    }}
+
+    async function initFeedbackIdentity() {{
+        let actorId = localStorage.getItem(ACTOR_KEY) || '';
+        if (!actorId) {{
+            actorId = crypto.randomUUID();
+            localStorage.setItem(ACTOR_KEY, actorId);
+        }}
+        feedbackIdentity.actorId = actorId;
+        feedbackIdentity.author = localStorage.getItem(NAME_KEY) || '';
+        const input = document.getElementById('feedback-name');
+        if (input) input.value = feedbackIdentity.author;
+        setIdentityStatus();
+        await Promise.allSettled([loadServerReactions(), loadServerFavourites(), loadNotes()]);
+    }}
+
+    async function loadServerReactions() {{
+        const response = await apiFetch(identityQuery('reactions'));
+        if (!response.ok) throw new Error('Could not load reactions');
+        const data = await response.json();
+        const server = {{}};
+        (data.reactions || []).forEach(r => {{
+            if (r?.property_id && r?.reaction) server[r.property_id] = r.reaction;
+        }});
+        state.feedback = server;
+        Object.entries(server).forEach(([pid, reaction]) => {{
+            const idx = cardIdxForPid(pid);
+            if (idx !== null) applyFeedbackUI(idx, reaction, false);
+        }});
+        state.reviewed = Object.keys(state.feedback).length;
+        updateProgress();
     }}
 
     // ── Feedback ──────────────────────────────────────────────────────
-    function sendFeedback(idx, propertyId, reaction) {{
+    async function sendFeedback(idx, propertyId, reaction) {{
         // Clicking an already-selected reaction clears it (neutral)
         const effective = state.feedback[propertyId] === reaction ? null : reaction;
-
-        if (effective === null) {{
-            delete state.feedback[propertyId];
-        }} else {{
-            state.feedback[propertyId] = effective;
-        }}
-        state.reviewed = Object.keys(state.feedback).length;
-        applyFeedbackUI(idx, effective);
-        updateProgress();
-        saveState();
-
-        // Sync to the shared sheet (reuses the notes Apps Script). Like notes,
-        // POST the reaction as JSON; we can't read the response, so it's
-        // verified via the GET on next load. Silent-fails if the reaction
-        // endpoint isn't deployed yet — localStorage still holds it.
-        if (NOTES_URL) {{
-            fetch(NOTES_URL, {{
+        try {{
+            const response = await apiFetch('', {{
                 method: 'POST',
-                body: JSON.stringify({{
+                body: JSON.stringify(identityPayload({{
                     action: 'reaction',
                     property_id: propertyId,
                     reaction: effective === null ? 'clear' : effective
-                }})
-            }}).catch(() => {{}});
+                }}))
+            }});
+            if (!response.ok) throw new Error('Save rejected');
+            if (effective === null) delete state.feedback[propertyId];
+            else state.feedback[propertyId] = effective;
+            state.reviewed = Object.keys(state.feedback).length;
+            applyFeedbackUI(idx, effective, true);
+            updateProgress();
+        }} catch {{
+            showConfirmation(idx, 'Could not save — please try again.');
         }}
     }}
 
-    function applyFeedbackUI(idx, reaction) {{
+    function applyFeedbackUI(idx, reaction, confirm = true) {{
         const card = document.getElementById('card-' + idx);
         const container = document.getElementById('feedback-' + idx);
         if (!container || !card) return;
@@ -1183,7 +1230,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                     reaction === 'interesting' ? 'Noted — worth a look.' :
                     reaction === 'pass' ? 'Noted — skipping this one.' :
                     'Cleared.';
-        showConfirmation(idx, msg);
+        if (confirm) showConfirmation(idx, msg);
 
         // Update map pin
         updateMapPin(idx, reaction);
@@ -1250,24 +1297,47 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     // ── Favourites ────────────────────────────────────────────────────
-    function toggleFavourite(idx, propertyId) {{
-        const isFav = !state.favourites[propertyId];
-        state.favourites[propertyId] = isFav;
-        state.favCount = Object.values(state.favourites).filter(Boolean).length;
-
-        if (isFav) {{
-            applyFavouriteUI(idx);
-        }} else {{
-            removeFavouriteUI(idx);
-        }}
+    async function loadServerFavourites() {{
+        const response = await apiFetch(identityQuery('favourites'));
+        if (!response.ok) throw new Error('Could not load favourites');
+        const data = await response.json();
+        const server = {{}};
+        (data.favourites || []).forEach(favourite => {{
+            if (favourite?.property_id) server[favourite.property_id] = true;
+        }});
+        state.favourites = server;
+        Object.keys(server).forEach(pid => {{
+            const idx = cardIdxForPid(pid);
+            if (idx !== null) applyFavouriteUI(idx);
+        }});
+        state.favCount = Object.keys(server).length;
         updateProgress();
-        saveState();
+    }}
 
-        if (FEEDBACK_URL) {{
-            const url = FEEDBACK_URL + '?action=favourite'
-                + '&property_id=' + encodeURIComponent(propertyId)
-                + '&value=' + (isFav ? '1' : '0');
-            fetch(url, {{ mode: 'no-cors' }}).catch(() => {{}});
+    async function toggleFavourite(idx, propertyId) {{
+        const isFav = !state.favourites[propertyId];
+        try {{
+            const response = await apiFetch('', {{
+                method: 'POST',
+                body: JSON.stringify(identityPayload({{
+                    action: 'favourite',
+                    property_id: propertyId,
+                    favourite: isFav
+                }}))
+            }});
+            if (!response.ok) throw new Error('Save rejected');
+            if (isFav) {{
+                state.favourites[propertyId] = true;
+                applyFavouriteUI(idx);
+            }} else {{
+                delete state.favourites[propertyId];
+                removeFavouriteUI(idx);
+            }}
+            state.favCount = Object.keys(state.favourites).length;
+            updateProgress();
+            showConfirmation(idx, isFav ? 'Saved to your favourites.' : 'Removed from your favourites.');
+        }} catch {{
+            showConfirmation(idx, 'Could not save — please try again.');
         }}
     }}
 
@@ -1296,11 +1366,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }}
 
-    // ── Shared notes (Apps Script backend) ────────────────────────────
-    // No identity plumbing — one URL for everyone, sign off inside the note
-    // body if you want ("— George"). The sheet's author column stays as
-    // dead data for existing test rows.
+    // ── Attributed shared notes ───────────────────────────────────────
     let notesCache = {{}};
+    const pendingNoteSaves = {{}};
 
     function escapeHtml(s) {{
         return String(s).replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}})[c]);
@@ -1317,37 +1385,23 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         return d.toLocaleDateString(undefined, {{month:'short', day:'numeric'}});
     }}
 
-    function loadNotes() {{
-        if (!NOTES_URL) return;
-        fetch(NOTES_URL).then(r => r.json()).then(data => {{
-            const next = {{}};
-            (data.notes || []).forEach(n => {{
-                (next[n.property_id] = next[n.property_id] || []).push(n);
-            }});
-            // Preserve optimistic (local-*) notes the server hasn't echoed back yet,
-            // to avoid flashing away a user's fresh note during the write race window.
-            Object.entries(notesCache).forEach(([pid, arr]) => {{
-                const pendingLocals = arr.filter(n =>
-                    typeof n.id === 'string' && n.id.startsWith('local-'));
-                if (!pendingLocals.length) return;
-                const serverTexts = new Set((next[pid] || []).map(n =>
-                    (n.note || '') + '|' + (n.author || '')));
-                const stillPending = pendingLocals.filter(n =>
-                    !serverTexts.has((n.note || '') + '|' + (n.author || '')));
-                if (stillPending.length) {{
-                    next[pid] = [...(next[pid] || []), ...stillPending];
-                }}
-            }});
-            notesCache = next;
-            Object.values(notesCache).forEach(list =>
-                list.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)));
-            document.querySelectorAll('.notes-section').forEach(section => {{
-                const pid = section.dataset.propertyId;
-                const idx = section.id.replace('notes-section-', '');
-                renderNotesIntoCard(idx, notesCache[pid] || []);
-            }});
-            updateActivityStrip(data.notes || []);
-        }}).catch(e => console.warn('notes load failed', e));
+    async function loadNotes() {{
+        const response = await apiFetch('');
+        if (!response.ok) throw new Error('Could not load notes');
+        const data = await response.json();
+        const next = {{}};
+        (data.notes || []).forEach(n => {{
+            (next[n.property_id] = next[n.property_id] || []).push(n);
+        }});
+        notesCache = next;
+        Object.values(notesCache).forEach(list =>
+            list.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp)));
+        document.querySelectorAll('.notes-section').forEach(section => {{
+            const pid = section.dataset.propertyId;
+            const idx = section.id.replace('notes-section-', '');
+            renderNotesIntoCard(idx, notesCache[pid] || []);
+        }});
+        updateActivityStrip(data.notes || []);
     }}
 
     function renderNotesIntoCard(idx, notes) {{
@@ -1366,6 +1420,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         pill.classList.add('notes-pill-active');
         list.innerHTML = notes.map(n => (
             '<div class="note"><div class="note-meta">' +
+                '<span class="note-author">' + escapeHtml(n.author || 'Unknown') + '</span> · ' +
                 '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
             '</div><div class="note-body">' + escapeHtml(n.note) + '</div></div>'
         )).join('');
@@ -1382,35 +1437,45 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
     }}
 
-    function submitNote(idx, propertyId) {{
+    async function submitNote(idx, propertyId) {{
+        if (pendingNoteSaves[propertyId]) return;
         const input = document.getElementById('notes-input-' + idx);
+        const button = document.getElementById('notes-post-' + idx);
         if (!input) return;
         const text = (input.value || '').trim();
         if (!text || !NOTES_URL) return;
-
-        const optimistic = {{
-            id: 'local-' + Date.now(),
+        pendingNoteSaves[propertyId] = true;
+        input.disabled = true;
+        if (button) button.disabled = true;
+        const body = JSON.stringify(identityPayload({{
+            action: 'note',
             property_id: propertyId,
-            author: '',
-            timestamp: new Date().toISOString(),
-            note: text,
+            idempotency_key: crypto.randomUUID(),
+            note: text
+        }}));
+        const postOnce = async () => {{
+            const response = await apiFetch('', {{method: 'POST', body}});
+            if (!response.ok) throw new Error('Save rejected');
+            return response.json();
         }};
-        (notesCache[propertyId] = notesCache[propertyId] || []).push(optimistic);
-        renderNotesIntoCard(idx, notesCache[propertyId]);
-        input.value = '';
-
-        const body = JSON.stringify({{action:'note', property_id: propertyId, author: '', note: text}});
-        const postOnce = () => fetch(NOTES_URL, {{ method: 'POST', body }});
-        postOnce()
-            .then(() => setTimeout(loadNotes, 2500))
-            .catch(e => {{
-                console.warn('note post failed, retrying once in 1.5s', e);
-                setTimeout(() => {{
-                    postOnce()
-                        .then(() => setTimeout(loadNotes, 2500))
-                        .catch(e2 => console.warn('note post retry failed — note remains optimistic-only', e2));
-                }}, 1500);
-            }});
+        try {{
+            let data;
+            try {{ data = await postOnce(); }}
+            catch {{ data = await postOnce(); }}
+            if (!data.note) throw new Error('Missing saved note');
+            (notesCache[propertyId] = notesCache[propertyId] || []).push(data.note);
+            notesCache[propertyId].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+            renderNotesIntoCard(idx, notesCache[propertyId]);
+            input.value = '';
+            updateActivityStrip(Object.values(notesCache).flat());
+            showConfirmation(idx, 'Saved as ' + data.note.author + '.');
+        }} catch {{
+            showConfirmation(idx, 'Could not save — your note is still here.');
+        }} finally {{
+            delete pendingNoteSaves[propertyId];
+            input.disabled = false;
+            if (button) button.disabled = false;
+        }}
     }}
 
     function noteKeydown(event, idx, propertyId) {{
@@ -1436,6 +1501,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             const pidAttr = escapeHtml(n.property_id);
             return '<div class="activity-item" onclick="scrollToProperty(\\'' + pidAttr.replace(/'/g, "\\\\'") + '\\')">' +
                 '<div class="activity-meta">' +
+                    '<span class="activity-author">' + escapeHtml(n.author || 'Unknown') + '</span> · ' +
                     '<span class="activity-suburb">' + escapeHtml(addr || '—') + '</span> · ' +
                     '<span class="note-time">' + escapeHtml(formatNoteDate(n.timestamp)) + '</span>' +
                 '</div><div class="activity-body">' + escapeHtml(n.note) + '</div></div>';
@@ -1683,16 +1749,22 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }});
     }})();
 
-    // ── Restore state on load ─────────────────────────────────────────
-    loadState();
-    loadServerReactions();
-    loadNotes();
+    // ── Restore the optional feedback name and this browser's identity ─
+    initFeedbackIdentity();
     </script>
 </body>
 </html>'''
 
-    with open(output_path, "w") as f:
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        "w", dir=output_path.parent, prefix=f".{output_path.name}.", delete=False
+    ) as f:
         f.write(page_html)
+        f.flush()
+        os.fsync(f.fileno())
+        temp_path = Path(f.name)
+    temp_path.replace(output_path)
 
     print(f"Shortlist: {len(props)} properties -> {output_path}")
     return output_path
@@ -1713,9 +1785,9 @@ def _parse_run_timestamp(filename_stem):
 
 def _fetch_sheet_properties():
     """
-    Fetch properties from the Apps Script sheet (self-contained DB) keyed by
-    source_id. Returns {} if endpoint is absent, action is unimplemented,
-    or any network hiccup. Never raises — sheet is a bonus, JSONs are canon.
+    Fetch properties from the D1-backed API keyed by source_id. Returns {} if
+    the endpoint is absent or unavailable. Never raises — the remote database
+    supplements the local JSON snapshots during rendering.
     """
     url = os.getenv(
         "NOTES_SCRIPT_URL",

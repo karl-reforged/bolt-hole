@@ -96,10 +96,24 @@ def main():
         shortlist.generate_shortlist(props, output_path=tmp_path)
         html = tmp_path.read_text()
         check("render produces substantial HTML", len(html) > 100_000, f"{len(html):,} bytes")
-        card_count = html.count("data-property-id=")
-        check("render contains property cards", card_count >= len(visible),
-              f"{card_count} card markers for {len(visible)} visible properties")
+        card_count = html.count('<div class="card" id="card-')
+        check("render contains one card per visible property", card_count == len(visible),
+              f"{card_count} cards for {len(visible)} visible properties")
         check("render wires reactions loader", "loadServerReactions" in html)
+        check("optional participant name is wired",
+              "feedback-name" in html and "actor_id" in html)
+        check("cross-device behaviour is explained",
+              "across devices" in html and "this browser" in html)
+        check("notes use idempotent confirmed writes",
+              "idempotency_key" in html and "response.ok" in html)
+        check("note double-submits are blocked",
+              "pendingNoteSaves" in html and "button.disabled" in html)
+        check("favourites sync to the shared backend",
+              "action: 'favourite'" in html)
+        check("notes display their attributed author",
+              '<span class="note-author">' in html)
+        check("access tokens are never embedded in generated HTML",
+              "SHORTLIST_ACCESS_TOKEN" not in html)
     finally:
         tmp_path.unlink(missing_ok=True)
 

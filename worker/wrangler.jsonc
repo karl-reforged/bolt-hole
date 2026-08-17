@@ -7,11 +7,24 @@
   "name": "bolt-hole-backend",
   "main": "src/index.js",
   "compatibility_date": "2026-08-09",
+  "vars": {
+    "PUBLIC_ORIGIN": "https://karl-reforged.github.io"
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "bolt-hole",
       "database_id": "901357da-160a-4962-9b47-951e6819b325"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "WRITE_RATE_LIMITER",
+      "namespace_id": "582001",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
     }
   ]
 }
