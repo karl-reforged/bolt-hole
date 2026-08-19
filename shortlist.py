@@ -235,7 +235,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     props = active_props + archived_props
     total_shown = len(active_props)
     archived_count = len(archived_props)
-    sources_count = len({p.get("source") for p in active_props if p.get("source")})
 
     # "New" = anything George hasn't seen since his last send. Single source of
     # truth (data/last_sent.json) so the count, the NEW badge, and the New sort
@@ -428,41 +427,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     else:
         showing = f"{total_found} properties matched your criteria"
 
-    # ── Scrape status strip ──────────────────────────────────────────────
-    # Pull source_report from the most recent cached run so we can surface
-    # raw-listing counts, dormant sources, and source errors.
-    status_bits = []
-    raw_total = 0
-    errored_sources = []
-    dormant_sources = []
-    try:
-        if prev_files:
-            with open(prev_files[0]) as _f:
-                _latest = json.load(_f)
-            sr = _latest.get("source_report") or {}
-            for name, rep in sr.items():
-                c = rep.get("count", 0)
-                if rep.get("error"):
-                    errored_sources.append(name)
-                elif c == 0 and name not in ("Domain API", "REA Manual"):
-                    # "Domain API" is intentionally null (falls back to Domain Web);
-                    # "REA Manual" is user-populated, blank is normal.
-                    dormant_sources.append(name)
-                raw_total += c
-    except Exception:
-        pass
-
-    if raw_total:
-        status_bits.append(f"{raw_total} listings scanned")
-    status_bits.append(f"{total_found} passed")
-    if new_ids:
-        status_bits.append(f"{len(new_ids)} new")
-    if dormant_sources:
-        status_bits.append(f'<span class="scrape-status-warn" title="Source returned 0 listings this run">{", ".join(dormant_sources)} idle</span>')
-    if errored_sources:
-        status_bits.append(f'<span class="scrape-status-warn" title="Source reported an error this run">{", ".join(errored_sources)} errored</span>')
-    scrape_status_html = " &middot; ".join(status_bits)
-
     best = active_props[0] if active_props else None
     top_match = ""
     if best:
@@ -504,7 +468,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolt Hole — Weekly Shortlist</title>
+    <title>Bolt Hole — Property Shortlist</title>
     <link rel="icon" href="design-system/assets/logo-mark.png" />
     <script>const initialView = new URLSearchParams(location.search).get('view'); if (initialView === 'past' || initialView === 'archived') document.documentElement.classList.add('past-view'); else document.documentElement.classList.add('task-view-' + (['saved', 'all'].includes(initialView) ? initialView : 'review'));</script>
     <link rel="preconnect" href="https://unpkg.com" />
@@ -588,16 +552,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             display: none; background: #fff; border: 1px dashed var(--light-border);
             border-radius: 10px; padding: 28px 20px; margin-bottom: 24px;
             text-align: center; color: var(--slate); font-size: 13px;
-        }}
-
-        /* ── Scrape status strip ─────────────────── */
-        .scrape-status {{
-            font-size: 11px; color: var(--slate);
-            padding: 8px 20px 0; margin: -14px 0 18px;
-            opacity: 0.85;
-        }}
-        .scrape-status-warn {{
-            color: #b45309; font-weight: 500;
         }}
 
         /* ── Sort bar ──────────────────────────── */
@@ -689,6 +643,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .map-expand-btn:hover {{
             background: var(--eucalyptus); color: #fff; border-color: var(--eucalyptus);
         }}
+        .map-mobile-toggle {{ display: none; }}
         #shortlist-map {{ height: 480px; width: 100%; }}
 
         /* ── Map legend ─────────────────────────── */
@@ -787,7 +742,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         html.past-view .sort-bar,
         html.past-view .map-container,
         html.past-view .map-modal,
-        html.past-view .scrape-status,
         html.past-view .dismissed-divider,
         html.past-view .view-empty {{ display: none; }}
         html.past-view .card.archived-card,
@@ -1036,6 +990,18 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         @media (max-width: 520px) {{
             .feedback-access {{ justify-content: space-between; }}
             .task-views {{ grid-template-columns: 1fr 1fr; }}
+            .map-container .map-label {{ padding: 12px 14px; }}
+            .map-label-right {{ gap: 8px; }}
+            .map-mobile-toggle {{
+                display: inline-flex; align-items: center; justify-content: center;
+                min-height: 40px; padding: 6px 10px; border-radius: 6px;
+                border: 1px solid var(--eucalyptus); background: #fff;
+                color: var(--eucalyptus); cursor: pointer; font: inherit;
+                font-size: 11px; font-weight: 600;
+            }}
+            .map-container:not(.map-open) .map-legend,
+            .map-container:not(.map-open) #shortlist-map,
+            .map-container:not(.map-open) .map-desktop-action {{ display: none; }}
             .sort-bar {{ flex-wrap: wrap; overflow-x: visible; }}
             .sort-label {{ flex-basis: 100%; margin-bottom: 2px; }}
             .sort-btn {{ min-height: 44px; }}
@@ -1114,19 +1080,17 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 <body>
     <nav style="position:sticky;top:0;z-index:9999;background:rgba(245,240,232,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
       <div style="max-width:640px;margin:0 auto;padding:0 16px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;">
-        <a href="bolt-hole-overview.html" style="display:inline-flex;align-items:center;padding:14px 12px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">Overview</a>
-        <a href="dashboard.html" style="display:inline-flex;align-items:center;padding:14px 12px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">Market Map</a>
         <a href="./" style="display:inline-flex;align-items:center;padding:14px 12px;font-size:13px;font-weight:600;color:#4A7C6B;text-decoration:none;white-space:nowrap;border-bottom:2px solid #4A7C6B;min-height:48px;">Shortlist</a>
-        <a href="system-map.html" style="display:inline-flex;align-items:center;padding:14px 12px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">How It Works</a>
+        <a href="dashboard.html" style="display:inline-flex;align-items:center;padding:14px 12px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">Area Insights</a>
+        <a href="bolt-hole-overview.html" style="display:inline-flex;align-items:center;padding:14px 12px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;min-height:48px;">About the Search</a>
       </div>
     </nav>
     <div class="container">
 
         <div class="header">
             <div class="brand">Bolt Hole Search</div>
-            <h1>Bolt Hole &mdash; Weekly Shortlist</h1>
-            <div class="date">{_escape(search_date)}</div>
-            <div class="freshness">{total_found} properties &middot; {sources_count} sources</div>
+            <h1>Bolt Hole &mdash; Property Shortlist</h1>
+            <div class="freshness">Updated {_escape(search_date)}</div>
         </div>
 
         <div class="summary">
@@ -1146,7 +1110,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <span>No longer available. Previous notes and feedback are retained.</span>
         </div>
 
-        <div class="scrape-status">{scrape_status_html}</div>
         <div class="feedback-access" id="feedback-access">
             <label for="feedback-name">Reviewing as</label>
             <select class="feedback-access-input" id="feedback-name" name="feedback-name" autocomplete="off" onchange="saveFeedbackName()">
@@ -1191,8 +1154,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <span>Where they are</span>
                 <div class="map-label-right">
                     {map_coverage_badge}
-                    <button type="button" class="map-expand-btn" onclick="resetMapView()" title="Zoom out to show every property">&#x21BA; Reset</button>
-                    <button type="button" class="map-expand-btn" onclick="openExpandedMap()" title="Open full-screen map">Expand &nearr;</button>
+                    <button type="button" class="map-expand-btn map-desktop-action" onclick="resetMapView()" title="Zoom out to show every property">&#x21BA; Reset</button>
+                    <button type="button" class="map-expand-btn map-desktop-action" onclick="openExpandedMap()" title="Open full-screen map">Expand &nearr;</button>
+                    <button type="button" class="map-mobile-toggle" aria-expanded="false" aria-controls="shortlist-map" onclick="toggleInlineMap()">View Map</button>
                 </div>
             </div>
             <div class="map-legend" aria-label="Map pin colour legend">
@@ -1294,6 +1258,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         document.documentElement.classList.add('task-view-' + view);
         history.replaceState(null, '', view === 'review' ? location.pathname : '?view=' + view);
         applyTaskView();
+        if (view === 'all') setTimeout(() => {{ if (map) map.invalidateSize(); }}, 0);
     }}
 
     function applyTaskView() {{
@@ -1977,6 +1942,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }} else {{
             map.flyToBounds(initialMapBounds, {{ padding: [30, 30], duration: 0.6 }});
         }}
+    }}
+
+    function toggleInlineMap() {{
+        const container = document.querySelector('.map-container');
+        const button = document.querySelector('.map-mobile-toggle');
+        if (!container || !button) return;
+        const open = container.classList.toggle('map-open');
+        button.setAttribute('aria-expanded', String(open));
+        button.textContent = open ? 'Hide Map' : 'View Map';
+        if (open) setTimeout(() => {{ if (map) map.invalidateSize(); }}, 0);
     }}
 
     function updateMapPin(idx, reaction) {{

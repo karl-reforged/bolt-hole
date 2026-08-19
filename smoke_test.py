@@ -101,12 +101,13 @@ def main():
               f"{card_count} cards for {len(visible)} visible properties")
         check("render wires reactions loader", "loadServerReactions" in html)
         expected_people = ["George", "Mary", "Alex", "Greg", "Justin"]
-        check("known people use a simple optional selector",
-              '<select class="feedback-access-input" id="feedback-name"' in html
-              and all(f'<option value="{name}">{name}</option>' in html
+        check("known people are offered on the first feedback action",
+              '<dialog class="identity-dialog" id="identity-dialog"' in html
+              and "Who's reviewing?" in html
+              and all(f"chooseFeedbackIdentity('{name}')" in html
                       for name in expected_people)
-              and '<option value="">Anonymous</option>' in html
-              and "KNOWN_FEEDBACK_NAMES.includes(storedName)" in html)
+              and "chooseFeedbackIdentity('')" in html
+              and "ensureFeedbackIdentity" in html)
         check("cross-device behaviour is explained",
               "across devices" in html and "this browser" in html)
         check("stale identity reads and writes are discarded",

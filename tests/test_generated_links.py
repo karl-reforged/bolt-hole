@@ -142,6 +142,29 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertIn('href="?view=past">Past Listings', self.html)
         self.assertIn("function applyTaskView()", self.html)
 
+    def test_shortlist_uses_simple_copy_and_a_collapsible_mobile_map(self):
+        self.assertIn('<title>Bolt Hole — Property Shortlist</title>', self.html)
+        self.assertIn('<h1>Bolt Hole &mdash; Property Shortlist</h1>', self.html)
+        self.assertIn('class="freshness">Updated ', self.html)
+        self.assertNotIn('class="scrape-status"', self.html)
+        self.assertIn('class="map-mobile-toggle"', self.html)
+        self.assertIn('function toggleInlineMap()', self.html)
+
+    def test_global_navigation_uses_three_customer_facing_destinations(self):
+        for page_name in (
+            "index.html",
+            "dashboard.html",
+            "bolt-hole-overview.html",
+            "system-map.html",
+        ):
+            source = (DOCS / page_name).read_text()
+            with self.subTest(page=page_name):
+                self.assertIn('>Shortlist</a>', source)
+                self.assertIn('>Area Insights</a>', source)
+                self.assertIn('>About the Search</a>', source)
+                self.assertNotIn('>Market Map</a>', source)
+                self.assertNotIn('>How It Works</a>', source)
+
 
 if __name__ == "__main__":
     unittest.main()
