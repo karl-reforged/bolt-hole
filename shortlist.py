@@ -1313,6 +1313,7 @@ def generate_shortlist(
     const state = {{
         feedback: {{}},
         favourites: {{}},
+        anonymousNoteReviews: {{}},
         reviewed: 0,
         favCount: 0,
     }};
@@ -1321,6 +1322,7 @@ def generate_shortlist(
     const ACTOR_KEY = 'blh_feedback_actor_v1';
     const NAME_KEY = 'blh_feedback_name_v1';
     const IDENTITY_CONFIRMED_KEY = 'blh_feedback_identity_confirmed_v1';
+    const ANONYMOUS_NOTE_REVIEW_KEY = 'blh_anonymous_note_reviews_v1';
     let identityPromptResolve = null;
     const requestedTaskView = new URLSearchParams(location.search).get('view');
     let currentTaskView = ['saved', 'all'].includes(requestedTaskView) ? requestedTaskView : 'review';
@@ -1346,10 +1348,12 @@ def generate_shortlist(
             const propertyId = card.dataset.propertyId;
             const reaction = state.feedback[propertyId] || '';
             const favourite = Boolean(state.favourites[propertyId]);
-            const reviewerNoteAuthor = feedbackIdentity.author
-                || (feedbackIdentity.confirmed ? 'Anonymous' : '');
-            const hasNote = Boolean(reviewerNoteAuthor)
-                && (notesCache[propertyId] || []).some(note => note.author === reviewerNoteAuthor);
+            const hasNamedNote = Boolean(feedbackIdentity.author)
+                && (notesCache[propertyId] || []).some(note => note.author === feedbackIdentity.author);
+            const hasAnonymousNote = !feedbackIdentity.author
+                && feedbackIdentity.confirmed
+                && Boolean(state.anonymousNoteReviews[propertyId]);
+            const hasNote = hasNamedNote || hasAnonymousNote;
             const needsReview = !reaction && !favourite && !hasNote;
             const saved = favourite || reaction === 'love' || reaction === 'interesting';
             if (needsReview) reviewCount += 1;
@@ -1715,6 +1719,20 @@ def generate_shortlist(
     let notesCache = {{}};
     const pendingNoteSaves = {{}};
 
+    function loadAnonymousNoteReviews() {{
+        try {{
+            const stored = JSON.parse(localStorage.getItem(ANONYMOUS_NOTE_REVIEW_KEY) || '{{}}');
+            state.anonymousNoteReviews = stored && typeof stored === 'object' ? stored : {{}};
+        }} catch {{
+            state.anonymousNoteReviews = {{}};
+        }}
+    }}
+
+    function rememberAnonymousNoteReview(propertyId) {{
+        state.anonymousNoteReviews[propertyId] = true;
+        localStorage.setItem(ANONYMOUS_NOTE_REVIEW_KEY, JSON.stringify(state.anonymousNoteReviews));
+    }}
+
     function escapeHtml(s) {{
         return String(s).replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}})[c]);
     }}
@@ -1814,6 +1832,7 @@ def generate_shortlist(
             if (!data.note) throw new Error('Missing saved note');
             (notesCache[propertyId] = notesCache[propertyId] || []).push(data.note);
             notesCache[propertyId].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+            if (!feedbackIdentity.author) rememberAnonymousNoteReview(propertyId);
             renderNotesIntoCard(idx, notesCache[propertyId]);
             input.value = '';
             updateActivityStrip(Object.values(notesCache).flat());
@@ -2227,6 +2246,7 @@ def generate_shortlist(
     }});
 
     // ── Restore the optional feedback name and this browser's identity ─
+    loadAnonymousNoteReviews();
     applyTaskView();
     initFeedbackIdentity();
     </script>

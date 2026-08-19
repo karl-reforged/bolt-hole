@@ -149,8 +149,11 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertIn('href="?view=past">Past Listings', self.html)
         self.assertIn("function applyTaskView()", self.html)
         self.assertIn("classList.remove('past-view')", self.html)
-        self.assertIn("const reviewerNoteAuthor = feedbackIdentity.author", self.html)
-        self.assertIn("note.author === reviewerNoteAuthor", self.html)
+        self.assertIn("const ANONYMOUS_NOTE_REVIEW_KEY", self.html)
+        self.assertIn("const hasNamedNote = Boolean(feedbackIdentity.author)", self.html)
+        self.assertIn("const hasAnonymousNote = !feedbackIdentity.author", self.html)
+        self.assertIn("state.anonymousNoteReviews[propertyId]", self.html)
+        self.assertIn("const hasNote = hasNamedNote || hasAnonymousNote;", self.html)
         self.assertIn("const needsReview = !reaction && !favourite && !hasNote;", self.html)
 
     def test_shortlist_uses_simple_copy_and_a_collapsible_mobile_map(self):
