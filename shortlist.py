@@ -99,7 +99,7 @@ def _archived_props(properties):
         )
         if is_archived_status(prop["status"]):
             archived.append(prop)
-    return archived
+    return sorted(archived, key=lambda prop: prop.get("last_seen_days") or 0)
 
 
 def _partition_props(properties, max_properties=None):
@@ -251,11 +251,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     cards_html = []
     for i, p in enumerate(props):
         archived = is_archived_status(p.get("status"))
-        if archived and i == len(active_props):
-            cards_html.append(
-                '<div class="archive-heading"><strong>Archived properties</strong>'
-                '<span>Kept here with their notes and reactions for future learning.</span></div>'
-            )
         score = p.get("score", {})
         pct = score.get("pct", 0)
         breakdown = score.get("breakdown", {})
@@ -374,7 +369,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             if archived else ""
         )
         rank_control = (
-            f'<span class="rank-badge archived-rank" style="background:{sc_color};">#{i + 1}</span>'
+            ''
             if archived else
             f'<button type="button" class="rank-badge" style="background:{sc_color};" onclick="panMapToCard({i})" title="Find property {i+1} on the map" aria-label="Find property {i+1} on the map">#{i+1}</button>'
         )
@@ -511,7 +506,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bolt Hole — Weekly Shortlist</title>
     <link rel="icon" href="design-system/assets/logo-mark.png" />
-    <script>if (new URLSearchParams(location.search).get('view') === 'archived') document.documentElement.classList.add('archive-view');</script>
+    <script>const initialView = new URLSearchParams(location.search).get('view'); if (initialView === 'past' || initialView === 'archived') document.documentElement.classList.add('past-view'); else document.documentElement.classList.add('task-view-' + (['saved', 'all'].includes(initialView) ? initialView : 'review'));</script>
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -569,16 +564,31 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }}
         .summary .count {{ font-size: 15px; color: var(--bark); font-weight: 500; }}
         .summary .top {{ font-size: 13px; color: var(--slate); margin-top: 4px; }}
-        .view-switch {{ display: flex; gap: 6px; margin: -14px 0 22px; }}
-        .view-switch a {{
-            flex: 1; min-height: 42px; display: inline-flex; align-items: center;
+        .task-views {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: -14px 0 22px; }}
+        .task-views button, .task-views a {{
+            min-height: 42px; display: inline-flex; align-items: center;
             justify-content: center; padding: 8px 12px; border-radius: 8px;
             border: 1px solid var(--light-border); background: #fff;
-            color: var(--slate); text-decoration: none; font-size: 13px; font-weight: 600;
+            color: var(--slate); text-decoration: none; font: inherit;
+            font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
         }}
-        .view-switch .active-link {{ background: var(--eucalyptus); border-color: var(--eucalyptus); color: #fff; }}
-        html.archive-view .view-switch .active-link {{ background: #fff; border-color: var(--light-border); color: var(--slate); }}
-        html.archive-view .view-switch .archive-link {{ background: var(--eucalyptus); border-color: var(--eucalyptus); color: #fff; }}
+        html.task-view-review .task-views [data-view="review"],
+        html.task-view-saved .task-views [data-view="saved"],
+        html.task-view-all .task-views [data-view="all"],
+        html.past-view .task-views .past-link {{
+            background: var(--eucalyptus); border-color: var(--eucalyptus); color: #fff;
+        }}
+        .past-summary {{
+            display: none; background: #fff; border: 1px solid #d6c7ad;
+            border-radius: 10px; padding: 16px 20px; margin-bottom: 18px;
+        }}
+        .past-summary strong, .past-summary span {{ display: block; }}
+        .past-summary span {{ margin-top: 4px; color: var(--slate); font-size: 13px; }}
+        .view-empty {{
+            display: none; background: #fff; border: 1px dashed var(--light-border);
+            border-radius: 10px; padding: 28px 20px; margin-bottom: 24px;
+            text-align: center; color: var(--slate); font-size: 13px;
+        }}
 
         /* ── Scrape status strip ─────────────────── */
         .scrape-status {{
@@ -765,24 +775,24 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .card.dismissed.show-dismissed {{ display: block; }}
         .card.dismissed:hover {{ opacity: 0.6; }}
         .card.archived-card {{ display: none; border-color: #d6c7ad; }}
-        .archive-heading {{ display: none; padding: 16px 4px 12px; color: var(--bark); }}
-        .archive-heading strong, .archive-heading span {{ display: block; }}
-        .archive-heading span {{ margin-top: 4px; color: var(--slate); font-size: 13px; }}
+        .card.task-hidden {{ display: none !important; }}
         .availability-badge {{
             display: inline-block; padding: 3px 8px; border-radius: 4px;
             background: #fef3c7; color: #92400e; font-size: 10px;
             font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase;
         }}
-        .archived-rank {{ cursor: default; opacity: 0.72; }}
-        html.archive-view .card:not(.archived-card),
-        html.archive-view .sort-bar,
-        html.archive-view .map-container,
-        html.archive-view .map-modal,
-        html.archive-view .scrape-status,
-        html.archive-view .dismissed-divider {{ display: none; }}
-        html.archive-view .card.archived-card,
-        html.archive-view .archive-heading {{ display: block; }}
-        html.archive-view .progress-bar {{ display: none !important; }}
+        html:not(.task-view-all):not(.past-view) .map-container {{ display: none; }}
+        html.past-view .card:not(.archived-card),
+        html.past-view .summary,
+        html.past-view .sort-bar,
+        html.past-view .map-container,
+        html.past-view .map-modal,
+        html.past-view .scrape-status,
+        html.past-view .dismissed-divider,
+        html.past-view .view-empty {{ display: none; }}
+        html.past-view .card.archived-card,
+        html.past-view .past-summary {{ display: block; }}
+        html.past-view .progress-bar {{ display: none !important; }}
 
         /* ── Dismissed section ─────────────────── */
         .dismissed-divider {{
@@ -1025,10 +1035,11 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .identity-choice.anonymous {{ grid-column: 1 / -1; color: var(--slate); font-weight: 500; }}
         @media (max-width: 520px) {{
             .feedback-access {{ justify-content: space-between; }}
+            .task-views {{ grid-template-columns: 1fr 1fr; }}
             .sort-bar {{ flex-wrap: wrap; overflow-x: visible; }}
             .sort-label {{ flex-basis: 100%; margin-bottom: 2px; }}
             .sort-btn {{ min-height: 44px; }}
-            .view-switch a, .map-expand-btn, .rank-badge, .score-badge,
+            .task-views button, .task-views a, .map-expand-btn, .rank-badge, .score-badge,
             .fav-btn, .notes-post, .map-modal-close {{ min-height: 44px; }}
             .rank-badge {{ min-width: 44px; }}
             .fav-btn {{ width: 44px; height: 44px; padding: 6px; }}
@@ -1123,9 +1134,16 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <div class="top">{top_match}</div>
         </div>
 
-        <div class="view-switch" aria-label="Property availability">
-            <a class="active-link" href="./">Available ({total_found})</a>
-            <a class="archive-link" href="?view=archived">Archived ({archived_count})</a>
+        <div class="task-views" aria-label="Shortlist view">
+            <button type="button" data-view="review" aria-pressed="false" onclick="setTaskView('review')">To Review <span id="to-review-count">({total_found})</span></button>
+            <button type="button" data-view="saved" aria-pressed="false" onclick="setTaskView('saved')">Saved <span id="saved-count">(0)</span></button>
+            <button type="button" data-view="all" aria-pressed="false" onclick="setTaskView('all')">All Available ({total_found})</button>
+            <a class="past-link" href="?view=past">Past Listings ({archived_count})</a>
+        </div>
+
+        <div class="past-summary">
+            <strong>{archived_count} past listings</strong>
+            <span>No longer available. Previous notes and feedback are retained.</span>
         </div>
 
         <div class="scrape-status">{scrape_status_html}</div>
@@ -1196,6 +1214,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <div id="expanded-map"></div>
         </div>
 
+        <div class="view-empty" id="view-empty" role="status"></div>
+
         {all_cards}
 
         <div class="footer">
@@ -1264,6 +1284,53 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     const NAME_KEY = 'blh_feedback_name_v1';
     const IDENTITY_CONFIRMED_KEY = 'blh_feedback_identity_confirmed_v1';
     let identityPromptResolve = null;
+    const requestedTaskView = new URLSearchParams(location.search).get('view');
+    let currentTaskView = ['saved', 'all'].includes(requestedTaskView) ? requestedTaskView : 'review';
+
+    function setTaskView(view) {{
+        if (!['review', 'saved', 'all'].includes(view)) return;
+        currentTaskView = view;
+        document.documentElement.classList.remove('task-view-review', 'task-view-saved', 'task-view-all');
+        document.documentElement.classList.add('task-view-' + view);
+        history.replaceState(null, '', view === 'review' ? location.pathname : '?view=' + view);
+        applyTaskView();
+    }}
+
+    function applyTaskView() {{
+        if (document.documentElement.classList.contains('past-view')) return;
+        const cards = Array.from(document.querySelectorAll('.card:not(.archived-card)'));
+        let reviewCount = 0;
+        let savedCount = 0;
+        let visibleCount = 0;
+        cards.forEach(card => {{
+            const propertyId = card.dataset.propertyId;
+            const reaction = state.feedback[propertyId] || '';
+            const favourite = Boolean(state.favourites[propertyId]);
+            const needsReview = !reaction && !favourite;
+            const saved = favourite || reaction === 'love' || reaction === 'interesting';
+            if (needsReview) reviewCount += 1;
+            if (saved) savedCount += 1;
+            const visible = currentTaskView === 'review'
+                ? needsReview
+                : currentTaskView === 'saved' ? saved : true;
+            card.classList.toggle('task-hidden', !visible);
+            if (visible && reaction !== 'pass') visibleCount += 1;
+        }});
+        const reviewCountEl = document.getElementById('to-review-count');
+        const savedCountEl = document.getElementById('saved-count');
+        if (reviewCountEl) reviewCountEl.textContent = '(' + reviewCount + ')';
+        if (savedCountEl) savedCountEl.textContent = '(' + savedCount + ')';
+        document.querySelectorAll('.task-views button[data-view]').forEach(button => {{
+            button.setAttribute('aria-pressed', String(button.dataset.view === currentTaskView));
+        }});
+        const empty = document.getElementById('view-empty');
+        if (empty) {{
+            empty.style.display = visibleCount === 0 ? 'block' : 'none';
+            empty.textContent = currentTaskView === 'review'
+                ? 'Nothing left to review.'
+                : currentTaskView === 'saved' ? 'No saved properties yet.' : '';
+        }}
+    }}
 
     function cardIdxForPid(pid) {{
         const card = document.querySelector('.card[data-property-id="' + CSS.escape(pid) + '"]');
@@ -1305,6 +1372,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         state.feedback = {{}};
         state.favourites = {{}};
         updateProgress();
+        applyTaskView();
     }}
 
     async function saveFeedbackName(selectedValue = null) {{
@@ -1379,6 +1447,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }});
         state.reviewed = Object.keys(state.feedback).length;
         updateProgress();
+        applyTaskView();
     }}
 
     // ── Feedback ──────────────────────────────────────────────────────
@@ -1403,6 +1472,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             state.reviewed = Object.keys(state.feedback).length;
             applyFeedbackUI(idx, effective, true);
             updateProgress();
+            applyTaskView();
         }} catch {{
             if (identityVersionIsCurrent(version)) {{
                 showConfirmation(idx, 'Could not save — please try again.');
@@ -1522,6 +1592,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         }});
         state.favCount = Object.keys(server).length;
         updateProgress();
+        applyTaskView();
     }}
 
     async function toggleFavourite(idx, propertyId) {{
@@ -1548,6 +1619,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             }}
             state.favCount = Object.keys(state.favourites).length;
             updateProgress();
+            applyTaskView();
             showConfirmation(idx, isFav ? 'Saved to your favourites.' : 'Removed from your favourites.');
         }} catch {{
             if (identityVersionIsCurrent(version)) {{
@@ -1748,8 +1820,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         const card = section.closest('.card');
         if (!card) return;
         if (card.classList.contains('archived-card')) {{
-            document.documentElement.classList.add('archive-view');
-            history.replaceState(null, '', '?view=archived');
+            document.documentElement.classList.add('past-view');
+            history.replaceState(null, '', '?view=past');
         }}
         card.scrollIntoView({{behavior:'smooth', block:'start'}});
         const idx = section.id.replace('notes-section-', '');
@@ -2095,6 +2167,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }});
 
     // ── Restore the optional feedback name and this browser's identity ─
+    applyTaskView();
     initFeedbackIdentity();
     </script>
 </body>

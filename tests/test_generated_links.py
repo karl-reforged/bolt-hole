@@ -117,12 +117,14 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertIn('class="property-cluster"', self.html)
         self.assertIn("restoreMapPinState(m.idx, m.pct, el)", self.html)
 
-    def test_unavailable_properties_have_a_separate_archive_view(self):
-        self.assertIn('href="?view=archived">Archived (', self.html)
+    def test_unavailable_properties_have_a_separate_past_listings_view(self):
+        self.assertIn('href="?view=past">Past Listings (', self.html)
+        self.assertIn('class="past-summary"', self.html)
         self.assertIn('class="card archived-card"', self.html)
         self.assertIn('class="availability-badge">Under offer</span>', self.html)
-        self.assertIn("document.documentElement.classList.add('archive-view')", self.html)
-        self.assertIn("html.archive-view .dismissed-divider", self.html)
+        self.assertIn("document.documentElement.classList.add('past-view')", self.html)
+        self.assertIn("html.past-view .dismissed-divider", self.html)
+        self.assertNotIn('archived-rank', self.html)
 
     def test_feedback_actions_ask_for_identity_only_when_the_user_first_saves(self):
         self.assertIn('id="identity-dialog"', self.html)
@@ -132,6 +134,13 @@ class GeneratedLinkTests(unittest.TestCase):
             self.html.count('if (!await ensureFeedbackIdentity()) return;'),
             3,
         )
+
+    def test_shortlist_is_organised_by_the_users_review_task(self):
+        self.assertRegex(self.html, r'data-view="review"[^>]*>To Review')
+        self.assertRegex(self.html, r'data-view="saved"[^>]*>Saved')
+        self.assertRegex(self.html, r'data-view="all"[^>]*>All Available')
+        self.assertIn('href="?view=past">Past Listings', self.html)
+        self.assertIn("function applyTaskView()", self.html)
 
 
 if __name__ == "__main__":
