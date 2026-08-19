@@ -102,12 +102,62 @@ def _archived_props(properties):
     return archived
 
 
+def _canonical_property_key(prop):
+    """Stable cross-source identity for the same advertised street address."""
+    address = re.sub(r"[^a-z0-9]+", "", str(prop.get("address") or "").lower())
+    if address:
+        return f"address:{address}"
+    return f"source:{prop.get('source') or ''}:{prop.get('source_id') or prop.get('id') or ''}"
+
+
+def _property_quality(prop):
+    """Prefer active, complete canonical cards when sources advertise the same place."""
+    status = prop.get("status") or "active"
+    active_rank = 0 if is_archived_status(status) else 1
+    explicitly_active = 1 if status == "active" else 0
+    completeness = sum(
+        prop.get(field) not in (None, "", 0, [])
+        for field in (
+            "price", "land_acres", "bedrooms", "bathrooms", "headline",
+            "description", "photo_url", "listing_url", "lat", "lng",
+        )
+    )
+    source_rank = 1 if prop.get("source") == "domain_web" else 0
+    score = float((prop.get("score") or {}).get("pct") or 0)
+    return active_rank, explicitly_active, completeness, source_rank, score
+
+
+def _dedupe_cross_source(properties):
+    """Collapse exact-address cross-source duplicates without merging same-source lots."""
+    groups = {}
+    order = []
+    for prop in properties:
+        key = _canonical_property_key(prop)
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(prop)
+
+    deduped = []
+    for key in order:
+        group = groups[key]
+        sources = {prop.get("source") for prop in group}
+        if len(group) == 1 or len(sources) <= 1 or key.startswith("source:"):
+            deduped.extend(group)
+            continue
+        deduped.append(max(group, key=_property_quality))
+    return deduped
+
+
 def _partition_props(properties, max_properties=None):
-    """Split active and archived cards while preserving the top-N contract."""
-    all_active = _visible_props(properties)
+    """Split one deduplicated inventory into active and archived cards."""
+    candidates = _visible_props(properties) + _archived_props(properties)
+    canonical = _dedupe_cross_source(candidates)
+    all_active = [prop for prop in canonical if not is_archived_status(prop.get("status"))]
+    archived = [prop for prop in canonical if is_archived_status(prop.get("status"))]
     if max_properties:
         return all_active[:max_properties], [], len(all_active)
-    return all_active, _archived_props(properties), len(all_active)
+    return all_active, archived, len(all_active)
 
 
 def _load_last_sent_ids():
@@ -263,14 +313,14 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         sc_color, sc_bg = _score_color(pct)
 
         price = p.get("price")
-        price_str = f"${price:,.0f}" if price else _escape(p.get("display_price", "Price on application"))
+        price_str = f"${price:,.0f}" if price else _escape(p.get("display_price") or "Price not disclosed")
 
         acres = p.get("land_acres")
-        acres_str = f"{acres:.0f} acres" if acres else ""
+        acres_str = f"{acres:.0f} acres" if acres else "Acreage not stated"
 
         beds = p.get("bedrooms")
         baths = p.get("bathrooms")
-        bed_bath = ""
+        bed_bath = "Bedrooms not stated"
         if beds:
             bed_bath = f"{beds} bed"
             if baths:
@@ -519,6 +569,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="site-state.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -1103,8 +1154,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         <div class="header">
             <div class="brand">Bolt Hole Search</div>
             <h1>Bolt Hole &mdash; Weekly Shortlist</h1>
-            <div class="date">{_escape(search_date)}</div>
-            <div class="freshness">{total_found} properties &middot; {sources_count} sources</div>
+            <div class="date" data-state="search-display">{_escape(search_date)}</div>
+            <div class="freshness"><span data-state="available">{total_found}</span> properties &middot; <span data-state="source-count">{sources_count}</span> sources</div>
         </div>
 
         <div class="summary">
@@ -1113,8 +1164,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         </div>
 
         <div class="view-switch" aria-label="Property availability">
-            <a class="active-link" href="./">Available ({total_found})</a>
-            <a class="archive-link" href="?view=archived">Archived ({archived_count})</a>
+            <a class="active-link" href="./">Available (<span data-state="available">{total_found}</span>)</a>
+            <a class="archive-link" href="?view=archived">Archived (<span data-state="archived">{archived_count}</span>)</a>
         </div>
 
         <div class="scrape-status">{scrape_status_html}</div>
@@ -2320,6 +2371,25 @@ if __name__ == "__main__":
             pass
 
     path = generate_shortlist(properties, search_date=search_date)
+
+    # Every public page reads this exact state. It is generated from the same
+    # canonical partition as index.html and published in the same commit.
+    try:
+        with open(latest_file) as f:
+            run_metadata = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        run_metadata = {}
+    from site_state import build_site_state, write_site_state
+    active_props, archived_props, _ = _partition_props(properties)
+    state_search_display = search_date or datetime.now().strftime("%d %B %Y")
+    state = build_site_state(
+        active_props,
+        archived_props,
+        search_display=state_search_display,
+        run_metadata=run_metadata,
+    )
+    state_path = write_site_state(state)
+    print(f"Site state: {state_path}")
 
     # `--mark-sent`: snapshot what George is receiving as the new baseline.
     # Run this only when actually sending — normal renders leave it untouched.

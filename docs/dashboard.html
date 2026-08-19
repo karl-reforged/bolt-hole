@@ -391,6 +391,7 @@
     .corridor-card { transition: none; }
   }
 </style>
+  <script src="site-state.js" defer></script>
 </head>
 <body>
 <nav style="position:sticky;top:0;z-index:9999;background:rgba(244,241,236,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
@@ -409,7 +410,8 @@
         <h1>Bolt Hole</h1>
       </div>
       <div class="subtitle">Rural retreat search &middot; $2M budget &middot; 30-200 acres with house</div>
-      <div style="font-size:11px;color:var(--dust);margin-top:6px;">1,296 historic sales &middot; PSI data to Dec 2024 &middot; Last updated: 24 April 2026</div>
+      <div style="font-size:11px;color:var(--dust);margin-top:6px;"><span data-state="market-sales">1,296</span> historical sales &middot; NSW PSI through <span data-state="market-through">December 2024</span></div>
+      <div style="font-size:11px;color:var(--dust);margin-top:4px;">Current shortlist: <span data-state="available">&mdash;</span> available &middot; <span data-state="search-display">publication state unavailable</span></div>
     </div>
     <div class="panel-scroll">
       <div class="summary-block" id="summary-block">

@@ -18,7 +18,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 REFRESH = ROOT / "refresh.sh"
-SHORTLIST = Path("docs/index.html")
+PUBLIC_SITE_FILES = (
+    Path("docs/index.html"),
+    Path("docs/site-state.json"),
+    Path("docs/site-state.js"),
+    Path("docs/bolt-hole-overview.html"),
+    Path("docs/system-map.html"),
+    Path("docs/dashboard.html"),
+    Path("docs/top10.html"),
+)
 GUARDED_STATUS = ROOT / "data" / "logs" / "guarded_domain_refresh_status.json"
 SCHEDULED_STATUS = ROOT / "data" / "logs" / "scheduled_refresh_status.json"
 
@@ -37,9 +45,12 @@ def _run(args: list[str], *, capture_output: bool = False) -> subprocess.Complet
     )
 
 
-def _shortlist_is_dirty() -> bool:
+def _site_is_dirty() -> bool:
     result = _run(
-        ["git", "status", "--porcelain", "--untracked-files=no", "--", str(SHORTLIST)],
+        [
+            "git", "status", "--porcelain", "--untracked-files=normal", "--",
+            *(str(path) for path in PUBLIC_SITE_FILES),
+        ],
         capture_output=True,
     )
     return bool(result.stdout.strip())
@@ -56,7 +67,11 @@ def _verify_guarded_result() -> dict:
     return status
 
 
-def _publish_shortlist() -> str:
+def _verify_site_bundle() -> None:
+    _run([sys.executable, "site_state.py", "--verify"])
+
+
+def _publish_site() -> str:
     branch = _run(["git", "branch", "--show-current"], capture_output=True).stdout.strip()
     publish_branch = os.getenv("BOLT_PUBLISH_BRANCH", "main")
     if branch != publish_branch:
@@ -65,7 +80,7 @@ def _publish_shortlist() -> str:
         )
 
     unchanged = subprocess.run(
-        ["git", "diff", "--quiet", "--", str(SHORTLIST)],
+        ["git", "diff", "--quiet", "--", *(str(path) for path in PUBLIC_SITE_FILES)],
         cwd=ROOT,
     ).returncode == 0
     if unchanged:
@@ -74,9 +89,12 @@ def _publish_shortlist() -> str:
         _run(["git", "push", "origin", f"HEAD:{publish_branch}"])
         return "unchanged"
 
-    _run(["git", "add", "--", str(SHORTLIST)])
-    message = f"Refresh Bolt Hole shortlist — {datetime.now().date().isoformat()}"
-    _run(["git", "commit", "--only", str(SHORTLIST), "-m", message])
+    _run(["git", "add", "--", *(str(path) for path in PUBLIC_SITE_FILES)])
+    message = f"Refresh coherent Bolt Hole site — {datetime.now().date().isoformat()}"
+    _run([
+        "git", "commit", "--only", *(str(path) for path in PUBLIC_SITE_FILES),
+        "-m", message,
+    ])
     _run(["git", "push", "origin", f"HEAD:{publish_branch}"])
     return "pushed"
 
@@ -97,13 +115,14 @@ def _notify_failure(message: str) -> None:
 
 def main() -> int:
     try:
-        if _shortlist_is_dirty():
+        if _site_is_dirty():
             raise ScheduledRefreshError(
-                "docs/index.html already has uncommitted changes; refusing to overwrite them"
+                "public site files already have uncommitted changes; refusing to overwrite them"
             )
         _run([str(REFRESH)])
         guarded = _verify_guarded_result()
-        publication = _publish_shortlist()
+        _verify_site_bundle()
+        publication = _publish_site()
         _write_status(
             True,
             publication=publication,
