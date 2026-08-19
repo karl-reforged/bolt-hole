@@ -6,12 +6,40 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import scheduled_refresh
+import run_guarded_domain_refresh
 
 
 class ScheduledRefreshTests(unittest.TestCase):
-    def test_dirty_shortlist_fails_before_refresh_or_publish(self):
+    def test_guarded_health_rejects_weak_rea_coverage(self):
+        data = {
+            "properties": [
+                {
+                    "source": "domain_web",
+                    "description": "complete",
+                }
+                for _ in range(110)
+            ],
+            "source_report": {
+                "Domain Web": {"count": 260, "error": None},
+                "REA (Apify)": {"count": 2, "error": None},
+            },
+        }
+
+        ok, problems, checks = run_guarded_domain_refresh.health(
+            data,
+            min_domain=240,
+            min_passed=110,
+            min_domain_desc=90,
+            min_rea=5,
+        )
+
+        self.assertFalse(ok)
+        self.assertIn("REA Apify source count 2 < floor 5", problems)
+        self.assertEqual(checks["rea_apify_source_count"], 2)
+
+    def test_dirty_site_fails_before_refresh_or_publish(self):
         with (
-            patch.object(scheduled_refresh, "_shortlist_is_dirty", return_value=True),
+            patch.object(scheduled_refresh, "_site_is_dirty", return_value=True),
             patch.object(scheduled_refresh, "_run") as run,
             patch.object(scheduled_refresh, "_write_status") as write_status,
             patch.object(scheduled_refresh, "_notify_failure") as notify,
@@ -23,26 +51,30 @@ class ScheduledRefreshTests(unittest.TestCase):
         self.assertFalse(write_status.call_args.args[0])
         notify.assert_called_once()
 
-    def test_publish_stages_only_generated_shortlist_and_pushes_main(self):
+    def test_publish_stages_the_complete_public_bundle_and_pushes_main(self):
         branch = Mock(stdout="main\n")
         with (
             patch.object(scheduled_refresh, "_run", side_effect=[branch, Mock(), Mock(), Mock()]) as run,
             patch.object(subprocess, "run", return_value=Mock(returncode=1)),
         ):
-            self.assertEqual(scheduled_refresh._publish_shortlist(), "pushed")
+            self.assertEqual(scheduled_refresh._publish_site(), "pushed")
 
         commands = [call.args[0] for call in run.call_args_list]
-        self.assertEqual(commands[1], ["git", "add", "--", "docs/index.html"])
-        self.assertEqual(commands[2][0:4], ["git", "commit", "--only", "docs/index.html"])
+        self.assertEqual(commands[1][0:3], ["git", "add", "--"])
+        self.assertIn("docs/index.html", commands[1])
+        self.assertIn("docs/site-state.json", commands[1])
+        self.assertIn("docs/bolt-hole-overview.html", commands[1])
+        self.assertEqual(commands[2][0:3], ["git", "commit", "--only"])
+        self.assertIn("docs/site-state.json", commands[2])
         self.assertEqual(commands[3], ["git", "push", "origin", "HEAD:main"])
 
-    def test_unchanged_shortlist_still_pushes_a_previously_committed_refresh(self):
+    def test_unchanged_site_still_pushes_a_previously_committed_refresh(self):
         branch = Mock(stdout="main\n")
         with (
             patch.object(scheduled_refresh, "_run", side_effect=[branch, Mock()]) as run,
             patch.object(subprocess, "run", return_value=Mock(returncode=0)),
         ):
-            self.assertEqual(scheduled_refresh._publish_shortlist(), "unchanged")
+            self.assertEqual(scheduled_refresh._publish_site(), "unchanged")
 
         self.assertEqual(
             run.call_args_list[1].args[0],

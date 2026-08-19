@@ -348,6 +348,7 @@
         * { transition: none !important; }
     }
 </style>
+    <script src="site-state.js" defer></script>
 </head>
 <body>
 
@@ -366,22 +367,22 @@
     <div class="header">
         <div class="brand">Bolt Hole Search</div>
         <h1>How the Pipeline Works</h1>
-        <div class="subtitle">From listing sites to your inbox &mdash; every step explained</div>
-        <div style="font-size:12px;color:var(--slate);margin-top:8px;">System status as of 4 May 2026</div>
+        <div class="subtitle">The current listing-to-shortlist publication path</div>
+        <div style="font-size:12px;color:var(--slate);margin-top:8px;">Current shortlist: <span data-state="search-display">publication state unavailable</span></div>
     </div>
 
     <!-- Stats -->
     <div class="stats">
         <div class="stat">
-            <div class="stat-value">370</div>
-            <div class="stat-label">Listings scanned</div>
+            <div class="stat-value" data-state="scanned">&mdash;</div>
+            <div class="stat-label">Scanned in current run</div>
         </div>
         <div class="stat">
-            <div class="stat-value">167</div>
-            <div class="stat-label">Pass all gates</div>
+            <div class="stat-value" data-state="passed-gates">&mdash;</div>
+            <div class="stat-label">Passed current gates</div>
         </div>
         <div class="stat">
-            <div class="stat-value">6&ndash;85%</div>
+            <div class="stat-value" data-state="score-range">&mdash;</div>
             <div class="stat-label">Score range</div>
         </div>
         <div class="stat">
@@ -420,7 +421,7 @@
                     <div class="detail-item"><span class="dot">&bull;</span> Property Whispers (off-market, dormant)</div>
                 </div>
                 <div style="margin-top: 12px;">
-                    <span class="pipeline-card-stat">5 active sources</span>
+                    <span class="pipeline-card-stat"><span data-state="source-count">&mdash;</span> published sources</span>
                     <span class="pipeline-card-stat">26 postcodes</span>
                     <span class="pipeline-card-stat">7 channels</span>
                 </div>
@@ -461,8 +462,8 @@
                     <div class="detail-item"><span class="dot">&bull;</span> Drive time (&le;4 hours)</div>
                 </div>
                 <div style="margin-top: 12px;">
-                    <span class="pipeline-card-stat">163 pass</span>
-                    <span class="pipeline-card-stat muted">49% pass rate</span>
+                    <span class="pipeline-card-stat"><span data-state="passed-gates">&mdash;</span> pass</span>
+                    <span class="pipeline-card-stat muted"><span data-state="pass-rate">&mdash;</span> pass rate</span>
                 </div>
             </div>
         </div>
@@ -477,8 +478,8 @@
                 <div class="pipeline-card-title">Enrich</div>
                 <div class="pipeline-card-desc">Search pages only show basic data. For every property that passes the gates, the system fetches the full listing page to pull the complete description, headline, and agent details. This is what makes accurate scoring possible.</div>
                 <div style="margin-top: 12px;">
-                    <span class="pipeline-card-stat">163/163 enriched</span>
-                    <span class="pipeline-card-stat muted">Full descriptions</span>
+                    <span class="pipeline-card-stat">Source-permitted enrichment</span>
+                    <span class="pipeline-card-stat muted">Missing fields labelled</span>
                 </div>
             </div>
         </div>
@@ -528,7 +529,7 @@
                 <div style="font-size:12px;color:#94a3b8;margin-top:8px;">Weights updated 13 Mar per George &amp; Mary. Carbon and convenience set to 0.</div>
 
                 <div style="margin-top: 12px;">
-                    <span class="pipeline-card-stat">69&ndash;78% scores</span>
+                    <span class="pipeline-card-stat" data-state="score-range">&mdash;</span>
                     <span class="pipeline-card-stat muted">100-point scale</span>
                 </div>
             </div>
@@ -571,7 +572,7 @@
     <!-- Footer -->
     <div class="footer">
         <div style="margin-bottom: 6px;">Prepared by Karl Howard &middot; Reforged</div>
-        <div>August 2026 &middot; Work in progress</div>
+        <div>Current shortlist: <span data-state="search-display">publication state unavailable</span></div>
     </div>
 
 </div>

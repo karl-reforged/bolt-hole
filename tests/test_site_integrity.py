@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from email_template import render_email
 from email_sender import _build_link_email
-from shortlist import _fetch_sheet_properties, _visible_props
+from shortlist import _automated_feed_count, _fetch_sheet_properties, _visible_props
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +14,47 @@ LIVE_SHORTLIST_URL = "https://karl-reforged.github.io/bolt-hole/"
 
 
 class SiteIntegrityTests(unittest.TestCase):
+    def test_coverage_count_reports_automated_feeds_not_card_sources(self):
+        report = {
+            "Domain API": {"count": 0},
+            "Domain Web": {"count": 260},
+            "Farmbuy": {"count": 13},
+            "Elders": {"count": 39},
+            "REA (Apify)": {"count": 25},
+            "REA Manual": {"count": 0},
+            "Email Alerts": {"count": 42},
+        }
+
+        self.assertEqual(_automated_feed_count(report), 5)
+
+    def test_complete_rea_apify_property_is_publishable(self):
+        prop = {
+            "source": "rea_apify",
+            "source_id": "rea-123",
+            "address": "123 Test Road",
+            "suburb": "Oberon",
+            "postcode": "2787",
+            "listing_url": "https://www.realestate.com.au/property-rural-nsw-oberon-123",
+            "land_acres": 40,
+            "headline": "A real rural listing",
+        }
+
+        self.assertEqual([p["source_id"] for p in _visible_props([prop])], ["rea-123"])
+
+    def test_old_rea_apify_property_without_a_link_stays_hidden(self):
+        incomplete = {
+            "source": "rea_apify",
+            "source_id": "rea-old",
+            "address": "123 Test Road",
+            "suburb": "Oberon",
+            "postcode": "2787",
+            "land_acres": 40,
+            "headline": "A real rural listing",
+            "listing_url": "",
+        }
+
+        self.assertEqual(_visible_props([incomplete]), [])
+
     def test_incomplete_listingloop_property_is_not_published_as_a_normal_card(self):
         incomplete = {
             "source": "listing_loop",

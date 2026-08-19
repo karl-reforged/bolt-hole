@@ -42,17 +42,32 @@ DOCS_DIR.mkdir(exist_ok=True)
 # poison the new set. Seed once from the last shortlist George actually saw.
 LAST_SENT_FILE = BASE_DIR / "data" / "last_sent.json"
 
-# Marginal source suppressed from the published shortlist (see
-# out/rea_apify_marginal): REA via Apify returns few rural listings, with no
-# land size, and nets ~2 low-quality cards. Kept in the pipeline/sheet, hidden
-# from George's page.
-SUPPRESSED_SOURCES = {"rea_apify"}
+# Sources may be suppressed only when the entire adapter is intentionally
+# disabled. REA is now quality-gated at ingestion and should remain visible.
+SUPPRESSED_SOURCES = set()
+
+AUTOMATED_FEED_NAMES = frozenset({
+    "Domain Web",
+    "Farmbuy",
+    "Elders",
+    "REA (Apify)",
+    "Email Alerts",
+})
+
+
+def _automated_feed_count(source_report):
+    """Count production feeds attempted in a search run."""
+    return sum(name in source_report for name in AUTOMATED_FEED_NAMES)
 
 
 def _is_suppressed_property(prop):
     """Hide known-low-quality sources and CRE records without a real listing id."""
     if prop.get("source") in SUPPRESSED_SOURCES:
         return True
+    if prop.get("source") == "rea_apify":
+        # Older Actor rows lacked a usable detail/search URL. New ingestion
+        # supplies a canonical URL or an exact filtered-search fallback.
+        return not bool(str(prop.get("listing_url") or "").strip())
     if prop.get("source") == "listing_loop":
         has_address = bool(str(prop.get("address") or "").strip())
         has_property_detail = any(
@@ -102,12 +117,62 @@ def _archived_props(properties):
     return sorted(archived, key=lambda prop: prop.get("last_seen_days") or 0)
 
 
+def _canonical_property_key(prop):
+    """Stable cross-source identity for the same advertised street address."""
+    address = re.sub(r"[^a-z0-9]+", "", str(prop.get("address") or "").lower())
+    if address:
+        return f"address:{address}"
+    return f"source:{prop.get('source') or ''}:{prop.get('source_id') or prop.get('id') or ''}"
+
+
+def _property_quality(prop):
+    """Prefer active, complete canonical cards when sources advertise the same place."""
+    status = prop.get("status") or "active"
+    active_rank = 0 if is_archived_status(status) else 1
+    explicitly_active = 1 if status == "active" else 0
+    completeness = sum(
+        prop.get(field) not in (None, "", 0, [])
+        for field in (
+            "price", "land_acres", "bedrooms", "bathrooms", "headline",
+            "description", "photo_url", "listing_url", "lat", "lng",
+        )
+    )
+    source_rank = 1 if prop.get("source") == "domain_web" else 0
+    score = float((prop.get("score") or {}).get("pct") or 0)
+    return active_rank, explicitly_active, completeness, source_rank, score
+
+
+def _dedupe_cross_source(properties):
+    """Collapse exact-address cross-source duplicates without merging same-source lots."""
+    groups = {}
+    order = []
+    for prop in properties:
+        key = _canonical_property_key(prop)
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(prop)
+
+    deduped = []
+    for key in order:
+        group = groups[key]
+        sources = {prop.get("source") for prop in group}
+        if len(group) == 1 or len(sources) <= 1 or key.startswith("source:"):
+            deduped.extend(group)
+            continue
+        deduped.append(max(group, key=_property_quality))
+    return deduped
+
+
 def _partition_props(properties, max_properties=None):
-    """Split active and archived cards while preserving the top-N contract."""
-    all_active = _visible_props(properties)
+    """Split one deduplicated inventory into active and archived cards."""
+    candidates = _visible_props(properties) + _archived_props(properties)
+    canonical = _dedupe_cross_source(candidates)
+    all_active = [prop for prop in canonical if not is_archived_status(prop.get("status"))]
+    archived = [prop for prop in canonical if is_archived_status(prop.get("status"))]
     if max_properties:
         return all_active[:max_properties], [], len(all_active)
-    return all_active, _archived_props(properties), len(all_active)
+    return all_active, archived, len(all_active)
 
 
 def _load_last_sent_ids():
@@ -225,7 +290,13 @@ def _value_badge(price, land_acres, postcode):
         return ppa_label, "Premium", "#92400e", "#fef3c7"
 
 
-def generate_shortlist(properties, search_date=None, max_properties=None, output_path=None):
+def generate_shortlist(
+    properties,
+    search_date=None,
+    max_properties=None,
+    output_path=None,
+    source_report=None,
+):
     if search_date is None:
         search_date = datetime.now().strftime("%d %B %Y")
     if output_path is None:
@@ -235,6 +306,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     props = active_props + archived_props
     total_shown = len(active_props)
     archived_count = len(archived_props)
+    source_report = source_report or {}
 
     # "New" = anything George hasn't seen since his last send. Single source of
     # truth (data/last_sent.json) so the count, the NEW badge, and the New sort
@@ -257,14 +329,14 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         sc_color, sc_bg = _score_color(pct)
 
         price = p.get("price")
-        price_str = f"${price:,.0f}" if price else _escape(p.get("display_price", "Price on application"))
+        price_str = f"${price:,.0f}" if price else _escape(p.get("display_price") or "Price not disclosed")
 
         acres = p.get("land_acres")
-        acres_str = f"{acres:.0f} acres" if acres else ""
+        acres_str = f"{acres:.0f} acres" if acres else "Acreage not stated"
 
         beds = p.get("bedrooms")
         baths = p.get("bathrooms")
-        bed_bath = ""
+        bed_bath = "Bedrooms not stated"
         if beds:
             bed_bath = f"{beds} bed"
             if baths:
@@ -478,6 +550,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="site-state.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -1090,7 +1163,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         <div class="header">
             <div class="brand">Bolt Hole Search</div>
             <h1>Bolt Hole &mdash; Property Shortlist</h1>
-            <div class="freshness">Updated {_escape(search_date)}</div>
+            <div class="freshness">Updated <span data-state="search-display">{_escape(search_date)}</span></div>
         </div>
 
         <div class="summary">
@@ -1273,7 +1346,10 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             const propertyId = card.dataset.propertyId;
             const reaction = state.feedback[propertyId] || '';
             const favourite = Boolean(state.favourites[propertyId]);
-            const hasNote = Boolean(notesCache[propertyId]?.length);
+            const reviewerNoteAuthor = feedbackIdentity.author
+                || (feedbackIdentity.confirmed ? 'Anonymous' : '');
+            const hasNote = Boolean(reviewerNoteAuthor)
+                && (notesCache[propertyId] || []).some(note => note.author === reviewerNoteAuthor);
             const needsReview = !reaction && !favourite && !hasNote;
             const saved = favourite || reaction === 'love' || reaction === 'interesting';
             if (needsReview) reviewCount += 1;
@@ -2419,7 +2495,36 @@ if __name__ == "__main__":
         except ValueError:
             pass
 
-    path = generate_shortlist(properties, search_date=search_date)
+    try:
+        with open(latest_file) as source_file:
+            source_report = json.load(source_file).get("source_report") or {}
+    except (OSError, ValueError):
+        source_report = {}
+
+    path = generate_shortlist(
+        properties,
+        search_date=search_date,
+        source_report=source_report,
+    )
+
+    # Every public page reads this exact state. It is generated from the same
+    # canonical partition as index.html and published in the same commit.
+    try:
+        with open(latest_file) as f:
+            run_metadata = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        run_metadata = {}
+    from site_state import build_site_state, write_site_state
+    active_props, archived_props, _ = _partition_props(properties)
+    state_search_display = search_date or datetime.now().strftime("%d %B %Y")
+    state = build_site_state(
+        active_props,
+        archived_props,
+        search_display=state_search_display,
+        run_metadata=run_metadata,
+    )
+    state_path = write_site_state(state)
+    print(f"Site state: {state_path}")
 
     # `--mark-sent`: snapshot what George is receiving as the new baseline.
     # Run this only when actually sending — normal renders leave it untouched.

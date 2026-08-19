@@ -9,6 +9,10 @@ class AvailabilityTests(unittest.TestCase):
         prop = {"source_id": "one"}
         self.assertEqual(availability_status(prop), "active")
         self.assertEqual(
+            availability_status({"status": "possibly_unavailable"}),
+            "possibly_unavailable",
+        )
+        self.assertEqual(
             availability_status(prop, missing_from_latest=True, missing_days=3),
             "possibly_unavailable",
         )

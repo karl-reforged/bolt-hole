@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "published_at": "2026-08-19T17:52:28+10:00",
+  "search_at": "2026-08-19T17:49:29.966100",
+  "search_display": "19 August 2026 · 5:49pm",
+  "inventory": {
+    "available": 176,
+    "archived": 72,
+    "possibly_unavailable": 12,
+    "under_offer": 1,
+    "sources": {
+      "domain_web": 139,
+      "elders": 2,
+      "farmbuy": 1,
+      "rea_apify": 34
+    },
+    "source_count": 4,
+    "automated_feed_count": 5
+  },
+  "run": {
+    "scanned": 591,
+    "passed_gates": 180,
+    "pass_rate": 30.5,
+    "source_failures": []
+  },
+  "scores": {
+    "minimum": 6.0,
+    "maximum": 94.5
+  },
+  "top_match": {
+    "source_id": "2020548185",
+    "headline": "\"Spring Creek\" - A Thoughtfully Established Country Escape",
+    "address": "185 Pulpit Rock Road Bullio NSW 2575",
+    "score": 94.5
+  },
+  "market_data": {
+    "sales": 1296,
+    "source": "NSW PSI",
+    "through": "December 2024"
+  }
+}

@@ -12,11 +12,12 @@ Sources:
   - Farmbuy.com (scrapes embedded JSON from listing pages)
   - Elders Real Estate (scrapes regionalnsw.eldersrealestate.com.au)
   - Southern Tablelands Realty (scrapes yourstr.com.au)
-  - REA via Apify (abotapi/realestate-au-scraper actor — bypasses REA bot blocking)
+  - REA via Apify (ONE API actor — uses structured REA services data)
   - REA Manual (manually captured listings from email alerts)
   - Email Alerts (IMAP parsing of property alert emails)
 """
 
+import html as html_mod
 import json
 import os
 import re
@@ -1580,24 +1581,59 @@ def enrich_with_descriptions(properties):
 
 # ── Source 3c: REA via Apify ──────────────────────────────────────────────
 #
-# REA aggressively blocks all automated access (429 on Playwright, requests,
-# and even browser-context fetch). Apify handles anti-bot via their proxy
-# infrastructure. We pass search URLs, they return structured listing JSON.
-#
-# Cost: ~$0.09 per 1,000 listings. Free tier ($5/mo) covers our volume easily.
-# Actor: configurable via APIFY_REA_ACTOR in .env (default: stealth_mode/realestate-property-search-scraper)
+# REA aggressively blocks browser scraping. The selected Actor queries
+# structured REA services data and supports postcode-level rural filters.
+# Actor is configurable via APIFY_REA_ACTOR in .env.
 # Docs: https://docs.apify.com/api/v2
 
 APIFY_API_BASE = "https://api.apify.com/v2"
-APIFY_DEFAULT_ACTOR = "abotapi/realestate-au-scraper"
+APIFY_DEFAULT_ACTOR = "one-api/realestate-com-au-scraper"
+
+
+def _build_rea_actor_input(actor, postcodes, gates):
+    """Build input for the configured REA Actor."""
+    if actor == "one-api/realestate-com-au-scraper":
+        min_land = int(gates["land_size"]["min_hectares"] * 10000)
+        max_land = int(gates["land_size"]["max_hectares"] * 10000)
+        return {
+            "search_inputs": postcodes,
+            "searchType": "For_Sale",
+            "propertyType": "House,Acreage,Rural",
+            "priceRange": (
+                f"min:{gates['budget']['min_price']},"
+                f"max:{gates['budget']['max_price']}"
+            ),
+            "landSizeRange": f"min:{min_land},max:{max_land}",
+            "surroundingSuburbs": False,
+            "constructionStatus": "established",
+            "sortOrder": "Newest",
+            "pages": 1,
+            "resultCount": 200,
+            "excludeUnderContract": True,
+        }
+
+    # Compatibility path for the previous Abot actor.
+    search_urls = [_rea_search_url(postcode, gates) for postcode in postcodes]
+    return {
+        "mode": "url",
+        "urls": search_urls,
+        "maxListings": 500,
+        "maxPages": 3,
+        "requestDelay": {"min": 2000, "max": 5000},
+        "proxyConfiguration": {
+            "useApifyProxy": True,
+            "apifyProxyGroups": ["RESIDENTIAL"],
+            "apifyProxyCountry": "AU",
+        },
+    }
 
 
 def fetch_rea_apify(criteria):
     """Fetch REA listings via Apify actor.
 
-    Uses location mode with postcode + filters to get rural properties in
-    our target postcodes. The actor handles REA's anti-bot protection
-    server-side, and returns structured JSON we normalise into our format.
+    Uses postcode searches with explicit price, land-size and rural-property
+    filters. The selected Actor returns structured REA service data rather than
+    scraping blocked HTML search pages.
     """
     token = os.getenv("APIFY_API_TOKEN")
     if not token:
@@ -1607,36 +1643,20 @@ def fetch_rea_apify(criteria):
     gates = criteria["gates"]
     postcodes = gates["geography"]["postcodes_west"] + gates["geography"]["postcodes_south"]
 
-    # Limit postcodes to control Apify cost (~$0.12 per postcode)
-    # Set APIFY_MAX_POSTCODES in .env to cap (default: all)
+    # Set APIFY_MAX_POSTCODES in .env to cap local probes (default: all).
     max_pc = int(os.getenv("APIFY_MAX_POSTCODES", "0")) or len(postcodes)
     if max_pc < len(postcodes):
         postcodes = postcodes[:max_pc]
         print(f"REA (Apify): capped to {max_pc} postcodes (APIFY_MAX_POSTCODES)")
 
-    # Build location list from postcodes
-    locations = [{"postcode": pc, "state": "NSW"} for pc in postcodes]
-
-    print(f"REA (Apify): submitting {len(locations)} postcodes to actor {actor}...")
+    print(f"REA (Apify): submitting {len(postcodes)} postcode searches to actor {actor}...")
 
     # Apify API uses ~ not / as separator: "user/actor" → "user~actor"
     actor_api_id = actor.replace("/", "~")
     session = _retry_session(retries=2, backoff=2.0)
     auth_headers = {"Authorization": f"Bearer {token}"}
 
-    # Actor input — location mode with filters matching our gates
-    actor_input = {
-        "mode": "location",
-        "locations": locations,
-        "listingType": "buy",
-        "propertyTypes": ["rural"],
-        "priceMin": gates["budget"]["min_price"],
-        "priceMax": gates["budget"]["max_price"],
-        "maxListings": 500,
-        "maxPages": 3,
-        "includeSurrounding": False,
-        "requestDelay": {"min": 2000, "max": 5000},
-    }
+    actor_input = _build_rea_actor_input(actor, postcodes, gates)
 
     # ── Step 1: Start the actor run (async) ──
     run_url = f"{APIFY_API_BASE}/acts/{actor_api_id}/runs"
@@ -1644,7 +1664,7 @@ def fetch_rea_apify(criteria):
         run_params = {
             # Pay-per-result Actors now require a positive platform-side charge
             # ceiling. This is separate from the actor input's maxListings.
-            "maxItems": str(actor_input["maxListings"]),
+            "maxItems": "500",
         }
         resp = session.post(
             run_url,
@@ -1672,7 +1692,6 @@ def fetch_rea_apify(criteria):
     print(f"REA (Apify): run started (ID: {run_id}), polling for completion...")
 
     # ── Step 2: Poll until run finishes (max 30 min) ──
-    # 3 postcodes takes ~3.5 min; 27 postcodes ~30 min with rate limiting
     poll_url = f"{APIFY_API_BASE}/actor-runs/{run_id}"
     max_wait = 1800  # 30 minutes
     poll_interval = 15
@@ -1761,6 +1780,11 @@ def fetch_rea_apify(criteria):
             continue
         if not prop:
             continue
+        # Search-only Actor output can omit the canonical detail URL when a
+        # residential proxy is unavailable. Keep a valid, exact REA search URL
+        # as the user-facing fallback instead of publishing a dead button.
+        if not prop.get("listing_url") and prop.get("postcode"):
+            prop["listing_url"] = _rea_search_url(prop["postcode"], gates)
         if prop["source_id"] in seen_ids:
             continue
         seen_ids.add(prop["source_id"])
@@ -1786,6 +1810,9 @@ def _normalize_apify_rea_listing(item, target_postcodes):
       propertyId: string
       badge: "Under offer" | "" | etc  — listing status
     """
+    if "Listing ID" in item or "Listing URL" in item:
+        return _normalize_one_api_rea_listing(item, target_postcodes)
+
     # Skip under-offer / sold listings — George wants active listings only
     badge = (item.get("badge") or "").lower()
     if "under offer" in badge or "sold" in badge:
@@ -1829,12 +1856,18 @@ def _normalize_apify_rea_listing(item, target_postcodes):
     land_sqm, land_ha, land_acres = None, None, None
     features = item.get("features", {}) or {}
     land_val = features.get("landSize")
-    land_unit = (features.get("landSizeUnit") or "sqm").lower()
+    if land_val is None:
+        land_val = item.get("landSize")
+    land_unit = (
+        features.get("landSizeUnit")
+        or item.get("landSizeUnit")
+        or "sqm"
+    ).lower()
 
     if land_val is not None and land_val > 0:
         # Heuristic: landSizeUnit is often "sqm" even for hectare values.
         # If value < 500 and unit says "sqm", it's almost certainly hectares.
-        if land_unit == "sqm" and land_val < 500:
+        if land_unit in {"sqm", "m2", "m²"} and land_val < 500:
             # Treat as hectares
             land_ha = round(land_val, 2)
             land_sqm = land_ha * 10000
@@ -1847,11 +1880,15 @@ def _normalize_apify_rea_listing(item, target_postcodes):
             land_acres = round(land_val, 1)
             land_ha = round(land_val / 2.471, 2)
             land_sqm = land_ha * 10000
-        else:
+        elif land_unit in {"sqm", "m2", "m²"}:
             # Assume sqm
             land_sqm = float(land_val)
             land_ha = round(land_sqm / 10000, 2)
             land_acres = round(land_ha * 2.471, 1)
+        else:
+            # Unknown units are safer to leave unset than to silently turn a
+            # hectare or acre value into square metres.
+            land_val = None
 
     beds = features.get("bedrooms")
     baths = features.get("bathrooms")
@@ -1897,14 +1934,105 @@ def _normalize_apify_rea_listing(item, target_postcodes):
         "land_acres": land_acres,
         "bedrooms": beds,
         "bathrooms": baths,
-        "headline": "",
+        "headline": item.get("headline") or "",
         "description": description,
         "listing_url": listing_url,
         "photo_url": photo_url,
         "lat": lat,
         "lng": lng,
-        "date_listed": item.get("scrapedAt"),
+        "date_listed": item.get("dateListed") or item.get("scrapedAt"),
         "agent": agent_name,
+        "raw": item,
+    }
+
+
+def _normalize_one_api_rea_listing(item, target_postcodes):
+    """Normalise one-api/realestate-com-au-scraper output."""
+    raw = item.get("Raw") or {}
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            raw = {}
+    if not isinstance(raw, dict):
+        raw = {}
+
+    raw_address = raw.get("address") or {}
+    postcode = str(item.get("Postcode") or raw_address.get("postcode") or "")
+    if postcode and postcode not in target_postcodes:
+        return None
+
+    status = str(item.get("Status") or raw.get("channel") or "").lower()
+    if any(label in status for label in ("sold", "under contract", "under offer")):
+        return None
+
+    street = item.get("Street") or raw_address.get("street") or ""
+    suburb = item.get("Suburb") or raw_address.get("suburb") or ""
+    state = item.get("State") or raw_address.get("state") or "NSW"
+
+    price_display = str(item.get("Price") or raw.get("price") or "")
+    price_num = None
+    price_match = re.search(r"\$\s*([\d,]+)", price_display)
+    if price_match:
+        try:
+            price_num = int(price_match.group(1).replace(",", ""))
+        except ValueError:
+            pass
+
+    land = raw.get("land_size") or {}
+    land_val = land.get("value") if isinstance(land, dict) else None
+    land_unit = str(land.get("unit") or "m2").lower() if isinstance(land, dict) else "m2"
+    land_sqm = land_ha = land_acres = None
+    if isinstance(land_val, (int, float)) and land_val > 0:
+        if land_unit in {"sqm", "m2", "m²"}:
+            land_sqm = float(land_val)
+            land_ha = round(land_sqm / 10000, 2)
+            land_acres = round(land_ha * 2.471, 1)
+        elif "ha" in land_unit or "hectare" in land_unit:
+            land_ha = float(land_val)
+            land_sqm = land_ha * 10000
+            land_acres = round(land_ha * 2.471, 1)
+        elif "ac" in land_unit or "acre" in land_unit:
+            land_acres = float(land_val)
+            land_ha = round(land_acres / 2.471, 2)
+            land_sqm = land_ha * 10000
+
+    description_html = str(raw.get("description") or "")
+    description = html_mod.unescape(
+        re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", description_html))
+    ).strip()[:2000]
+
+    photos = item.get("Photos") or raw.get("main_image")
+    if isinstance(photos, list):
+        photo_url = photos[0] if photos else None
+    else:
+        photo_url = str(photos).split(",")[0].strip() if photos else None
+
+    listing_id = str(item.get("Listing ID") or raw.get("listing_id") or "")
+    listing_url = item.get("Listing URL") or raw.get("url") or ""
+
+    return {
+        "source": "rea_apify",
+        "source_id": f"rea-{listing_id}" if listing_id else "",
+        "address": str(street).strip(),
+        "suburb": suburb,
+        "postcode": postcode,
+        "state": state,
+        "price": price_num,
+        "display_price": price_display or "Price on application",
+        "land_sqm": land_sqm,
+        "land_ha": land_ha,
+        "land_acres": land_acres,
+        "bedrooms": item.get("Beds") if item.get("Beds") is not None else raw.get("beds"),
+        "bathrooms": item.get("Baths") if item.get("Baths") is not None else raw.get("baths"),
+        "headline": item.get("Title") or raw.get("title") or "",
+        "description": description,
+        "listing_url": listing_url,
+        "photo_url": photo_url,
+        "lat": item.get("Latitude") if item.get("Latitude") is not None else raw_address.get("latitude"),
+        "lng": item.get("Longitude") if item.get("Longitude") is not None else raw_address.get("longitude"),
+        "date_listed": item.get("Modified Date") or raw.get("modified_date"),
+        "agent": item.get("Agent Name") or raw.get("agent_name"),
         "raw": item,
     }
 

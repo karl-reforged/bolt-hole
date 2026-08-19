@@ -611,7 +611,7 @@ Features
 const markers = [{"lat": -33.320293, "lng": 150.112, "suburb": "LIDSDALE", "rank": 1, "price": "$990,000", "pct": 85}, {"lat": -34.969357, "lng": 149.92012, "suburb": "WINDELLAMA", "rank": 2, "price": "$1,190,000", "pct": 85}, {"lat": -35.015343, "lng": 149.84944, "suburb": "WINDELLAMA", "rank": 3, "price": "Deposit Taken", "pct": 85}, {"lat": -34.407658, "lng": 149.60205, "suburb": "CROOKWELL", "rank": 4, "price": "$950,000", "pct": 84}, {"lat": -35.12757, "lng": 149.94038, "suburb": "OALLEN", "rank": 5, "price": "$650,000", "pct": 83}, {"lat": -34.339405, "lng": 150.12868, "suburb": "BULLIO", "rank": 6, "price": "$1,475,000", "pct": 82}, {"lat": -34.51101, "lng": 150.02887, "suburb": "BIG HILL", "rank": 7, "price": "UNDER OFFER", "pct": 82}, {"lat": -34.617554, "lng": 150.08467, "suburb": "BRAYTON", "rank": 8, "price": "$1,650,000", "pct": 82}, {"lat": -35.12079, "lng": 149.5891, "suburb": "TARAGO", "rank": 9, "price": "$1,099,000", "pct": 82}, {"lat": -34.880203, "lng": 148.94876, "suburb": "YASS", "rank": 10, "price": "Contact Agent", "pct": 80}];
 
 const map = L.map('map', { zoomControl: true, scrollWheelZoom: false });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}@2x.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png', {
     attribution: '&copy; OSM &copy; CARTO',
     maxZoom: 18,
 }).addTo(map);

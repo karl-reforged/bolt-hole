@@ -32,6 +32,8 @@ def availability_status(prop, *, missing_from_latest=False, missing_days=0):
     explicit = str(prop.get("status") or "").strip().lower().replace("-", "_").replace(" ", "_")
     if explicit in ARCHIVED_STATUSES:
         return explicit
+    if explicit == POSSIBLY_UNAVAILABLE_STATUS and not missing_from_latest:
+        return explicit
 
     status_labels = [
         str(prop.get(key) or "").strip()

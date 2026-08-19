@@ -374,6 +374,7 @@
             * { transition: none !important; }
         }
     </style>
+    <script src="site-state.js" defer></script>
 </head>
 <body>
 
@@ -392,29 +393,29 @@
     <div class="header">
         <div class="brand">Bolt Hole Search</div>
         <h1>Your Weekly Property Shortlist</h1>
-        <div class="subtitle">Prepared for George Miltenyi &middot; August 2026</div>
-        <div style="font-size:12px;color:var(--slate);margin-top:8px;">Last updated: 17 August 2026</div>
+        <div class="subtitle">Prepared for George &amp; Mary</div>
+        <div style="font-size:12px;color:var(--slate);margin-top:8px;">Current shortlist: <span data-state="search-display">publication state unavailable</span></div>
     </div>
 
     <!-- Lead with outcome -->
     <div class="section">
         <div class="section-label">The Short Version</div>
-        <p>Every week, a shortlist of rural properties lands in your inbox &mdash; scored against your brief, filtered to your criteria, ready to browse on your phone from wherever you are. Your reactions and notes provide evidence for improving future searches.</p>
-        <p>On its latest published run, the system shows <strong>137 available properties</strong> that meet your criteria, plus a separate archive for listings that are under offer or no longer available. The guarded refresh checks source health, suppresses records without a trustworthy destination link, and confirms the database update before rebuilding the shortlist.</p>
+        <p>The weekly shortlist contains rural properties that pass your brief, ranked for review on phone or desktop. Reactions and notes are retained for the next deliberate preference review.</p>
+        <p><strong><span data-state="available">&mdash;</span> available properties</strong> from <span data-state="source-count">&mdash;</span> current sources. The separate archive contains <span data-state="archived">&mdash;</span> listings that are under offer or no longer current.</p>
     </div>
 
     <!-- Stats -->
     <div class="stats">
         <div class="stat">
-            <div class="stat-value">358</div>
-            <div class="stat-label">Listings scanned</div>
+            <div class="stat-value" data-state="scanned">&mdash;</div>
+            <div class="stat-label">Scanned in current run</div>
         </div>
         <div class="stat">
-            <div class="stat-value">143</div>
-            <div class="stat-label">Pass all filters</div>
+            <div class="stat-value" data-state="passed-gates">&mdash;</div>
+            <div class="stat-label">Passed current gates</div>
         </div>
         <div class="stat">
-            <div class="stat-value">85%</div>
+            <div class="stat-value" data-state="score-max">&mdash;</div>
             <div class="stat-label">Best match score</div>
         </div>
     </div>
@@ -437,7 +438,7 @@
             <div class="criteria-item"><span class="check">&#10003;</span> Target corridors only</div>
         </div>
 
-        <p style="margin-top: 16px; font-size: 14px; color: var(--slate);">Scoring ranks by: water (25pts), terrain (20pts), seclusion (15pts), house quality (15pts), drive time (10pts), park proximity (5pts), carbon eligibility (5pts), and convenience (5pts). Feedback is summarised for review before any scoring criteria are changed.</p>
+        <p style="margin-top: 16px; font-size: 14px; color: var(--slate);">Scoring ranks by water (25), terrain (20), drive time (20), seclusion (15), house quality (15), and park proximity (5). Carbon and convenience currently carry no weight. Feedback is reviewed before criteria change.</p>
     </div>
 
     <hr class="divider">
@@ -495,7 +496,7 @@
         <h2>How the system works</h2>
 
         <div class="pipeline">
-            <div class="pipe-step">Search<small>5 sources</small></div>
+            <div class="pipe-step">Search<small><span data-state="source-count">&mdash;</span> current sources</small></div>
             <div class="pipe-arrow">&rarr;</div>
             <div class="pipe-step">Filter<small>6 hard gates</small></div>
             <div class="pipe-arrow">&rarr;</div>
@@ -563,7 +564,7 @@
                 <span class="badge badge-done">DONE</span>
                 <span class="card-title">Search pipeline built &amp; running</span>
             </div>
-            <div class="card-body">The active sources are health-checked before each publish. The latest source run scanned 358 listings, with 143 passing all gates; recent carry-over listings are clearly marked when missing from the newest scrape.</div>
+            <div class="card-body">The active sources are health-checked before publication. The current run scanned <span data-state="scanned">&mdash;</span> listings and <span data-state="passed-gates">&mdash;</span> passed the gates. The published shortlist contains <span data-state="available">&mdash;</span> canonical available properties after availability checks, suppression and cross-source deduplication.</div>
         </div>
 
         <div class="card">
@@ -576,10 +577,10 @@
 
         <div class="card">
             <div class="status-row">
-                <span class="badge badge-ready">WIRING UP</span>
+                <span class="badge badge-done">RUNNING</span>
                 <span class="card-title">Weekly email delivery</span>
             </div>
-            <div class="card-body">Email template and feedback capture are built. Connecting Gmail delivery and scheduling now &mdash; first automated email coming shortly.</div>
+            <div class="card-body">Weekly updates link to the same published shortlist used by every page. Feedback is stored against the canonical property record.</div>
         </div>
     </div>
 
@@ -589,7 +590,7 @@
     <div class="section">
         <div class="section-label">Next Steps</div>
         <h2>What happens from here</h2>
-        <p>Your first weekly email arrives soon. Open it, browse the shortlist on your phone, tap your reactions. That's all you need to do.</p>
+        <p>Open the weekly update, browse the current shortlist, and record reactions or notes on properties worth discussing.</p>
         <p>Your feedback is the most valuable input. Every "Love it", favourite and note is retained with the optional name you provide, then summarised for review. Scoring changes remain deliberate rather than automatic.</p>
         <p>When something catches your eye, I'll get you the agent's details, run due diligence on the property, and handle inspection logistics from here. You find the right place &mdash; I'll sort the rest.</p>
     </div>
