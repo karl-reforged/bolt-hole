@@ -992,28 +992,39 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         .activity-suburb {{ color: var(--bark); }}
         .activity-body {{ font-size: 12px; color: var(--bark); line-height: 1.4; }}
 
-        /* ── Optional shared feedback identity ────── */
+        /* ── Feedback identity ────────────────────── */
         .feedback-access {{
-            margin: -4px 0 18px; padding: 12px 16px;
-            background: #fafaf7; border: 1px solid var(--light-border);
-            border-radius: 9px; display: flex; align-items: center;
-            justify-content: space-between; gap: 12px; flex-wrap: wrap;
+            margin: -4px 0 18px; display: flex; align-items: center;
+            justify-content: flex-end; gap: 8px;
         }}
-        .feedback-access-copy {{ font-size: 12px; color: var(--bark); line-height: 1.45; }}
-        .feedback-access-copy strong {{ display: block; color: var(--eucalyptus); }}
-        .feedback-access-controls {{ display: flex; gap: 6px; flex: 1; justify-content: flex-end; }}
+        .feedback-access label {{ font-size: 12px; color: var(--slate); font-weight: 600; }}
         .feedback-access-input {{
-            min-width: 180px; max-width: 280px; flex: 1; padding: 8px 10px;
+            min-width: 150px; max-width: 220px; padding: 8px 10px;
             border: 1px solid var(--light-border); border-radius: 7px;
-            font: inherit; font-size: 12px;
+            background: #fff; color: var(--bark); font: inherit; font-size: 12px;
         }}
-        .feedback-access-button {{
-            border: 0; border-radius: 7px; padding: 8px 12px; cursor: pointer;
-            background: var(--eucalyptus); color: #fff; font: inherit; font-size: 12px;
+        .identity-dialog {{
+            width: min(420px, calc(100vw - 32px)); margin: auto;
+            border: 0; border-radius: 12px; padding: 24px;
+            background: #fff; color: var(--bark);
+            box-shadow: 0 20px 60px rgba(15,23,42,0.28);
         }}
-        .feedback-access-button.secondary {{ background: var(--slate); }}
+        .identity-dialog::backdrop {{ background: rgba(15,23,42,0.58); }}
+        .identity-dialog h2 {{
+            font-family: 'DM Serif Display', Georgia, serif;
+            font-size: 24px; font-weight: 400; margin-bottom: 6px;
+        }}
+        .identity-dialog p {{ font-size: 13px; color: var(--slate); margin-bottom: 16px; }}
+        .identity-choices {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }}
+        .identity-choice {{
+            min-height: 44px; border: 1px solid var(--light-border); border-radius: 8px;
+            background: #fff; color: var(--bark); cursor: pointer; font: inherit;
+            font-size: 13px; font-weight: 600;
+        }}
+        .identity-choice:hover {{ border-color: var(--eucalyptus); color: var(--eucalyptus); }}
+        .identity-choice.anonymous {{ grid-column: 1 / -1; color: var(--slate); font-weight: 500; }}
         @media (max-width: 520px) {{
-            .feedback-access-controls {{ justify-content: stretch; width: 100%; }}
+            .feedback-access {{ justify-content: space-between; }}
             .sort-bar {{ flex-wrap: wrap; overflow-x: visible; }}
             .sort-label {{ flex-basis: 100%; margin-bottom: 2px; }}
             .sort-btn {{ min-height: 44px; }}
@@ -1119,21 +1130,29 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
         <div class="scrape-status">{scrape_status_html}</div>
         <div class="feedback-access" id="feedback-access">
-            <div class="feedback-access-copy">
-                <strong id="feedback-access-title">Who are you?</strong>
-                <span id="feedback-access-status">Choose a name to carry reactions and favourites across devices, or stay anonymous.</span>
-            </div>
-            <div class="feedback-access-controls">
-                <select class="feedback-access-input" id="feedback-name" name="feedback-name" autocomplete="off" aria-label="Who are you?" onchange="saveFeedbackName()">
-                    <option value="">Anonymous</option>
-                    <option value="George">George</option>
-                    <option value="Mary">Mary</option>
-                    <option value="Alex">Alex</option>
-                    <option value="Greg">Greg</option>
-                    <option value="Justin">Justin</option>
-                </select>
-            </div>
+            <label for="feedback-name">Reviewing as</label>
+            <select class="feedback-access-input" id="feedback-name" name="feedback-name" autocomplete="off" onchange="saveFeedbackName()">
+                <option value="">Choose name…</option>
+                <option value="George">George</option>
+                <option value="Mary">Mary</option>
+                <option value="Alex">Alex</option>
+                <option value="Greg">Greg</option>
+                <option value="Justin">Justin</option>
+                <option value="__anonymous__">Anonymous — this device only</option>
+            </select>
         </div>
+        <dialog class="identity-dialog" id="identity-dialog" aria-labelledby="identity-dialog-title">
+            <h2 id="identity-dialog-title">Who's reviewing?</h2>
+            <p>Choose your name to load your saved feedback on any device.</p>
+            <div class="identity-choices">
+                <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('George')">George</button>
+                <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('Mary')">Mary</button>
+                <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('Alex')">Alex</button>
+                <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('Greg')">Greg</button>
+                <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('Justin')">Justin</button>
+                <button type="button" class="identity-choice anonymous" onclick="chooseFeedbackIdentity('')">Continue anonymously — feedback stays on this device</button>
+            </div>
+        </dialog>
         <div class="notes-activity" id="notes-activity" style="display:none;">
             <button class="notes-activity-toggle" onclick="toggleActivity()">💬 <span id="notes-activity-count">0</span> recent notes</button>
             <div class="notes-activity-panel" id="notes-activity-panel" style="display:none;"></div>
@@ -1239,10 +1258,12 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         reviewed: 0,
         favCount: 0,
     }};
-    const feedbackIdentity = {{ actorId: '', author: '', version: 0 }};
+    const feedbackIdentity = {{ actorId: '', author: '', confirmed: false, version: 0 }};
     const KNOWN_FEEDBACK_NAMES = ['George', 'Mary', 'Alex', 'Greg', 'Justin'];
     const ACTOR_KEY = 'blh_feedback_actor_v1';
     const NAME_KEY = 'blh_feedback_name_v1';
+    const IDENTITY_CONFIRMED_KEY = 'blh_feedback_identity_confirmed_v1';
+    let identityPromptResolve = null;
 
     function cardIdxForPid(pid) {{
         const card = document.querySelector('.card[data-property-id="' + CSS.escape(pid) + '"]');
@@ -1272,18 +1293,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         return version === feedbackIdentity.version;
     }}
 
-    function setIdentityStatus() {{
-        const titleEl = document.getElementById('feedback-access-title');
-        const statusEl = document.getElementById('feedback-access-status');
-        if (feedbackIdentity.author) {{
-            if (titleEl) titleEl.textContent = 'Using Bolt Hole as ' + feedbackIdentity.author;
-            if (statusEl) statusEl.textContent = 'Your reactions and favourites follow this name across devices.';
-        }} else {{
-            if (titleEl) titleEl.textContent = 'Using Bolt Hole anonymously';
-            if (statusEl) statusEl.textContent = 'Reactions and favourites stay with this browser. Notes are shared as Anonymous.';
-        }}
-    }}
-
     function clearPersonalUI() {{
         Object.entries(state.feedback).forEach(([pid]) => {{
             const idx = cardIdxForPid(pid);
@@ -1298,18 +1307,41 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         updateProgress();
     }}
 
-    async function saveFeedbackName() {{
+    async function saveFeedbackName(selectedValue = null) {{
         const input = document.getElementById('feedback-name');
-        const selected = input?.value || '';
+        const selected = selectedValue === null ? (input?.value || '') : selectedValue;
+        if (!KNOWN_FEEDBACK_NAMES.includes(selected) && selected !== '__anonymous__') return false;
         const author = KNOWN_FEEDBACK_NAMES.includes(selected) ? selected : '';
         feedbackIdentity.version += 1;
         const version = feedbackIdentity.version;
         clearPersonalUI();
         feedbackIdentity.author = author;
+        feedbackIdentity.confirmed = true;
         if (author) localStorage.setItem(NAME_KEY, author);
         else localStorage.removeItem(NAME_KEY);
-        setIdentityStatus();
+        localStorage.setItem(IDENTITY_CONFIRMED_KEY, '1');
+        if (input) input.value = author || '__anonymous__';
         await Promise.allSettled([loadServerReactions(version), loadServerFavourites(version)]);
+        return true;
+    }}
+
+    function ensureFeedbackIdentity() {{
+        if (feedbackIdentity.confirmed) return Promise.resolve(true);
+        const dialog = document.getElementById('identity-dialog');
+        if (!dialog || typeof dialog.showModal !== 'function') return Promise.resolve(false);
+        if (!dialog.open) dialog.showModal();
+        return new Promise(resolve => {{ identityPromptResolve = resolve; }});
+    }}
+
+    async function chooseFeedbackIdentity(author) {{
+        const selected = KNOWN_FEEDBACK_NAMES.includes(author) ? author : '__anonymous__';
+        const saved = await saveFeedbackName(selected);
+        const dialog = document.getElementById('identity-dialog');
+        if (dialog?.open) dialog.close();
+        if (identityPromptResolve) {{
+            identityPromptResolve(saved);
+            identityPromptResolve = null;
+        }}
     }}
 
     async function initFeedbackIdentity() {{
@@ -1321,12 +1353,13 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         feedbackIdentity.actorId = actorId;
         const storedName = localStorage.getItem(NAME_KEY) || '';
         feedbackIdentity.author = KNOWN_FEEDBACK_NAMES.includes(storedName) ? storedName : '';
+        feedbackIdentity.confirmed = Boolean(feedbackIdentity.author)
+            || localStorage.getItem(IDENTITY_CONFIRMED_KEY) === '1';
         feedbackIdentity.version += 1;
         const version = feedbackIdentity.version;
         if (storedName && !feedbackIdentity.author) localStorage.removeItem(NAME_KEY);
         const input = document.getElementById('feedback-name');
-        if (input) input.value = feedbackIdentity.author;
-        setIdentityStatus();
+        if (input) input.value = feedbackIdentity.author || (feedbackIdentity.confirmed ? '__anonymous__' : '');
         await Promise.allSettled([loadServerReactions(version), loadServerFavourites(version), loadNotes()]);
     }}
 
@@ -1350,6 +1383,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
 
     // ── Feedback ──────────────────────────────────────────────────────
     async function sendFeedback(idx, propertyId, reaction) {{
+        if (!await ensureFeedbackIdentity()) return;
         const version = feedbackIdentity.version;
         // Clicking an already-selected reaction clears it (neutral)
         const effective = state.feedback[propertyId] === reaction ? null : reaction;
@@ -1491,6 +1525,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     }}
 
     async function toggleFavourite(idx, propertyId) {{
+        if (!await ensureFeedbackIdentity()) return;
         const version = feedbackIdentity.version;
         const isFav = !state.favourites[propertyId];
         try {{
@@ -1636,6 +1671,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (!input) return;
         const text = (input.value || '').trim();
         if (!text || !NOTES_URL) return;
+        if (!await ensureFeedbackIdentity()) return;
         pendingNoteSaves[propertyId] = true;
         input.disabled = true;
         if (button) button.disabled = true;
@@ -2050,6 +2086,13 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             }}
         }});
     }})();
+
+    document.getElementById('identity-dialog')?.addEventListener('cancel', () => {{
+        if (identityPromptResolve) {{
+            identityPromptResolve(false);
+            identityPromptResolve = null;
+        }}
+    }});
 
     // ── Restore the optional feedback name and this browser's identity ─
     initFeedbackIdentity();

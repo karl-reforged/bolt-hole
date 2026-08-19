@@ -124,6 +124,15 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertIn("document.documentElement.classList.add('archive-view')", self.html)
         self.assertIn("html.archive-view .dismissed-divider", self.html)
 
+    def test_feedback_actions_ask_for_identity_only_when_the_user_first_saves(self):
+        self.assertIn('id="identity-dialog"', self.html)
+        self.assertIn("Who's reviewing?", self.html)
+        self.assertIn('Continue anonymously', self.html)
+        self.assertEqual(
+            self.html.count('if (!await ensureFeedbackIdentity()) return;'),
+            3,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
