@@ -736,7 +736,6 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             background: #fef3c7; color: #92400e; font-size: 10px;
             font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase;
         }}
-        html:not(.task-view-all):not(.past-view) .map-container {{ display: none; }}
         html.past-view .card:not(.archived-card),
         html.past-view .summary,
         html.past-view .sort-bar,
@@ -961,6 +960,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             margin: -4px 0 18px; display: flex; align-items: center;
             justify-content: flex-end; gap: 8px;
         }}
+        .feedback-access[hidden] {{ display: none; }}
         .feedback-access label {{ font-size: 12px; color: var(--slate); font-weight: 600; }}
         .feedback-access-input {{
             min-width: 150px; max-width: 220px; padding: 8px 10px;
@@ -1110,7 +1110,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <span>No longer available. Previous notes and feedback are retained.</span>
         </div>
 
-        <div class="feedback-access" id="feedback-access">
+        <div class="feedback-access" id="feedback-access" hidden>
             <label for="feedback-name">Reviewing as</label>
             <select class="feedback-access-input" id="feedback-name" name="feedback-name" autocomplete="off" onchange="saveFeedbackName()">
                 <option value="">Choose name…</option>
@@ -1119,7 +1119,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <option value="Alex">Alex</option>
                 <option value="Greg">Greg</option>
                 <option value="Justin">Justin</option>
-                <option value="__anonymous__">Anonymous — this device only</option>
+                <option value="__anonymous__">Anonymous — reactions stay on this device</option>
             </select>
         </div>
         <dialog class="identity-dialog" id="identity-dialog" aria-labelledby="identity-dialog-title">
@@ -1131,8 +1131,9 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
                 <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('Alex')">Alex</button>
                 <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('Greg')">Greg</button>
                 <button type="button" class="identity-choice" onclick="chooseFeedbackIdentity('Justin')">Justin</button>
-                <button type="button" class="identity-choice anonymous" onclick="chooseFeedbackIdentity('')">Continue anonymously — feedback stays on this device</button>
+                <button type="button" class="identity-choice anonymous" onclick="chooseFeedbackIdentity('')">Continue anonymously</button>
             </div>
+            <p>Reactions and saved properties stay on this device. Notes are shared as Anonymous.</p>
         </dialog>
         <div class="notes-activity" id="notes-activity" style="display:none;">
             <button class="notes-activity-toggle" onclick="toggleActivity()">💬 <span id="notes-activity-count">0</span> recent notes</button>
@@ -1254,6 +1255,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     function setTaskView(view) {{
         if (!['review', 'saved', 'all'].includes(view)) return;
         currentTaskView = view;
+        document.documentElement.classList.remove('past-view');
         document.documentElement.classList.remove('task-view-review', 'task-view-saved', 'task-view-all');
         document.documentElement.classList.add('task-view-' + view);
         history.replaceState(null, '', view === 'review' ? location.pathname : '?view=' + view);
@@ -1271,7 +1273,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             const propertyId = card.dataset.propertyId;
             const reaction = state.feedback[propertyId] || '';
             const favourite = Boolean(state.favourites[propertyId]);
-            const needsReview = !reaction && !favourite;
+            const hasNote = Boolean(notesCache[propertyId]?.length);
+            const needsReview = !reaction && !favourite && !hasNote;
             const saved = favourite || reaction === 'love' || reaction === 'interesting';
             if (needsReview) reviewCount += 1;
             if (saved) savedCount += 1;
@@ -1354,6 +1357,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         else localStorage.removeItem(NAME_KEY);
         localStorage.setItem(IDENTITY_CONFIRMED_KEY, '1');
         if (input) input.value = author || '__anonymous__';
+        const access = document.getElementById('feedback-access');
+        if (access) access.hidden = false;
         await Promise.allSettled([loadServerReactions(version), loadServerFavourites(version)]);
         return true;
     }}
@@ -1393,6 +1398,8 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
         if (storedName && !feedbackIdentity.author) localStorage.removeItem(NAME_KEY);
         const input = document.getElementById('feedback-name');
         if (input) input.value = feedbackIdentity.author || (feedbackIdentity.confirmed ? '__anonymous__' : '');
+        const access = document.getElementById('feedback-access');
+        if (access) access.hidden = !feedbackIdentity.confirmed;
         await Promise.allSettled([loadServerReactions(version), loadServerFavourites(version), loadNotes()]);
     }}
 
@@ -1664,6 +1671,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             renderNotesIntoCard(idx, notesCache[pid] || []);
         }});
         updateActivityStrip(data.notes || []);
+        applyTaskView();
     }}
 
     function renderNotesIntoCard(idx, notes) {{
@@ -1733,6 +1741,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             renderNotesIntoCard(idx, notesCache[propertyId]);
             input.value = '';
             updateActivityStrip(Object.values(notesCache).flat());
+            applyTaskView();
             showConfirmation(idx, 'Saved as ' + data.note.author + '.');
         }} catch {{
             showConfirmation(idx, 'Could not save — your note is still here.');

@@ -130,10 +130,17 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertIn('id="identity-dialog"', self.html)
         self.assertIn("Who's reviewing?", self.html)
         self.assertIn('Continue anonymously', self.html)
+        self.assertIn('id="feedback-access" hidden', self.html)
+        self.assertIn('.feedback-access[hidden] { display: none; }', self.html)
         self.assertEqual(
             self.html.count('if (!await ensureFeedbackIdentity()) return;'),
             3,
         )
+
+    def test_anonymous_copy_distinguishes_private_feedback_from_shared_notes(self):
+        self.assertIn('Reactions and saved properties stay on this device.', self.html)
+        self.assertIn('Notes are shared as Anonymous.', self.html)
+        self.assertNotIn('feedback stays on this device', self.html)
 
     def test_shortlist_is_organised_by_the_users_review_task(self):
         self.assertRegex(self.html, r'data-view="review"[^>]*>To Review')
@@ -141,6 +148,9 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertRegex(self.html, r'data-view="all"[^>]*>All Available')
         self.assertIn('href="?view=past">Past Listings', self.html)
         self.assertIn("function applyTaskView()", self.html)
+        self.assertIn("classList.remove('past-view')", self.html)
+        self.assertIn("const hasNote = Boolean(notesCache[propertyId]?.length);", self.html)
+        self.assertIn("const needsReview = !reaction && !favourite && !hasNote;", self.html)
 
     def test_shortlist_uses_simple_copy_and_a_collapsible_mobile_map(self):
         self.assertIn('<title>Bolt Hole — Property Shortlist</title>', self.html)
@@ -149,6 +159,7 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertNotIn('class="scrape-status"', self.html)
         self.assertIn('class="map-mobile-toggle"', self.html)
         self.assertIn('function toggleInlineMap()', self.html)
+        self.assertNotIn("html:not(.task-view-all):not(.past-view) .map-container", self.html)
 
     def test_global_navigation_uses_three_customer_facing_destinations(self):
         for page_name in (
