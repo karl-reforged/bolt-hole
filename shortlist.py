@@ -42,17 +42,32 @@ DOCS_DIR.mkdir(exist_ok=True)
 # poison the new set. Seed once from the last shortlist George actually saw.
 LAST_SENT_FILE = BASE_DIR / "data" / "last_sent.json"
 
-# Marginal source suppressed from the published shortlist (see
-# out/rea_apify_marginal): REA via Apify returns few rural listings, with no
-# land size, and nets ~2 low-quality cards. Kept in the pipeline/sheet, hidden
-# from George's page.
-SUPPRESSED_SOURCES = {"rea_apify"}
+# Sources may be suppressed only when the entire adapter is intentionally
+# disabled. REA is now quality-gated at ingestion and should remain visible.
+SUPPRESSED_SOURCES = set()
+
+AUTOMATED_FEED_NAMES = frozenset({
+    "Domain Web",
+    "Farmbuy",
+    "Elders",
+    "REA (Apify)",
+    "Email Alerts",
+})
+
+
+def _automated_feed_count(source_report):
+    """Count production feeds attempted in a search run."""
+    return sum(name in source_report for name in AUTOMATED_FEED_NAMES)
 
 
 def _is_suppressed_property(prop):
     """Hide known-low-quality sources and CRE records without a real listing id."""
     if prop.get("source") in SUPPRESSED_SOURCES:
         return True
+    if prop.get("source") == "rea_apify":
+        # Older Actor rows lacked a usable detail/search URL. New ingestion
+        # supplies a canonical URL or an exact filtered-search fallback.
+        return not bool(str(prop.get("listing_url") or "").strip())
     if prop.get("source") == "listing_loop":
         has_address = bool(str(prop.get("address") or "").strip())
         has_property_detail = any(
@@ -275,7 +290,13 @@ def _value_badge(price, land_acres, postcode):
         return ppa_label, "Premium", "#92400e", "#fef3c7"
 
 
-def generate_shortlist(properties, search_date=None, max_properties=None, output_path=None):
+def generate_shortlist(
+    properties,
+    search_date=None,
+    max_properties=None,
+    output_path=None,
+    source_report=None,
+):
     if search_date is None:
         search_date = datetime.now().strftime("%d %B %Y")
     if output_path is None:
@@ -286,6 +307,13 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     total_shown = len(active_props)
     archived_count = len(archived_props)
     sources_count = len({p.get("source") for p in active_props if p.get("source")})
+    source_report = source_report or {}
+    feed_count = _automated_feed_count(source_report)
+    coverage_html = (
+        f'<span data-state="feed-count">{feed_count}</span> automated feeds checked'
+        if feed_count
+        else f'<span data-state="source-count">{sources_count}</span> represented sources'
+    )
 
     # "New" = anything George hasn't seen since his last send. Single source of
     # truth (data/last_sent.json) so the count, the NEW badge, and the New sort
@@ -491,19 +519,15 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
     errored_sources = []
     dormant_sources = []
     try:
-        if prev_files:
-            with open(prev_files[0]) as _f:
-                _latest = json.load(_f)
-            sr = _latest.get("source_report") or {}
-            for name, rep in sr.items():
-                c = rep.get("count", 0)
-                if rep.get("error"):
-                    errored_sources.append(name)
-                elif c == 0 and name not in ("Domain API", "REA Manual"):
-                    # "Domain API" is intentionally null (falls back to Domain Web);
-                    # "REA Manual" is user-populated, blank is normal.
-                    dormant_sources.append(name)
-                raw_total += c
+        for name, rep in source_report.items():
+            c = rep.get("count", 0)
+            if rep.get("error"):
+                errored_sources.append(name)
+            elif c == 0 and name not in ("Domain API", "REA Manual"):
+                # "Domain API" is intentionally null (falls back to Domain Web);
+                # "REA Manual" is user-populated, blank is normal.
+                dormant_sources.append(name)
+            raw_total += c
     except Exception:
         pass
 
@@ -1155,7 +1179,7 @@ def generate_shortlist(properties, search_date=None, max_properties=None, output
             <div class="brand">Bolt Hole Search</div>
             <h1>Bolt Hole &mdash; Weekly Shortlist</h1>
             <div class="date" data-state="search-display">{_escape(search_date)}</div>
-            <div class="freshness"><span data-state="available">{total_found}</span> properties &middot; <span data-state="source-count">{sources_count}</span> sources</div>
+            <div class="freshness"><span data-state="available">{total_found}</span> properties &middot; {coverage_html}</div>
         </div>
 
         <div class="summary">
@@ -2370,7 +2394,17 @@ if __name__ == "__main__":
         except ValueError:
             pass
 
-    path = generate_shortlist(properties, search_date=search_date)
+    try:
+        with open(latest_file) as source_file:
+            source_report = json.load(source_file).get("source_report") or {}
+    except (OSError, ValueError):
+        source_report = {}
+
+    path = generate_shortlist(
+        properties,
+        search_date=search_date,
+        source_report=source_report,
+    )
 
     # Every public page reads this exact state. It is generated from the same
     # canonical partition as index.html and published in the same commit.

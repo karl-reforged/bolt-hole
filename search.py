@@ -923,7 +923,7 @@ if __name__ == "__main__":
                 print("\nMinor warnings detected but sending anyway.")
 
             # Generate shortlist page (docs/index.html for GitHub Pages)
-            generate_shortlist(props)
+            generate_shortlist(props, source_report=source_report)
 
             # Send short email with link to shortlist
             result = send_digest(props, dry_run=dry_run)

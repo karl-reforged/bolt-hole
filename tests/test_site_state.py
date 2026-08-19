@@ -92,6 +92,7 @@ class SiteStateTests(unittest.TestCase):
         self.assertEqual(state["inventory"]["possibly_unavailable"], 1)
         self.assertEqual(state["run"]["scanned"], 320)
         self.assertEqual(state["run"]["passed_gates"], 143)
+        self.assertEqual(state["inventory"]["automated_feed_count"], 2)
         self.assertEqual(state["top_match"]["headline"], "Current property")
 
     def test_bundle_verifier_rejects_page_count_drift(self):

@@ -6,9 +6,37 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import scheduled_refresh
+import run_guarded_domain_refresh
 
 
 class ScheduledRefreshTests(unittest.TestCase):
+    def test_guarded_health_rejects_weak_rea_coverage(self):
+        data = {
+            "properties": [
+                {
+                    "source": "domain_web",
+                    "description": "complete",
+                }
+                for _ in range(110)
+            ],
+            "source_report": {
+                "Domain Web": {"count": 260, "error": None},
+                "REA (Apify)": {"count": 2, "error": None},
+            },
+        }
+
+        ok, problems, checks = run_guarded_domain_refresh.health(
+            data,
+            min_domain=240,
+            min_passed=110,
+            min_domain_desc=90,
+            min_rea=5,
+        )
+
+        self.assertFalse(ok)
+        self.assertIn("REA Apify source count 2 < floor 5", problems)
+        self.assertEqual(checks["rea_apify_source_count"], 2)
+
     def test_dirty_site_fails_before_refresh_or_publish(self):
         with (
             patch.object(scheduled_refresh, "_site_is_dirty", return_value=True),

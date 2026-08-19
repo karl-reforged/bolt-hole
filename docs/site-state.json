@@ -1,23 +1,26 @@
 {
   "schema_version": 1,
-  "published_at": "2026-08-19T10:53:27+10:00",
-  "search_at": "2026-08-17T15:01:00.161000+10:00",
-  "search_display": "17 August 2026 · 3:01pm",
+  "published_at": "2026-08-19T17:52:28+10:00",
+  "search_at": "2026-08-19T17:49:29.966100",
+  "search_display": "19 August 2026 · 5:49pm",
   "inventory": {
-    "available": 133,
-    "archived": 66,
-    "possibly_unavailable": 0,
+    "available": 176,
+    "archived": 72,
+    "possibly_unavailable": 12,
     "under_offer": 1,
     "sources": {
-      "domain_web": 131,
-      "elders": 2
+      "domain_web": 139,
+      "elders": 2,
+      "farmbuy": 1,
+      "rea_apify": 34
     },
-    "source_count": 2
+    "source_count": 4,
+    "automated_feed_count": 5
   },
   "run": {
-    "scanned": 0,
-    "passed_gates": 133,
-    "pass_rate": null,
+    "scanned": 591,
+    "passed_gates": 180,
+    "pass_rate": 30.5,
     "source_failures": []
   },
   "scores": {

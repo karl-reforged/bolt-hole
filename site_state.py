@@ -58,6 +58,13 @@ def build_site_state(
         for name, report in source_report.items()
         if isinstance(report, dict) and report.get("error")
     ]
+    automated_feed_count = sum(
+        bool(report.get("count"))
+        for name, report in source_report.items()
+        if isinstance(report, dict)
+        and name not in {"Domain API", "REA Manual"}
+        and not report.get("error")
+    )
     passed_gates = int(run_metadata.get("passed_gates") or len(active_props))
 
     return {
@@ -76,6 +83,7 @@ def build_site_state(
             ),
             "sources": dict(sorted(active_sources.items())),
             "source_count": len(active_sources),
+            "automated_feed_count": automated_feed_count,
         },
         "run": {
             "scanned": scanned,

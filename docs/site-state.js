@@ -44,6 +44,7 @@
     setText('possibly-unavailable', inventory.possibly_unavailable);
     setText('under-offer', inventory.under_offer);
     setText('source-count', inventory.source_count);
+    setText('feed-count', inventory.automated_feed_count);
     setText('source-labels', sourceLabel(inventory.sources));
     setText('scanned', run.scanned || 'Not recorded');
     setText('passed-gates', run.passed_gates);

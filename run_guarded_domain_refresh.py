@@ -43,10 +43,17 @@ def load(path: Path) -> dict:
         return json.load(fh)
 
 
-def health(data: dict, min_domain: int, min_passed: int, min_domain_desc: int) -> tuple[bool, list[str], dict]:
+def health(
+    data: dict,
+    min_domain: int,
+    min_passed: int,
+    min_domain_desc: int,
+    min_rea: int,
+) -> tuple[bool, list[str], dict]:
     report = data.get("source_report", {}) or {}
     props = data.get("properties", []) or []
     dw_source = (report.get("Domain Web") or {}).get("count") or 0
+    rea_source = (report.get("REA (Apify)") or {}).get("count") or 0
     passed = len(props)
     dw_passed = [p for p in props if p.get("source") == "domain_web"]
     dw_desc = sum(1 for p in dw_passed if p.get("description"))
@@ -54,6 +61,7 @@ def health(data: dict, min_domain: int, min_passed: int, min_domain_desc: int) -
 
     checks = {
         "domain_web_source_count": dw_source,
+        "rea_apify_source_count": rea_source,
         "passed_gates": passed,
         "domain_web_passed": len(dw_passed),
         "domain_web_passed_with_descriptions": dw_desc,
@@ -62,6 +70,8 @@ def health(data: dict, min_domain: int, min_passed: int, min_domain_desc: int) -
     problems = []
     if dw_source < min_domain:
         problems.append(f"Domain Web source count {dw_source} < floor {min_domain}")
+    if rea_source < min_rea:
+        problems.append(f"REA Apify source count {rea_source} < floor {min_rea}")
     if passed < min_passed:
         problems.append(f"passed gates {passed} < floor {min_passed}")
     if dw_desc < min_domain_desc:
@@ -95,7 +105,13 @@ def run_once(attempt: int, args) -> tuple[bool, Path | None, dict, list[str]]:
     if not result:
         return False, None, {"log": str(log_path)}, ["no search_*.json produced"]
     data = load(result)
-    ok, problems, checks = health(data, args.min_domain, args.min_passed, args.min_domain_desc)
+    ok, problems, checks = health(
+        data,
+        args.min_domain,
+        args.min_passed,
+        args.min_domain_desc,
+        args.min_rea,
+    )
     checks["result_file"] = str(result)
     checks["log"] = str(log_path)
     print("Health:", json.dumps(checks, indent=2), flush=True)
@@ -109,6 +125,7 @@ def main() -> int:
     ap.add_argument("--min-domain", type=int, default=240, help="minimum Domain Web raw source count; historical healthy run is ~270-280")
     ap.add_argument("--min-passed", type=int, default=110, help="minimum final gate-passed properties")
     ap.add_argument("--min-domain-desc", type=int, default=90, help="minimum gate-passed Domain Web listings with descriptions")
+    ap.add_argument("--min-rea", type=int, default=5, help="minimum raw REA Apify listings in target postcodes")
     ap.add_argument("--cooldown", type=int, default=900, help="seconds between failed attempts")
     ap.add_argument("--max-attempts", type=int, default=3, help="0 means retry indefinitely")
     ap.add_argument("--timeout", type=int, default=2700, help="per search timeout seconds")

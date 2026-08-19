@@ -1,3 +1,4 @@
+import json
 import os
 import importlib.util
 import unittest
@@ -27,9 +28,10 @@ class SourceResilienceTests(unittest.TestCase):
             "gates": {
                 "geography": {
                     "postcodes_west": ["2787"],
-                    "postcodes_south": [],
+                    "postcodes_south": ["2580"],
                 },
                 "budget": {"min_price": 100_000, "max_price": 2_000_000},
+                "land_size": {"min_hectares": 12.14, "max_hectares": 80.94},
             }
         }
 
@@ -38,7 +40,7 @@ class SourceResilienceTests(unittest.TestCase):
                 os.environ,
                 {
                     "APIFY_API_TOKEN": "private-apify-token",
-                    "APIFY_REA_ACTOR": "owner/actor",
+                    "APIFY_REA_ACTOR": "one-api/realestate-com-au-scraper",
                     "APIFY_MAX_POSTCODES": "0",
                 },
             ),
@@ -53,6 +55,92 @@ class SourceResilienceTests(unittest.TestCase):
         for call in session.get.call_args_list:
             self.assertEqual(call.kwargs["headers"], auth)
             self.assertNotIn("token", call.kwargs["params"])
+
+        actor_input = session.post.call_args.kwargs["json"]
+        self.assertEqual(actor_input["search_inputs"], ["2787", "2580"])
+        self.assertEqual(actor_input["searchType"], "For_Sale")
+        self.assertEqual(actor_input["propertyType"], "House,Acreage,Rural")
+        self.assertEqual(actor_input["priceRange"], "min:100000,max:2000000")
+        self.assertEqual(actor_input["landSizeRange"], "min:121400,max:809400")
+        self.assertFalse(actor_input["surroundingSuburbs"])
+        self.assertEqual(actor_input["resultCount"], 200)
+
+    def test_one_api_schema_normalizes_complete_rea_listing(self):
+        raw = {
+            "listing_id": "700414500",
+            "url": "https://www.realestate.com.au/property-farmlet-nsw-chatham+valley-700414500",
+            "title": "FROG HOLLOW - 37 ACRES",
+            "description": "Frog Hollow<br/>A useful rural description.",
+            "price": "$750,000",
+            "beds": 2,
+            "baths": 1,
+            "land_size": {"value": 149_800, "unit": "m2"},
+            "address": {
+                "street": "50 Millers Lane",
+                "suburb": "Chatham Valley",
+                "postcode": "2787",
+                "state": "NSW",
+                "latitude": -33.84,
+                "longitude": 149.91,
+            },
+            "main_image": "https://example.com/property.jpg",
+        }
+        item = {
+            "Listing ID": "700414500",
+            "Listing URL": raw["url"],
+            "Title": raw["title"],
+            "Street": "50 Millers Lane",
+            "Suburb": "Chatham Valley",
+            "Postcode": "2787",
+            "State": "NSW",
+            "Price": "$750,000",
+            "Property Type": "farmlet",
+            "Beds": 2,
+            "Baths": 1,
+            "Latitude": -33.84,
+            "Longitude": 149.91,
+            "Photos": raw["main_image"],
+            "Raw": json.dumps(raw),
+        }
+
+        prop = sources._normalize_apify_rea_listing(item, {"2787"})
+
+        self.assertEqual(prop["source_id"], "rea-700414500")
+        self.assertEqual(prop["price"], 750_000)
+        self.assertAlmostEqual(prop["land_acres"], 37.0, places=1)
+        self.assertEqual(prop["bedrooms"], 2)
+        self.assertEqual(prop["headline"], "FROG HOLLOW - 37 ACRES")
+        self.assertNotIn("<br", prop["description"])
+        self.assertEqual(prop["listing_url"], raw["url"])
+
+    def test_current_apify_schema_preserves_listing_quality_fields(self):
+        item = {
+            "propertyId": "700417256",
+            "propertyType": "lifestyle",
+            "address": {
+                "full": "123 Test Road, Oberon, NSW 2787",
+                "suburb": "Oberon",
+                "state": "NSW",
+                "postcode": "2787",
+            },
+            "coordinates": {"latitude": -33.7, "longitude": 149.9},
+            "price": {"display": "$1,250,000"},
+            "features": {"bedrooms": 4, "bathrooms": 2},
+            "landSize": 149_700,
+            "landSizeUnit": "m2",
+            "headline": "A real rural listing",
+            "description": "A useful description.",
+            "url": "https://www.realestate.com.au/property-rural-nsw-oberon-123456789",
+            "dateListed": "2026-08-07",
+        }
+
+        prop = sources._normalize_apify_rea_listing(item, {"2787"})
+
+        self.assertEqual(prop["price"], 1_250_000)
+        self.assertAlmostEqual(prop["land_acres"], 37.0, places=1)
+        self.assertEqual(prop["headline"], "A real rural listing")
+        self.assertEqual(prop["listing_url"], item["url"])
+        self.assertEqual(prop["date_listed"], "2026-08-07")
 
     def test_farmbuy_transport_failure_is_not_reported_as_zero_results(self):
         session = Mock()
