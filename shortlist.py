@@ -601,20 +601,39 @@ def generate_shortlist(
         }}
         .summary .count {{ font-size: 15px; color: var(--bark); font-weight: 500; }}
         .summary .top {{ font-size: 13px; color: var(--slate); margin-top: 4px; }}
-        .task-views {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: -14px 0 22px; }}
-        .task-views button, .task-views a {{
-            min-height: 42px; display: inline-flex; align-items: center;
-            justify-content: center; padding: 8px 12px; border-radius: 8px;
-            border: 1px solid var(--light-border); background: #fff;
-            color: var(--slate); text-decoration: none; font: inherit;
-            font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
+        .task-views {{
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            margin: -16px 0 0; padding: 8px; border-radius: 12px;
+            background: #EDEBE7;
+        }}
+        .task-views button {{
+            min-height: 48px; display: inline-flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 8px;
+            border: 0; border-radius: 8px; background: transparent;
+            color: var(--slate); font: inherit; font-size: 13px;
+            font-weight: 600; cursor: pointer; text-align: center;
+        }}
+        .task-view-count {{
+            display: block; margin-top: 4px; font-size: 13px;
+            font-weight: 500; line-height: 1.2; opacity: 0.75;
         }}
         html.task-view-review .task-views [data-view="review"],
         html.task-view-saved .task-views [data-view="saved"],
-        html.task-view-all .task-views [data-view="all"],
-        html.past-view .task-views .past-link {{
-            background: var(--eucalyptus); border-color: var(--eucalyptus); color: #fff;
+        html.task-view-all .task-views [data-view="all"] {{
+            background: #fff; color: var(--eucalyptus);
         }}
+        .past-listings-link {{
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; margin: 16px 0 24px; padding: 16px 4px;
+            border-bottom: 1px solid #E2DDD6; color: var(--slate);
+            text-decoration: none; font-size: 13px;
+        }}
+        .past-listings-link strong {{ color: #2D5A4A; font-size: 13px; }}
+        .past-listings-link .past-listings-arrow {{ white-space: nowrap; }}
+        .past-listings-link:hover,
+        html.past-view .past-listings-link {{ color: var(--eucalyptus); }}
+        html.past-view .past-listings-link strong {{ color: var(--eucalyptus); }}
+        html.past-view .past-listings-link {{ border-bottom-color: var(--eucalyptus); }}
         .past-summary {{
             display: none; background: #fff; border: 1px solid #d6c7ad;
             border-radius: 10px; padding: 16px 20px; margin-bottom: 18px;
@@ -1062,7 +1081,8 @@ def generate_shortlist(
         .identity-choice.anonymous {{ grid-column: 1 / -1; color: var(--slate); font-weight: 500; }}
         @media (max-width: 520px) {{
             .feedback-access {{ justify-content: space-between; }}
-            .task-views {{ grid-template-columns: 1fr 1fr; }}
+            .task-views button {{ padding-inline: 4px; }}
+            .past-listings-link {{ align-items: flex-start; }}
             .map-container .map-label {{ padding: 12px 14px; }}
             .map-label-right {{ gap: 8px; }}
             .map-mobile-toggle {{
@@ -1078,7 +1098,7 @@ def generate_shortlist(
             .sort-bar {{ flex-wrap: wrap; overflow-x: visible; }}
             .sort-label {{ flex-basis: 100%; margin-bottom: 2px; }}
             .sort-btn {{ min-height: 44px; }}
-            .task-views button, .task-views a, .map-expand-btn, .rank-badge, .score-badge,
+            .task-views button, .past-listings-link, .map-expand-btn, .rank-badge, .score-badge,
             .fav-btn, .notes-post, .map-modal-close {{ min-height: 44px; }}
             .rank-badge {{ min-width: 44px; }}
             .fav-btn {{ width: 44px; height: 44px; padding: 6px; }}
@@ -1172,11 +1192,14 @@ def generate_shortlist(
         </div>
 
         <div class="task-views" aria-label="Shortlist view">
-            <button type="button" data-view="review" aria-pressed="false" onclick="setTaskView('review')">To Review <span id="to-review-count">({total_found})</span></button>
-            <button type="button" data-view="saved" aria-pressed="false" onclick="setTaskView('saved')">Saved <span id="saved-count">(0)</span></button>
-            <button type="button" data-view="all" aria-pressed="false" onclick="setTaskView('all')">All Available ({total_found})</button>
-            <a class="past-link" href="?view=past">Past Listings ({archived_count})</a>
+            <button type="button" data-view="review" aria-pressed="false" onclick="setTaskView('review')">To Review <span class="task-view-count" id="to-review-count">{total_found}</span></button>
+            <button type="button" data-view="saved" aria-pressed="false" onclick="setTaskView('saved')">Saved <span class="task-view-count" id="saved-count">0</span></button>
+            <button type="button" data-view="all" aria-pressed="false" onclick="setTaskView('all')">All Available <span class="task-view-count">{total_found}</span></button>
         </div>
+        <a class="past-listings-link" href="?view=past">
+            <span><strong>Past Listings</strong> &middot; {archived_count} no longer available</span>
+            <span class="past-listings-arrow">View history &rarr;</span>
+        </a>
 
         <div class="past-summary">
             <strong>{archived_count} past listings</strong>
@@ -1366,8 +1389,8 @@ def generate_shortlist(
         }});
         const reviewCountEl = document.getElementById('to-review-count');
         const savedCountEl = document.getElementById('saved-count');
-        if (reviewCountEl) reviewCountEl.textContent = '(' + reviewCount + ')';
-        if (savedCountEl) savedCountEl.textContent = '(' + savedCount + ')';
+        if (reviewCountEl) reviewCountEl.textContent = String(reviewCount);
+        if (savedCountEl) savedCountEl.textContent = String(savedCount);
         document.querySelectorAll('.task-views button[data-view]').forEach(button => {{
             button.setAttribute('aria-pressed', String(button.dataset.view === currentTaskView));
         }});

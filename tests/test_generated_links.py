@@ -118,7 +118,9 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertIn("restoreMapPinState(m.idx, m.pct, el)", self.html)
 
     def test_unavailable_properties_have_a_separate_past_listings_view(self):
-        self.assertIn('href="?view=past">Past Listings (', self.html)
+        self.assertIn('class="past-listings-link" href="?view=past"', self.html)
+        self.assertIn('<strong>Past Listings</strong>', self.html)
+        self.assertIn('no longer available', self.html)
         self.assertIn('class="past-summary"', self.html)
         self.assertIn('class="card archived-card"', self.html)
         self.assertIn('class="availability-badge">Under offer</span>', self.html)
@@ -146,7 +148,20 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertRegex(self.html, r'data-view="review"[^>]*>To Review')
         self.assertRegex(self.html, r'data-view="saved"[^>]*>Saved')
         self.assertRegex(self.html, r'data-view="all"[^>]*>All Available')
-        self.assertIn('href="?view=past">Past Listings', self.html)
+        task_views = re.search(
+            r'<div class="task-views"[^>]*>(.*?)</div>',
+            self.html,
+            re.DOTALL,
+        ).group(1)
+        self.assertEqual(task_views.count('data-view='), 3)
+        self.assertNotIn('Past Listings', task_views)
+        self.assertIn('class="past-listings-link" href="?view=past"', self.html)
+        self.assertIn('grid-template-columns: repeat(3, 1fr)', self.html)
+        self.assertNotIn('.task-views { grid-template-columns: 1fr 1fr; }', self.html)
+        self.assertIn('background: #EDEBE7', self.html)
+        self.assertIn('border-bottom: 1px solid #E2DDD6', self.html)
+        self.assertRegex(self.html, r'\.task-view-count \{[^}]*font-size: 13px')
+        self.assertIn('.task-views button { padding-inline: 4px; }', self.html)
         self.assertIn("function applyTaskView()", self.html)
         self.assertIn("classList.remove('past-view')", self.html)
         self.assertIn("const ANONYMOUS_NOTE_REVIEW_KEY", self.html)
