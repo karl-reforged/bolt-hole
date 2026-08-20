@@ -150,6 +150,23 @@ class SourceResilienceTests(unittest.TestCase):
         self.assertNotIn("<br", prop["description"])
         self.assertEqual(prop["listing_url"], raw["url"])
 
+    def test_one_api_schema_preserves_commas_inside_rea_photo_urls(self):
+        photo_url = (
+            "https://i3.au.reastatic.net/1200x900-fit,format=webp/"
+            "9226420814ebdf5bd96328c6ed03b7c585df4057deb4fc48548204a39045acac/"
+            "image.png"
+        )
+        item = {
+            "Listing ID": "149223908",
+            "Listing URL": "https://www.realestate.com.au/property-house-nsw-brayton-149223908",
+            "Postcode": "2579",
+            "Photos": f"{photo_url}, https://i4.au.reastatic.net/second-photo.jpg",
+        }
+
+        prop = sources._normalize_apify_rea_listing(item, {"2579"})
+
+        self.assertEqual(prop["photo_url"], photo_url)
+
     def test_current_apify_schema_preserves_listing_quality_fields(self):
         item = {
             "propertyId": "700417256",

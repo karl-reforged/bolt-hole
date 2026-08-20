@@ -2049,7 +2049,7 @@ def _normalize_one_api_rea_listing(item, target_postcodes):
     if isinstance(photos, list):
         photo_url = photos[0] if photos else None
     else:
-        photo_url = str(photos).split(",")[0].strip() if photos else None
+        photo_url = re.split(r",\s*(?=https?://)", str(photos), maxsplit=1)[0].strip() if photos else None
 
     listing_id = str(item.get("Listing ID") or raw.get("listing_id") or "")
     listing_url = item.get("Listing URL") or raw.get("url") or ""

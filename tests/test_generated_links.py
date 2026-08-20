@@ -110,8 +110,21 @@ class GeneratedLinkTests(unittest.TestCase):
         self.assertNotIn("farmbuycdn.clodflare.pushcreative.com.au", self.html)
         self.assertNotRegex(
             self.html,
+            r'src="https://i\d+\.au\.reastatic\.net/\d+x\d+-fit"',
+        )
+        self.assertNotRegex(
+            self.html,
             r'farmbuycdn\.edge\.pushcreative\.com\.au/[^"?]+/512_',
         )
+
+    def test_brayton_rea_listing_uses_its_complete_photo_url(self):
+        card = re.search(
+            r'<div class="card[^>]+data-property-id="rea-149223908".*?</div>\s*</div>',
+            self.html,
+            re.DOTALL,
+        ).group(0)
+        self.assertIn("1200x900-fit,format=webp/", card)
+        self.assertIn("/image.png", card)
 
     def test_farmbuy_photos_use_the_browser_safe_relay(self):
         self.assertIn("?action=photo&url=", self.html)
