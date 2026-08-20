@@ -105,6 +105,18 @@ class GeneratedLinkTests(unittest.TestCase):
             self.assertIn('height="540"', attrs)
         self.assertIn("height: clamp(180px, 40vw, 240px)", self.html)
 
+    def test_property_photos_avoid_known_stale_supplier_urls(self):
+        self.assertNotIn("elders-re-vre-cdn.imgix.net", self.html)
+        self.assertNotIn("farmbuycdn.clodflare.pushcreative.com.au", self.html)
+        self.assertNotRegex(
+            self.html,
+            r'farmbuycdn\.edge\.pushcreative\.com\.au/[^"?]+/512_',
+        )
+
+    def test_farmbuy_photos_use_the_browser_safe_relay(self):
+        self.assertIn("?action=photo&url=", self.html)
+        self.assertIn("encodeURIComponent(image.src)", self.html)
+
     def test_map_and_card_navigation_uses_keyboard_controls(self):
         self.assertNotIn('<span class="rank-badge"', self.html)
         self.assertIn('<button type="button" class="rank-badge"', self.html)

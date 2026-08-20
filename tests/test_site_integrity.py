@@ -6,7 +6,12 @@ from unittest.mock import patch
 
 from email_template import render_email
 from email_sender import _build_link_email
-from shortlist import _automated_feed_count, _fetch_sheet_properties, _visible_props
+from shortlist import (
+    _automated_feed_count,
+    _display_photo_url,
+    _fetch_sheet_properties,
+    _visible_props,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +19,14 @@ LIVE_SHORTLIST_URL = "https://karl-reforged.github.io/bolt-hole/"
 
 
 class SiteIntegrityTests(unittest.TestCase):
+    def test_farmbuy_photos_are_relayed_but_other_sources_stay_direct(self):
+        farmbuy = "https://farmbuycdn.edge.pushcreative.com.au/123/photo.jpg?456"
+        relayed = _display_photo_url(farmbuy)
+        self.assertTrue(relayed.startswith("https://bolt-hole-backend.karl-582.workers.dev?action=photo&url="))
+        self.assertIn("https%3A%2F%2Ffarmbuycdn.edge.pushcreative.com.au%2F123", relayed)
+        domain = "https://rimh2.domainstatic.com.au/photo.jpg"
+        self.assertEqual(_display_photo_url(domain), domain)
+
     def test_coverage_count_reports_automated_feeds_not_card_sources(self):
         report = {
             "Domain API": {"count": 0},

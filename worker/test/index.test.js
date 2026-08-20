@@ -81,6 +81,47 @@ test('property and note reads are public with exact-origin CORS', async () => {
   assert.equal(wrongOrigin.status, 403);
 });
 
+test('photo relay serves only allowlisted Farmbuy images', async (t) => {
+  const env = makeEnv();
+  const originalFetch = globalThis.fetch;
+  let requestedUrl = '';
+  globalThis.fetch = async (url) => {
+    requestedUrl = String(url);
+    return new Response(new Uint8Array([1, 2, 3]), {
+      headers: { 'Content-Type': 'image/jpeg' },
+    });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const photoUrl = 'https://farmbuycdn.edge.pushcreative.com.au/408999/1920_photo.jpg?123';
+  const response = await worker.fetch(request(`/?action=photo&url=${encodeURIComponent(photoUrl)}`), env);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'image/jpeg');
+  assert.match(response.headers.get('cache-control'), /max-age=86400/);
+  assert.equal(requestedUrl, photoUrl);
+  assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [1, 2, 3]);
+});
+
+test('photo relay rejects non-Farmbuy URLs without fetching them', async (t) => {
+  const env = makeEnv();
+  const originalFetch = globalThis.fetch;
+  let fetchCalled = false;
+  globalThis.fetch = async () => {
+    fetchCalled = true;
+    return new Response('unexpected');
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const response = await worker.fetch(request(
+    '/?action=photo&url=https%3A%2F%2Fevil.example%2Fphoto.jpg'
+  ), env);
+
+  assert.equal(response.status, 422);
+  assert.deepEqual(await response.json(), { ok: false, error: 'invalid_photo_url' });
+  assert.equal(fetchCalled, false);
+});
+
 test('browser writes from an untrusted origin are rejected before storage', async () => {
   const env = makeEnv();
   const response = await worker.fetch(request('/', {

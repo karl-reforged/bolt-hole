@@ -11,6 +11,43 @@ class SourceResilienceTests(unittest.TestCase):
     def test_elders_pdf_dependency_is_installed(self):
         self.assertIsNotNone(importlib.util.find_spec("pdfplumber"))
 
+    def test_og_image_parser_decodes_source_urls(self):
+        html = (
+            '<meta property="og:image" '
+            'content="https://images.example/property.jpg?w=1200&amp;fit=max" />'
+        )
+
+        self.assertEqual(
+            sources._extract_og_image(html),
+            "https://images.example/property.jpg?w=1200&fit=max",
+        )
+
+    def test_listing_photo_enrichment_replaces_stale_source_url(self):
+        response = Mock(
+            status_code=200,
+            text='<meta property="og:image" content="https://images.example/live.jpg?v=2" />',
+        )
+        session = Mock()
+        session.get.return_value = response
+        listings = [{
+            "source_id": "listing-1",
+            "listing_url": "https://listings.example/1",
+            "photo_url": "https://images.example/stale.jpg",
+        }]
+
+        enriched = sources._enrich_listing_photos(
+            listings,
+            lambda listing: listing["listing_url"],
+            session=session,
+        )
+
+        self.assertEqual(enriched[0]["photo_url"], "https://images.example/live.jpg?v=2")
+        session.get.assert_called_once_with(
+            "https://listings.example/1",
+            timeout=20,
+            headers={"User-Agent": "Mozilla/5.0 (property search tool)"},
+        )
+
     def test_apify_token_is_sent_only_in_authorization_headers(self):
         session = Mock()
         started = Mock(status_code=201)

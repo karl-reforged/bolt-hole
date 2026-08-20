@@ -24,7 +24,7 @@ import sys
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from dotenv import load_dotenv
 
@@ -191,6 +191,17 @@ NOTES_URL = os.getenv(
     "NOTES_SCRIPT_URL",
     "https://bolt-hole-backend.karl-582.workers.dev",
 )
+
+
+def _display_photo_url(photo_url):
+    """Relay supplier images that block direct browser requests."""
+    photo_url = str(photo_url or "").strip()
+    if not photo_url:
+        return ""
+    parsed = urlparse(photo_url)
+    if parsed.hostname == "farmbuycdn.edge.pushcreative.com.au":
+        return f"{NOTES_URL}?action=photo&url={quote(photo_url, safe='')}"
+    return photo_url
 
 # Readable labels for score breakdown keys
 SCORE_LABELS = {
@@ -359,7 +370,7 @@ def generate_shortlist(
             description += "..."
 
         listing_url = _escape(p.get("listing_url", "#"))
-        photo_url = p.get("photo_url")
+        photo_url = _display_photo_url(p.get("photo_url"))
 
         photo_html = ""
         if photo_url:

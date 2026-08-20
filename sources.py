@@ -111,6 +111,45 @@ def _retry_session(retries=3, backoff=0.5, status_forcelist=(429, 500, 502, 503,
     return session
 
 
+def _extract_og_image(page_html):
+    """Return a page's canonical social image URL, if present."""
+    if not page_html:
+        return None
+    patterns = (
+        r'<meta\s+[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)',
+        r'<meta\s+[^>]*content=["\']([^"\']+)["\'][^>]*property=["\']og:image["\']',
+    )
+    for pattern in patterns:
+        match = re.search(pattern, page_html, re.IGNORECASE)
+        if match:
+            return html_mod.unescape(match.group(1).strip())
+    return None
+
+
+def _enrich_listing_photos(listings, page_url_for, *, session=None):
+    """Refresh supplier photo URLs from each listing page's canonical metadata.
+
+    Some supplier search feeds expose resized image URLs that expire or return
+    stale 410 responses. The detail page's og:image URL is the authoritative,
+    cache-busted image. Failures are non-fatal so one listing cannot suppress a
+    complete source refresh.
+    """
+    session = session or _retry_session(retries=1, backoff=0.5)
+    headers = {"User-Agent": "Mozilla/5.0 (property search tool)"}
+    for listing in listings:
+        page_url = page_url_for(listing)
+        if not page_url:
+            continue
+        try:
+            response = session.get(page_url, timeout=20, headers=headers)
+        except requests.RequestException:
+            continue
+        photo_url = _extract_og_image(response.text)
+        if photo_url:
+            listing["photo_url"] = photo_url
+    return listings
+
+
 def load_criteria():
     with open(CRITERIA_PATH) as f:
         return json.load(f)
@@ -1090,7 +1129,11 @@ def fetch_farmbuy(criteria):
         })
 
     print(f"Farmbuy: {len(normalized)} in target postcodes")
-    return normalized
+    return _enrich_listing_photos(
+        normalized,
+        lambda listing: listing.get("listing_url"),
+        session=session,
+    )
 
 
 # ── Source 3: REA Web (scrape ArgonautExchange) ──────────────────────────
@@ -2731,6 +2774,17 @@ def fetch_elders(criteria):
             break
         page += 1
         time.sleep(1.0)
+
+    # The regional API exposes an outdated constructed CDN path. Elders' stable
+    # listing-ID pages redirect to the canonical page and expose the live image.
+    all_listings = _enrich_listing_photos(
+        all_listings,
+        lambda listing: (
+            "https://www.eldersrealestate.com.au/"
+            f"{listing.get('source_id', '').removeprefix('elders-')}/"
+        ),
+        session=session,
+    )
 
     # Enrich with descriptions from PDF brochures
     all_listings = _enrich_elders_from_brochures(all_listings)

@@ -6,6 +6,14 @@
     <title>Bolt Hole — Property Shortlist</title>
     <link rel="icon" href="design-system/assets/logo-mark.png" />
     <script>const initialView = new URLSearchParams(location.search).get('view'); if (initialView === 'past' || initialView === 'archived') document.documentElement.classList.add('past-view'); else document.documentElement.classList.add('task-view-' + (['saved', 'all'].includes(initialView) ? initialView : 'review'));</script>
+    <script>
+        addEventListener('error', (event) => {
+            const image = event.target;
+            if (!(image instanceof HTMLImageElement)) return;
+            if (!image.src.startsWith('https://farmbuycdn.edge.pushcreative.com.au/')) return;
+            image.src = 'https://bolt-hole-backend.karl-582.workers.dev?action=photo&url=' + encodeURIComponent(image.src);
+        }, true);
+    </script>
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -6217,7 +6225,7 @@
         </div>
 
         <div class="card" id="card-73" data-idx="73" data-property-id="elders-300P130769" data-score="61.5" data-price="1300000" data-acres="188.2" data-drive="237" data-new="0" data-ppa="6908" >
-            <div class="card-photo"><img src="https://elders-re-vre-cdn.imgix.net/300P130769/image-1.jpg?w=660&amp;h=440&amp;fit=crop" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://elders-re-ab-cdn.imgix.net/clients-data/22359/public_html/media/lt/300/300P130769/169749529499560847-rsd.jpg" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -12817,7 +12825,7 @@
         </div>
 
         <div class="card" id="card-161" data-idx="161" data-property-id="408999" data-score="20.0" data-price="365000" data-acres="50.7" data-drive="152" data-new="1" data-ppa="7199" >
-            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/408999/512_408999p-8rl3-6wpa4o1zhs5k7no7.jpg" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/408999/1920_408999p-8rl3-6wpa4o1zhs5k7no7.jpg?1787201191" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -13717,7 +13725,7 @@
         </div>
 
         <div class="card" id="card-173" data-idx="173" data-property-id="elders-300P187142" data-score="6.0" data-price="700000" data-acres="31.1" data-drive="222" data-new="0" data-ppa="22508" data-stale="1">
-            <div class="card-photo"><img src="https://elders-re-vre-cdn.imgix.net/300P187142/image-1.jpg?w=660&amp;h=440&amp;fit=crop" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://elders-re-ab-cdn.imgix.net/clients-data/22359/public_html/media/lt/300/300P187142/176334370646884334-rsd.jpg" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -17124,7 +17132,7 @@
         </div>
 
         <div class="card archived-card" id="card-219" data-idx="219" data-property-id="elders-300P190699" data-score="14.0" data-price="550000" data-acres="80.6" data-drive="181" data-new="0" data-ppa="6824" data-stale="1">
-            <div class="card-photo"><img src="https://elders-re-vre-cdn.imgix.net/300P190699/image-1.jpg?w=660&amp;h=440&amp;fit=crop" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://elders-re-ab-cdn.imgix.net/clients-data/22359/public_html/media/lt/300/300P190699/176836702150216726-rsd.jpg" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -18012,7 +18020,7 @@
         </div>
 
         <div class="card archived-card" id="card-231" data-idx="231" data-property-id="417323" data-score="6.0" data-price="995000" data-acres="100" data-drive="226" data-new="0" data-ppa="9950" data-stale="1">
-            <div class="card-photo"><img src="https://farmbuycdn.clodflare.pushcreative.com.au/417323/512_417323p-8y0b-4ms2yoz35y5uf0de.jpg" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/417323/1920_417323p-8y0b-yhdhcfgkhyddrkep.jpg?1787201005" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -18382,7 +18390,7 @@
         </div>
 
         <div class="card archived-card" id="card-236" data-idx="236" data-property-id="418769" data-score="20.0" data-price="0" data-acres="76.5" data-drive="152" data-new="0" data-ppa="0" data-stale="1">
-            <div class="card-photo"><img src="https://farmbuycdn.clodflare.pushcreative.com.au/418769/512_418769p-8z4h-ez1lzlick1ojxipk.jpg" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/418769/1920_418769p-8z4h-ez1lzlick1ojxipk.jpg?1787201005" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -19048,7 +19056,7 @@
         </div>
 
         <div class="card archived-card" id="card-245" data-idx="245" data-property-id="420680" data-score="6.0" data-price="770000" data-acres="98.8" data-drive="230" data-new="0" data-ppa="7794" data-stale="1">
-            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/420680/512_420680p-90lk-8bhfcnekvqcdtf1q.jpg" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/420680/1125_420680p-90lk-8bhfcnekvqcdtf1q.jpg?1787201005" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -19122,7 +19130,7 @@
         </div>
 
         <div class="card archived-card" id="card-246" data-idx="246" data-property-id="420386" data-score="6.0" data-price="1375000" data-acres="197.7" data-drive="215" data-new="0" data-ppa="6955" data-stale="1">
-            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/420386/512_420386p-90de-cgsawxvfccj64h9o.jpg" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/420386/1920_420386p-90de-cgsawxvfccj64h9o.jpg?1787201005" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">
@@ -19196,7 +19204,7 @@
         </div>
 
         <div class="card archived-card" id="card-247" data-idx="247" data-property-id="421362" data-score="6.0" data-price="835000" data-acres="158.2" data-drive="234" data-new="0" data-ppa="5278" data-stale="1">
-            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/421362/512_421362p-914i-9ngtreipvm7gjpqy.JPG" alt="" loading="lazy" width="720" height="540" /></div>
+            <div class="card-photo"><img src="https://farmbuycdn.edge.pushcreative.com.au/421362/1920_421362p-914i-1uv8s6s6377xfxe1.JPG?1787201006" alt="" loading="lazy" width="720" height="540" /></div>
             <div class="card-body">
                 <div class="card-top-row">
                     <div class="card-header">

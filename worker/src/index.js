@@ -71,6 +71,49 @@ const ALLOWED_PROPERTY_STATUSES = new Set([
   'active', 'possibly_unavailable', 'under_offer', 'sold', 'withdrawn', 'archived',
 ]);
 
+const PHOTO_HOSTS = new Set(['farmbuycdn.edge.pushcreative.com.au']);
+
+async function proxyPhoto(request, env) {
+  const rawUrl = new URL(request.url).searchParams.get('url') || '';
+  let upstreamUrl;
+  try {
+    upstreamUrl = new URL(rawUrl);
+  } catch {
+    return json(request, env, { ok: false, error: 'invalid_photo_url' }, 422);
+  }
+  if (
+    upstreamUrl.protocol !== 'https:'
+    || upstreamUrl.port
+    || upstreamUrl.username
+    || upstreamUrl.password
+    || !PHOTO_HOSTS.has(upstreamUrl.hostname)
+  ) {
+    return json(request, env, { ok: false, error: 'invalid_photo_url' }, 422);
+  }
+
+  let response;
+  try {
+    response = await fetch(upstreamUrl.toString(), {
+      headers: { Accept: 'image/avif,image/webp,image/jpeg,image/*' },
+      redirect: 'manual',
+    });
+  } catch {
+    return json(request, env, { ok: false, error: 'photo_unavailable' }, 502);
+  }
+  const contentType = response.headers.get('Content-Type') || '';
+  if (!response.ok || !contentType.toLowerCase().startsWith('image/')) {
+    return json(request, env, { ok: false, error: 'photo_unavailable' }, 502);
+  }
+  return new Response(response.body, {
+    status: 200,
+    headers: {
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+      ...corsHeaders(request, env),
+    },
+  });
+}
+
 function listingStatus(property) {
   const explicit = String(property.status || '').trim().toLowerCase().replace(/[ -]+/g, '_');
   if (explicit) return explicit;
@@ -127,6 +170,7 @@ export default {
     try {
       if (request.method === 'GET') {
         const action = new URL(request.url).searchParams.get('action') || '';
+        if (action === 'photo') return proxyPhoto(request, env);
         if (action === 'properties') return json(request, env, { properties: await readProperties(env) });
         if (action === 'feedback_export') {
           if (!isAdminRequest(request, env)) {
