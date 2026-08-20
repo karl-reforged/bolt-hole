@@ -301,6 +301,31 @@ def _value_badge(price, land_acres, postcode):
         return ppa_label, "Premium", "#92400e", "#fef3c7"
 
 
+def _map_preview_html(preview_id, context):
+    """One adaptive property preview, populated from the canonical card DOM."""
+    return f'''<aside class="map-preview map-preview-{context}" id="{preview_id}" data-context="{context}" aria-label="Selected property" hidden>
+                <button type="button" class="map-preview-grip" onclick="toggleMapPreviewSheet(this)" aria-expanded="false" aria-label="Expand property preview"><span></span></button>
+                <button type="button" class="map-preview-close" onclick="closeMapPreview('{context}')" aria-label="Close property preview">&times;</button>
+                <div class="map-preview-photo-wrap">
+                    <img class="map-preview-photo" alt="" width="400" height="300" hidden />
+                </div>
+                <div class="map-preview-content">
+                    <div class="map-preview-kicker"></div>
+                    <div class="map-preview-heading-row">
+                        <h2 class="map-preview-title"></h2>
+                        <button type="button" class="map-preview-save" onclick="toggleMapPreviewFavourite(this)" aria-pressed="false">Save</button>
+                    </div>
+                    <div class="map-preview-price"></div>
+                    <div class="map-preview-address"></div>
+                    <div class="map-preview-stats"></div>
+                    <div class="map-preview-actions">
+                        <button type="button" class="map-preview-details" onclick="viewMapPreviewDetails(Number(this.dataset.idx), '{context}')">View full details</button>
+                        <a class="map-preview-listing" href="#" target="_blank" rel="noopener">View listing &nearr;</a>
+                    </div>
+                </div>
+            </aside>'''
+
+
 def generate_shortlist(
     properties,
     search_date=None,
@@ -545,6 +570,9 @@ def generate_shortlist(
     else:
         map_coverage_badge = f'<span class="map-coverage">{mapped_count} on map</span>'
 
+    inline_map_preview = _map_preview_html("map-preview-inline", "inline")
+    expanded_map_preview = _map_preview_html("map-preview-expanded", "expanded")
+
     # ── Full page HTML ────────────────────────────────────────────────────
     page_html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -717,6 +745,7 @@ def generate_shortlist(
             -webkit-overflow-scrolling: touch;
             position: relative;
         }}
+        .map-stage {{ position: relative; }}
         .map-container #shortlist-map {{
             border-radius: 0 0 10px 10px; /* rounded bottom corners without clipping touch */
             overflow: hidden;
@@ -785,8 +814,12 @@ def generate_shortlist(
         .map-modal-close:hover {{
             background: rgba(255,255,255,0.12);
         }}
+        .map-modal-body {{
+            display: flex; flex: 1; min-height: 0; overflow: hidden;
+            border-radius: 10px; background: #fff;
+        }}
         #expanded-map {{
-            flex: 1; width: 100%; border-radius: 10px; overflow: hidden;
+            flex: 1; min-width: 0; width: 100%; overflow: hidden;
             background: #fff;
         }}
         .map-pin {{
@@ -813,11 +846,83 @@ def generate_shortlist(
             100% {{ transform: scale(1); }}
         }}
         .map-pin.fav-pin {{ border-color: var(--fav-gold); box-shadow: 0 0 0 3px rgba(234,179,8,0.3), 0 2px 6px rgba(0,0,0,0.25); }}
-        .leaflet-popup-content {{ font-family: Inter, sans-serif; font-size: 13px; line-height: 1.4; }}
-        .popup-link {{
-            color: var(--eucalyptus); font: inherit; font-weight: 600;
-            text-decoration: none; cursor: pointer; background: none; border: 0;
-            padding: 8px 0; min-height: 40px;
+        .map-pin.selected-pin {{
+            transform: scale(1.2); box-shadow: 0 0 0 4px rgba(74,124,107,0.28), 0 3px 9px rgba(0,0,0,0.3);
+        }}
+
+        /* ── Adaptive property preview ──────────── */
+        .map-preview {{
+            background: #fff; color: var(--bark); z-index: 800;
+            box-shadow: 0 14px 38px rgba(15,23,42,0.24);
+            font-family: Inter, -apple-system, sans-serif;
+        }}
+        .map-preview[hidden] {{ display: none; }}
+        .map-preview-inline {{
+            position: absolute; left: 16px; bottom: 16px; width: min(420px, calc(100% - 32px));
+            display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: start;
+            border: 1px solid #E2DDD6; border-radius: 12px; overflow: hidden;
+        }}
+        .map-preview-expanded {{
+            flex: 0 0 390px; width: 390px; overflow-y: auto;
+            border-left: 1px solid var(--light-border);
+        }}
+        .map-preview-photo-wrap {{
+            aspect-ratio: 16 / 9; background: var(--limestone) url('design-system/assets/logo-mark.png') center / 32px auto no-repeat;
+            overflow: hidden;
+        }}
+        .map-preview-photo {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
+        .map-preview-inline .map-preview-photo-wrap {{ margin: 16px 0 16px 16px; border-radius: 8px; }}
+        .map-preview-content {{ padding: 16px; min-width: 0; }}
+        .map-preview-expanded .map-preview-content {{ padding: 24px; }}
+        .map-preview-close {{
+            position: absolute; top: 8px; right: 8px; z-index: 2;
+            width: 34px; height: 34px; border-radius: 50%; border: 1px solid #E2DDD6;
+            background: rgba(255,255,255,0.94); color: var(--bark); cursor: pointer;
+            font: 22px/1 Inter, sans-serif; box-shadow: 0 2px 8px rgba(15,23,42,0.12);
+        }}
+        .map-preview-kicker {{
+            padding-right: 32px; color: var(--eucalyptus); font-size: 13px; font-weight: 700;
+            letter-spacing: 0.7px; text-transform: uppercase; margin-bottom: 8px;
+        }}
+        .map-preview-heading-row {{ display: flex; align-items: flex-start; gap: 8px; }}
+        .map-preview-title {{
+            flex: 1; min-width: 0; font-family: 'DM Serif Display', Georgia, serif;
+            font-size: 18px; line-height: 1.2; font-weight: 400;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }}
+        .map-preview-expanded .map-preview-title {{ font-size: 24px; -webkit-line-clamp: 3; }}
+        .map-preview-save {{
+            flex: 0 0 auto; border: 1px solid var(--light-border); border-radius: 6px;
+            background: #fff; color: var(--slate); padding: 8px; cursor: pointer;
+            font: 600 13px Inter, sans-serif;
+        }}
+        .map-preview-save[aria-pressed="true"] {{
+            border-color: #C17817; background: #F5E6D0; color: #C17817;
+        }}
+        .map-preview-price {{ margin-top: 8px; font-size: 16px; font-weight: 700; }}
+        .map-preview-address {{ margin-top: 8px; color: var(--slate); font-size: 13px; line-height: 1.35; }}
+        .map-preview-stats {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }}
+        .map-preview-stat {{
+            padding: 4px 8px; border-radius: 6px; background: #E8F0EC;
+            color: var(--slate); font-size: 13px; white-space: nowrap;
+        }}
+        .map-preview-actions {{ display: flex; gap: 8px; margin-top: 16px; }}
+        .map-preview-details, .map-preview-listing {{
+            min-height: 40px; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 8px; padding: 8px 16px; font: 600 13px Inter, sans-serif;
+            text-decoration: none; cursor: pointer;
+        }}
+        .map-preview-details {{
+            flex: 1; border: 1px solid var(--eucalyptus); background: var(--eucalyptus); color: #fff;
+        }}
+        .map-preview-listing {{ border: 1px solid var(--light-border); background: #fff; color: var(--eucalyptus); }}
+        .map-preview-grip {{ display: none; }}
+        .map-preview-inline .map-preview-actions {{ margin-top: 16px; }}
+        .map-preview-inline .map-preview-details,
+        .map-preview-inline .map-preview-listing {{ min-height: 40px; padding: 8px; font-size: 13px; }}
+        @media (min-width: 521px) {{
+            .map-preview-expanded {{ position: relative; }}
+            .map-preview-expanded .map-preview-close {{ position: sticky; float: right; margin: 10px 10px -44px 0; }}
         }}
 
         /* ── Cards ───────────────────────────────── */
@@ -1090,6 +1195,39 @@ def generate_shortlist(
         }}
         .identity-choice:hover {{ border-color: var(--eucalyptus); color: var(--eucalyptus); }}
         .identity-choice.anonymous {{ grid-column: 1 / -1; color: var(--slate); font-weight: 500; }}
+        @media (max-width: 1024px) {{
+            .map-modal {{ padding: 8px; }}
+            .map-modal-header {{ padding: 8px 0; }}
+            .map-modal-body {{ position: relative; }}
+            .map-preview-inline {{
+                left: 0; right: 0; bottom: 0; width: 100%;
+                grid-template-columns: 112px minmax(0, 1fr);
+                max-height: 52%; overflow-y: auto;
+                border-width: 1px 0 0; border-radius: 12px 12px 0 0;
+                box-shadow: 0 -10px 30px rgba(15,23,42,0.2);
+            }}
+            .map-preview-expanded {{
+                position: absolute; left: 0; right: 0; bottom: 0;
+                width: 100%; max-height: 52%; overflow-y: auto;
+                border: 1px solid var(--light-border); border-width: 1px 0 0;
+                border-radius: 12px 12px 0 0;
+                box-shadow: 0 -10px 30px rgba(15,23,42,0.22);
+            }}
+            .map-preview.is-expanded {{ max-height: 72%; }}
+            .map-preview:not(.is-expanded) .map-preview-address,
+            .map-preview:not(.is-expanded) .map-preview-stats {{ display: none; }}
+            .map-preview-grip {{
+                display: flex; position: absolute; top: 0; left: 50%; z-index: 3;
+                width: 48px; height: 32px; transform: translateX(-50%);
+                align-items: center; justify-content: center;
+                border: 0; background: transparent; cursor: pointer;
+            }}
+            .map-preview-grip span {{ width: 32px; height: 4px; border-radius: 2px; background: #9C948B; }}
+            .map-preview-content {{ padding-top: 24px; }}
+            .map-preview-expanded .map-preview-content {{ padding: 24px; }}
+            .map-preview-title {{ font-size: 18px; }}
+            .map-preview-expanded .map-preview-title {{ font-size: 21px; }}
+        }}
         @media (max-width: 520px) {{
             .feedback-access {{ justify-content: space-between; }}
             .task-views button {{ padding-inline: 4px; }}
@@ -1110,7 +1248,8 @@ def generate_shortlist(
             .sort-label {{ flex-basis: 100%; margin-bottom: 2px; }}
             .sort-btn {{ min-height: 44px; }}
             .task-views button, .past-listings-link, .map-expand-btn, .rank-badge, .score-badge,
-            .fav-btn, .notes-post, .map-modal-close {{ min-height: 44px; }}
+            .fav-btn, .notes-post, .map-modal-close, .map-preview-close,
+            .map-preview-save, .map-preview-details, .map-preview-listing {{ min-height: 44px; }}
             .rank-badge {{ min-width: 44px; }}
             .fav-btn {{ width: 44px; height: 44px; padding: 6px; }}
             .feedback .btn, .notes-pill {{ min-height: 44px; }}
@@ -1275,7 +1414,10 @@ def generate_shortlist(
                 <span class="map-legend-item"><span class="map-legend-dot fav"></span>Favourite</span>
                 <span class="map-legend-item"><span class="map-legend-dot syd"></span>Sydney</span>
             </div>
-            <div id="shortlist-map"></div>
+            <div class="map-stage">
+                <div id="shortlist-map"></div>
+                {inline_map_preview}
+            </div>
         </div>
 
         <div class="map-modal hidden" id="map-modal" role="dialog" aria-modal="true" aria-label="Expanded shortlist map">
@@ -1283,7 +1425,10 @@ def generate_shortlist(
                 <div class="map-modal-title">All properties · map view</div>
                 <button type="button" class="map-modal-close" onclick="closeExpandedMap()">Close &times;</button>
             </div>
-            <div id="expanded-map"></div>
+            <div class="map-modal-body">
+                <div id="expanded-map"></div>
+                {expanded_map_preview}
+            </div>
         </div>
 
         <div class="view-empty" id="view-empty" role="status"></div>
@@ -1723,8 +1868,8 @@ def generate_shortlist(
             btn.setAttribute('aria-pressed', 'true');
         }}
         // Update map pin
-        const pinEl = document.querySelector('.map-pin[data-idx="' + idx + '"]');
-        if (pinEl) pinEl.classList.add('fav-pin');
+        document.querySelectorAll('.map-pin[data-idx="' + idx + '"]').forEach(pin => pin.classList.add('fav-pin'));
+        refreshMapPreviewFavourite(idx);
     }}
 
     function removeFavouriteUI(idx) {{
@@ -1735,8 +1880,8 @@ def generate_shortlist(
             btn.classList.remove('active');
             btn.setAttribute('aria-pressed', 'false');
         }}
-        const pinEl = document.querySelector('.map-pin[data-idx="' + idx + '"]');
-        if (pinEl) pinEl.classList.remove('fav-pin');
+        document.querySelectorAll('.map-pin[data-idx="' + idx + '"]').forEach(pin => pin.classList.remove('fav-pin'));
+        refreshMapPreviewFavourite(idx);
     }}
 
     // ── Score breakdown toggle ────────────────────────────────────────
@@ -1965,8 +2110,10 @@ def generate_shortlist(
 
     // ── Map ───────────────────────────────────────────────────────────
     const markersData = {markers_json};
-    const mapPinEls = {{}};   // idx -> DOM element of the pin div
-    const mapMarkers = {{}};  // idx -> Leaflet marker
+    const mapPinEls = {{}};          // idx -> DOM element of the inline pin div
+    const mapMarkers = {{}};         // idx -> inline Leaflet marker
+    const expandedMapMarkers = {{}}; // idx -> expanded-map Leaflet marker
+    const mapPreviewSelection = {{ inline: null, expanded: null }};
 
     function pinColor(pct) {{
         if (pct >= 70) return '#166534';
@@ -1996,21 +2143,135 @@ def generate_shortlist(
         }});
     }}
 
-    function wireMarkerAccessibility(marker, m) {{
+    function wireMarkerAccessibility(marker, m, onSelect) {{
         const decorate = () => {{
             const el = marker.getElement();
             if (!el) return;
-            el.setAttribute('aria-label', 'Property ' + (m.idx + 1) + ' in ' + m.suburb + '. Open map details.');
+            el.setAttribute('aria-label', 'Property ' + (m.idx + 1) + ' in ' + m.suburb + '. Show property preview.');
             if (el.dataset.keyboardWired === '1') return;
             el.dataset.keyboardWired = '1';
             el.addEventListener('keydown', event => {{
                 if (event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
-                marker.openPopup();
+                onSelect();
             }});
         }};
+        marker.on('click', onSelect);
         decorate();
         marker.on('add', decorate);
+    }}
+
+    function updateSelectedMapPins() {{
+        document.querySelectorAll('.map-pin[data-idx]').forEach(pin => {{
+            const selectedIdx = mapPreviewSelection[pin.dataset.context];
+            pin.classList.toggle('selected-pin', selectedIdx === Number(pin.dataset.idx));
+        }});
+    }}
+
+    function refreshMapPreviewFavourite(idx) {{
+        document.querySelectorAll('.map-preview:not([hidden])').forEach(preview => {{
+            if (Number(preview.dataset.idx) !== idx) return;
+            const propertyId = preview.dataset.propertyId || '';
+            const saved = Boolean(state.favourites[propertyId]);
+            const button = preview.querySelector('.map-preview-save');
+            if (!button) return;
+            button.setAttribute('aria-pressed', String(saved));
+            button.textContent = saved ? 'Saved' : 'Save';
+        }});
+    }}
+
+    function showMapPreview(idx, context) {{
+        const preview = document.getElementById('map-preview-' + context);
+        const card = document.getElementById('card-' + idx);
+        if (!preview || !card) return;
+
+        const markerData = markersData.find(item => item.idx === idx);
+        const title = card.querySelector('.headline')?.textContent.trim() || 'Property ' + (idx + 1);
+        const address = card.querySelector('.address')?.textContent.trim() || markerData?.suburb || '';
+        const price = card.querySelector('.price')?.textContent.trim() || markerData?.price || '';
+        const score = card.querySelector('.score-badge')?.textContent.trim() || '';
+        const listing = card.querySelector('.btn-view');
+        const sourcePhoto = card.querySelector('.card-photo img');
+        const previewPhoto = preview.querySelector('.map-preview-photo');
+        const propertyId = card.dataset.propertyId || '';
+
+        preview.dataset.idx = String(idx);
+        preview.dataset.propertyId = propertyId;
+        preview.querySelector('.map-preview-kicker').textContent =
+            '#' + (idx + 1) + (markerData?.suburb ? ' · ' + markerData.suburb : '') + (score ? ' · ' + score : '');
+        preview.querySelector('.map-preview-title').textContent = title;
+        preview.querySelector('.map-preview-price').textContent = price;
+        preview.querySelector('.map-preview-address').textContent = address;
+
+        if (sourcePhoto?.src) {{
+            previewPhoto.src = sourcePhoto.src;
+            previewPhoto.alt = title + ' property photo';
+            previewPhoto.hidden = false;
+        }} else {{
+            previewPhoto.removeAttribute('src');
+            previewPhoto.alt = '';
+            previewPhoto.hidden = true;
+        }}
+
+        const stats = preview.querySelector('.map-preview-stats');
+        stats.textContent = '';
+        Array.from(card.querySelectorAll('.stats > *')).slice(0, 4).forEach(source => {{
+            const stat = document.createElement('span');
+            stat.className = 'map-preview-stat';
+            stat.textContent = source.textContent.trim();
+            stats.appendChild(stat);
+        }});
+
+        const details = preview.querySelector('.map-preview-details');
+        details.dataset.idx = String(idx);
+        const listingLink = preview.querySelector('.map-preview-listing');
+        listingLink.href = listing?.href || '#';
+        const save = preview.querySelector('.map-preview-save');
+        save.dataset.idx = String(idx);
+        save.dataset.propertyId = propertyId;
+
+        preview.classList.remove('is-expanded');
+        const grip = preview.querySelector('.map-preview-grip');
+        grip.setAttribute('aria-expanded', 'false');
+        grip.setAttribute('aria-label', 'Expand property preview');
+        preview.hidden = false;
+        mapPreviewSelection[context] = idx;
+        refreshMapPreviewFavourite(idx);
+        updateSelectedMapPins();
+        if (context === 'expanded') requestAnimationFrame(() => expandedMap?.invalidateSize());
+    }}
+
+    function closeMapPreview(context) {{
+        const preview = document.getElementById('map-preview-' + context);
+        const idx = mapPreviewSelection[context];
+        if (preview) preview.hidden = true;
+        mapPreviewSelection[context] = null;
+        updateSelectedMapPins();
+        if (context === 'expanded') requestAnimationFrame(() => expandedMap?.invalidateSize());
+        const marker = context === 'expanded' ? expandedMapMarkers[idx] : mapMarkers[idx];
+        marker?.getElement()?.focus();
+    }}
+
+    function toggleMapPreviewSheet(button) {{
+        const preview = button.closest('.map-preview');
+        if (!preview) return;
+        const expanded = preview.classList.toggle('is-expanded');
+        button.setAttribute('aria-expanded', String(expanded));
+        button.setAttribute('aria-label', expanded ? 'Collapse property preview' : 'Expand property preview');
+    }}
+
+    async function toggleMapPreviewFavourite(button) {{
+        const idx = Number(button.dataset.idx);
+        const propertyId = button.dataset.propertyId || '';
+        if (!Number.isInteger(idx) || !propertyId) return;
+        await toggleFavourite(idx, propertyId);
+        refreshMapPreviewFavourite(idx);
+    }}
+
+    function viewMapPreviewDetails(idx, context) {{
+        if (!Number.isInteger(idx)) return;
+        if (context === 'expanded') closeExpandedMap();
+        scrollToCard(idx);
     }}
 
     function scrollToCard(idx) {{
@@ -2056,11 +2317,11 @@ def generate_shortlist(
         const mapEl = document.getElementById('shortlist-map');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (mapEl) mapEl.scrollIntoView({{ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' }});
-        // Defer pan/zoom until the smooth-scroll has settled so the popup
-        // anchors correctly relative to the now-visible map viewport.
+        // Defer pan/zoom until the smooth-scroll has settled so the selected
+        // pin and preview update against the now-visible map viewport.
         setTimeout(() => {{
             const revealMarker = () => {{
-                marker.openPopup();
+                showMapPreview(idx, 'inline');
                 pulsePin(idx);
             }};
             if (propertyClusters) {{
@@ -2075,6 +2336,7 @@ def generate_shortlist(
     function resetMapView() {{
         if (!map || !initialMapBounds) return;
         map.closePopup();
+        if (Number.isInteger(mapPreviewSelection.inline)) closeMapPreview('inline');
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {{
             map.fitBounds(initialMapBounds, {{ padding: [30, 30], animate: false }});
         }} else {{
@@ -2090,6 +2352,7 @@ def generate_shortlist(
         button.setAttribute('aria-expanded', String(open));
         button.textContent = open ? 'Hide Map' : 'View Map';
         if (open) setTimeout(() => {{ if (map) map.invalidateSize(); }}, 0);
+        else if (Number.isInteger(mapPreviewSelection.inline)) closeMapPreview('inline');
     }}
 
     function updateMapPin(idx, reaction) {{
@@ -2146,20 +2409,14 @@ def generate_shortlist(
             const color = pinColor(m.pct);
             const icon = L.divIcon({{
                 className: '',
-                html: '<div class="map-pin" data-idx="' + m.idx + '" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
+                html: '<div class="map-pin" data-context="inline" data-idx="' + m.idx + '" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
                 iconSize: [28, 28],
                 iconAnchor: [14, 14],
                 popupAnchor: [0, -16]
             }});
 
             const marker = L.marker([m.lat, m.lng], {{ icon: icon }});
-            marker.bindPopup(
-                '<strong>' + m.suburb + '</strong><br>' +
-                m.price + (m.acres ? ' &middot; ' + m.acres : '') +
-                ' &middot; ' + m.pct.toFixed(0) + '%<br>' +
-                '<button type="button" class="popup-link" onclick="scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
-            );
-            wireMarkerAccessibility(marker, m);
+            wireMarkerAccessibility(marker, m, () => showMapPreview(m.idx, 'inline'));
             propertyClusters.addLayer(marker);
 
             mapMarkers[m.idx] = marker;
@@ -2168,10 +2425,11 @@ def generate_shortlist(
             // Grab pin DOM reference after it renders
             marker.on('add', () => {{
                 setTimeout(() => {{
-                    const el = document.querySelector('.map-pin[data-idx="' + m.idx + '"]');
+                    const el = marker.getElement()?.querySelector('.map-pin');
                     if (el) {{
                         mapPinEls[m.idx] = el;
                         restoreMapPinState(m.idx, m.pct, el);
+                        updateSelectedMapPins();
                     }}
                 }}, 50);
             }});
@@ -2224,23 +2482,32 @@ def generate_shortlist(
                 const color = pinColor(m.pct);
                 const icon = L.divIcon({{
                     className: '',
-                    html: '<div class="map-pin" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
+                    html: '<div class="map-pin" data-context="expanded" data-idx="' + m.idx + '" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
                     iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
                 }});
                 const marker = L.marker([m.lat, m.lng], {{ icon: icon }});
-                marker.bindPopup(
-                    '<strong>' + m.suburb + '</strong><br>' +
-                    m.price + (m.acres ? ' &middot; ' + m.acres : '') +
-                    ' &middot; ' + m.pct.toFixed(0) + '%<br>' +
-                    '<button type="button" class="popup-link" onclick="closeExpandedMap(); scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
-                );
-                wireMarkerAccessibility(marker, m);
+                wireMarkerAccessibility(marker, m, () => showMapPreview(m.idx, 'expanded'));
+                marker.on('add', () => {{
+                    setTimeout(() => {{
+                        const el = marker.getElement()?.querySelector('.map-pin');
+                        if (el) {{
+                            restoreMapPinState(m.idx, m.pct, el);
+                            updateSelectedMapPins();
+                        }}
+                    }}, 50);
+                }});
                 expandedClusters.addLayer(marker);
+                expandedMapMarkers[m.idx] = marker;
                 eb.push([m.lat, m.lng]);
             }});
             expandedMap.fitBounds(eb, {{ padding: [40, 40] }});
         }}
-        setTimeout(() => {{ if (expandedMap) expandedMap.invalidateSize(); }}, 50);
+        setTimeout(() => {{
+            if (expandedMap) expandedMap.invalidateSize();
+            if (Number.isInteger(mapPreviewSelection.inline)) {{
+                showMapPreview(mapPreviewSelection.inline, 'expanded');
+            }}
+        }}, 50);
     }}
     function closeExpandedMap() {{
         const modal = document.getElementById('map-modal');

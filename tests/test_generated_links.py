@@ -133,14 +133,33 @@ class GeneratedLinkTests(unittest.TestCase):
     def test_map_and_card_navigation_uses_keyboard_controls(self):
         self.assertNotIn('<span class="rank-badge"', self.html)
         self.assertIn('<button type="button" class="rank-badge"', self.html)
-        self.assertIn('<button type="button" class="popup-link"', self.html)
-        self.assertIn("wireMarkerAccessibility(marker, m)", self.html)
+        self.assertIn('aria-label="Selected property"', self.html)
+        self.assertIn("wireMarkerAccessibility(marker, m,", self.html)
 
     def test_dense_property_map_uses_clusters(self):
         self.assertIn("L.markerClusterGroup", self.html)
         self.assertIn("zoomToShowLayer", self.html)
         self.assertIn('class="property-cluster"', self.html)
         self.assertIn("restoreMapPinState(m.idx, m.pct, el)", self.html)
+
+    def test_map_pins_open_adaptive_previews_before_full_details(self):
+        self.assertIn('id="map-preview-inline"', self.html)
+        self.assertIn('id="map-preview-expanded"', self.html)
+        self.assertIn('class="map-modal-body"', self.html)
+        self.assertIn("showMapPreview(m.idx, 'inline')", self.html)
+        self.assertIn("showMapPreview(m.idx, 'expanded')", self.html)
+        self.assertIn("function viewMapPreviewDetails(idx, context)", self.html)
+        self.assertIn('>View full details</button>', self.html)
+        self.assertIn('>View listing &nearr;</a>', self.html)
+        self.assertIn('class="map-preview-grip"', self.html)
+        self.assertIn("function toggleMapPreviewSheet(button)", self.html)
+        self.assertIn(".map-preview:not(.is-expanded) .map-preview-stats", self.html)
+        self.assertIn("@media (max-width: 1024px)", self.html)
+        self.assertIn('data-context="inline"', self.html)
+        self.assertIn('data-context="expanded"', self.html)
+        self.assertIn("mapPreviewSelection[pin.dataset.context]", self.html)
+        self.assertNotIn('class="popup-link"', self.html)
+        self.assertNotIn("marker.openPopup()", self.html)
 
     def test_unavailable_properties_have_a_separate_past_listings_view(self):
         self.assertIn('class="past-listings-link" href="?view=past"', self.html)

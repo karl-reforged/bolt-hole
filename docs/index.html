@@ -177,6 +177,7 @@
             -webkit-overflow-scrolling: touch;
             position: relative;
         }
+        .map-stage { position: relative; }
         .map-container #shortlist-map {
             border-radius: 0 0 10px 10px; /* rounded bottom corners without clipping touch */
             overflow: hidden;
@@ -245,8 +246,12 @@
         .map-modal-close:hover {
             background: rgba(255,255,255,0.12);
         }
+        .map-modal-body {
+            display: flex; flex: 1; min-height: 0; overflow: hidden;
+            border-radius: 10px; background: #fff;
+        }
         #expanded-map {
-            flex: 1; width: 100%; border-radius: 10px; overflow: hidden;
+            flex: 1; min-width: 0; width: 100%; overflow: hidden;
             background: #fff;
         }
         .map-pin {
@@ -273,11 +278,83 @@
             100% { transform: scale(1); }
         }
         .map-pin.fav-pin { border-color: var(--fav-gold); box-shadow: 0 0 0 3px rgba(234,179,8,0.3), 0 2px 6px rgba(0,0,0,0.25); }
-        .leaflet-popup-content { font-family: Inter, sans-serif; font-size: 13px; line-height: 1.4; }
-        .popup-link {
-            color: var(--eucalyptus); font: inherit; font-weight: 600;
-            text-decoration: none; cursor: pointer; background: none; border: 0;
-            padding: 8px 0; min-height: 40px;
+        .map-pin.selected-pin {
+            transform: scale(1.2); box-shadow: 0 0 0 4px rgba(74,124,107,0.28), 0 3px 9px rgba(0,0,0,0.3);
+        }
+
+        /* ── Adaptive property preview ──────────── */
+        .map-preview {
+            background: #fff; color: var(--bark); z-index: 800;
+            box-shadow: 0 14px 38px rgba(15,23,42,0.24);
+            font-family: Inter, -apple-system, sans-serif;
+        }
+        .map-preview[hidden] { display: none; }
+        .map-preview-inline {
+            position: absolute; left: 16px; bottom: 16px; width: min(420px, calc(100% - 32px));
+            display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: start;
+            border: 1px solid #E2DDD6; border-radius: 12px; overflow: hidden;
+        }
+        .map-preview-expanded {
+            flex: 0 0 390px; width: 390px; overflow-y: auto;
+            border-left: 1px solid var(--light-border);
+        }
+        .map-preview-photo-wrap {
+            aspect-ratio: 16 / 9; background: var(--limestone) url('design-system/assets/logo-mark.png') center / 32px auto no-repeat;
+            overflow: hidden;
+        }
+        .map-preview-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .map-preview-inline .map-preview-photo-wrap { margin: 16px 0 16px 16px; border-radius: 8px; }
+        .map-preview-content { padding: 16px; min-width: 0; }
+        .map-preview-expanded .map-preview-content { padding: 24px; }
+        .map-preview-close {
+            position: absolute; top: 8px; right: 8px; z-index: 2;
+            width: 34px; height: 34px; border-radius: 50%; border: 1px solid #E2DDD6;
+            background: rgba(255,255,255,0.94); color: var(--bark); cursor: pointer;
+            font: 22px/1 Inter, sans-serif; box-shadow: 0 2px 8px rgba(15,23,42,0.12);
+        }
+        .map-preview-kicker {
+            padding-right: 32px; color: var(--eucalyptus); font-size: 13px; font-weight: 700;
+            letter-spacing: 0.7px; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .map-preview-heading-row { display: flex; align-items: flex-start; gap: 8px; }
+        .map-preview-title {
+            flex: 1; min-width: 0; font-family: 'DM Serif Display', Georgia, serif;
+            font-size: 18px; line-height: 1.2; font-weight: 400;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .map-preview-expanded .map-preview-title { font-size: 24px; -webkit-line-clamp: 3; }
+        .map-preview-save {
+            flex: 0 0 auto; border: 1px solid var(--light-border); border-radius: 6px;
+            background: #fff; color: var(--slate); padding: 8px; cursor: pointer;
+            font: 600 13px Inter, sans-serif;
+        }
+        .map-preview-save[aria-pressed="true"] {
+            border-color: #C17817; background: #F5E6D0; color: #C17817;
+        }
+        .map-preview-price { margin-top: 8px; font-size: 16px; font-weight: 700; }
+        .map-preview-address { margin-top: 8px; color: var(--slate); font-size: 13px; line-height: 1.35; }
+        .map-preview-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .map-preview-stat {
+            padding: 4px 8px; border-radius: 6px; background: #E8F0EC;
+            color: var(--slate); font-size: 13px; white-space: nowrap;
+        }
+        .map-preview-actions { display: flex; gap: 8px; margin-top: 16px; }
+        .map-preview-details, .map-preview-listing {
+            min-height: 40px; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 8px; padding: 8px 16px; font: 600 13px Inter, sans-serif;
+            text-decoration: none; cursor: pointer;
+        }
+        .map-preview-details {
+            flex: 1; border: 1px solid var(--eucalyptus); background: var(--eucalyptus); color: #fff;
+        }
+        .map-preview-listing { border: 1px solid var(--light-border); background: #fff; color: var(--eucalyptus); }
+        .map-preview-grip { display: none; }
+        .map-preview-inline .map-preview-actions { margin-top: 16px; }
+        .map-preview-inline .map-preview-details,
+        .map-preview-inline .map-preview-listing { min-height: 40px; padding: 8px; font-size: 13px; }
+        @media (min-width: 521px) {
+            .map-preview-expanded { position: relative; }
+            .map-preview-expanded .map-preview-close { position: sticky; float: right; margin: 10px 10px -44px 0; }
         }
 
         /* ── Cards ───────────────────────────────── */
@@ -550,6 +627,39 @@
         }
         .identity-choice:hover { border-color: var(--eucalyptus); color: var(--eucalyptus); }
         .identity-choice.anonymous { grid-column: 1 / -1; color: var(--slate); font-weight: 500; }
+        @media (max-width: 1024px) {
+            .map-modal { padding: 8px; }
+            .map-modal-header { padding: 8px 0; }
+            .map-modal-body { position: relative; }
+            .map-preview-inline {
+                left: 0; right: 0; bottom: 0; width: 100%;
+                grid-template-columns: 112px minmax(0, 1fr);
+                max-height: 52%; overflow-y: auto;
+                border-width: 1px 0 0; border-radius: 12px 12px 0 0;
+                box-shadow: 0 -10px 30px rgba(15,23,42,0.2);
+            }
+            .map-preview-expanded {
+                position: absolute; left: 0; right: 0; bottom: 0;
+                width: 100%; max-height: 52%; overflow-y: auto;
+                border: 1px solid var(--light-border); border-width: 1px 0 0;
+                border-radius: 12px 12px 0 0;
+                box-shadow: 0 -10px 30px rgba(15,23,42,0.22);
+            }
+            .map-preview.is-expanded { max-height: 72%; }
+            .map-preview:not(.is-expanded) .map-preview-address,
+            .map-preview:not(.is-expanded) .map-preview-stats { display: none; }
+            .map-preview-grip {
+                display: flex; position: absolute; top: 0; left: 50%; z-index: 3;
+                width: 48px; height: 32px; transform: translateX(-50%);
+                align-items: center; justify-content: center;
+                border: 0; background: transparent; cursor: pointer;
+            }
+            .map-preview-grip span { width: 32px; height: 4px; border-radius: 2px; background: #9C948B; }
+            .map-preview-content { padding-top: 24px; }
+            .map-preview-expanded .map-preview-content { padding: 24px; }
+            .map-preview-title { font-size: 18px; }
+            .map-preview-expanded .map-preview-title { font-size: 21px; }
+        }
         @media (max-width: 520px) {
             .feedback-access { justify-content: space-between; }
             .task-views button { padding-inline: 4px; }
@@ -570,7 +680,8 @@
             .sort-label { flex-basis: 100%; margin-bottom: 2px; }
             .sort-btn { min-height: 44px; }
             .task-views button, .past-listings-link, .map-expand-btn, .rank-badge, .score-badge,
-            .fav-btn, .notes-post, .map-modal-close { min-height: 44px; }
+            .fav-btn, .notes-post, .map-modal-close, .map-preview-close,
+            .map-preview-save, .map-preview-details, .map-preview-listing { min-height: 44px; }
             .rank-badge { min-width: 44px; }
             .fav-btn { width: 44px; height: 44px; padding: 6px; }
             .feedback .btn, .notes-pill { min-height: 44px; }
@@ -735,7 +846,28 @@
                 <span class="map-legend-item"><span class="map-legend-dot fav"></span>Favourite</span>
                 <span class="map-legend-item"><span class="map-legend-dot syd"></span>Sydney</span>
             </div>
-            <div id="shortlist-map"></div>
+            <div class="map-stage">
+                <div id="shortlist-map"></div>
+                <aside class="map-preview map-preview-inline" id="map-preview-inline" data-context="inline" aria-label="Selected property" hidden>
+                    <button type="button" class="map-preview-grip" onclick="toggleMapPreviewSheet(this)" aria-expanded="false" aria-label="Expand property preview"><span></span></button>
+                    <button type="button" class="map-preview-close" onclick="closeMapPreview('inline')" aria-label="Close property preview">&times;</button>
+                    <div class="map-preview-photo-wrap"><img class="map-preview-photo" alt="" width="400" height="300" hidden /></div>
+                    <div class="map-preview-content">
+                        <div class="map-preview-kicker"></div>
+                        <div class="map-preview-heading-row">
+                            <h2 class="map-preview-title"></h2>
+                            <button type="button" class="map-preview-save" onclick="toggleMapPreviewFavourite(this)" aria-pressed="false">Save</button>
+                        </div>
+                        <div class="map-preview-price"></div>
+                        <div class="map-preview-address"></div>
+                        <div class="map-preview-stats"></div>
+                        <div class="map-preview-actions">
+                            <button type="button" class="map-preview-details" onclick="viewMapPreviewDetails(Number(this.dataset.idx), 'inline')">View full details</button>
+                            <a class="map-preview-listing" href="#" target="_blank" rel="noopener">View listing &nearr;</a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
         </div>
 
         <div class="map-modal hidden" id="map-modal" role="dialog" aria-modal="true" aria-label="Expanded shortlist map">
@@ -743,7 +875,28 @@
                 <div class="map-modal-title">All properties · map view</div>
                 <button type="button" class="map-modal-close" onclick="closeExpandedMap()">Close &times;</button>
             </div>
-            <div id="expanded-map"></div>
+            <div class="map-modal-body">
+                <div id="expanded-map"></div>
+                <aside class="map-preview map-preview-expanded" id="map-preview-expanded" data-context="expanded" aria-label="Selected property" hidden>
+                    <button type="button" class="map-preview-grip" onclick="toggleMapPreviewSheet(this)" aria-expanded="false" aria-label="Expand property preview"><span></span></button>
+                    <button type="button" class="map-preview-close" onclick="closeMapPreview('expanded')" aria-label="Close property preview">&times;</button>
+                    <div class="map-preview-photo-wrap"><img class="map-preview-photo" alt="" width="400" height="300" hidden /></div>
+                    <div class="map-preview-content">
+                        <div class="map-preview-kicker"></div>
+                        <div class="map-preview-heading-row">
+                            <h2 class="map-preview-title"></h2>
+                            <button type="button" class="map-preview-save" onclick="toggleMapPreviewFavourite(this)" aria-pressed="false">Save</button>
+                        </div>
+                        <div class="map-preview-price"></div>
+                        <div class="map-preview-address"></div>
+                        <div class="map-preview-stats"></div>
+                        <div class="map-preview-actions">
+                            <button type="button" class="map-preview-details" onclick="viewMapPreviewDetails(Number(this.dataset.idx), 'expanded')">View full details</button>
+                            <a class="map-preview-listing" href="#" target="_blank" rel="noopener">View listing &nearr;</a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
         </div>
 
         <div class="view-empty" id="view-empty" role="status"></div>
@@ -19710,8 +19863,8 @@
             btn.setAttribute('aria-pressed', 'true');
         }
         // Update map pin
-        const pinEl = document.querySelector('.map-pin[data-idx="' + idx + '"]');
-        if (pinEl) pinEl.classList.add('fav-pin');
+        document.querySelectorAll('.map-pin[data-idx="' + idx + '"]').forEach(pin => pin.classList.add('fav-pin'));
+        refreshMapPreviewFavourite(idx);
     }
 
     function removeFavouriteUI(idx) {
@@ -19722,8 +19875,8 @@
             btn.classList.remove('active');
             btn.setAttribute('aria-pressed', 'false');
         }
-        const pinEl = document.querySelector('.map-pin[data-idx="' + idx + '"]');
-        if (pinEl) pinEl.classList.remove('fav-pin');
+        document.querySelectorAll('.map-pin[data-idx="' + idx + '"]').forEach(pin => pin.classList.remove('fav-pin'));
+        refreshMapPreviewFavourite(idx);
     }
 
     // ── Score breakdown toggle ────────────────────────────────────────
@@ -19952,8 +20105,10 @@
 
     // ── Map ───────────────────────────────────────────────────────────
     const markersData = [{"idx": 0, "lat": -34.362816, "lng": 150.15866, "suburb": "Bullio", "price": "$1,980,000", "pct": 94.5, "acres": "99ac"}, {"idx": 1, "lat": -34.947437, "lng": 149.89694, "suburb": "Windellama", "price": "$890,000", "pct": 87.0, "acres": "110ac"}, {"idx": 2, "lat": -34.969357, "lng": 149.92012, "suburb": "Windellama", "price": "$1,190,000", "pct": 85.0, "acres": "101ac"}, {"idx": 3, "lat": -34.407658, "lng": 149.60205, "suburb": "Crookwell", "price": "$950,000", "pct": 84.0, "acres": "30ac"}, {"idx": 4, "lat": -35.12757, "lng": 149.94038, "suburb": "Oallen", "price": "$595,000", "pct": 83.0, "acres": "99ac"}, {"idx": 5, "lat": -34.617554, "lng": 150.08467, "suburb": "Brayton", "price": "$1,650,000", "pct": 82.5, "acres": "100ac"}, {"idx": 6, "lat": -34.62151118, "lng": 150.00880878, "suburb": "Brayton", "price": "$1,375,000", "pct": 82.5, "acres": "40ac"}, {"idx": 7, "lat": -35.18511, "lng": 149.73103, "suburb": "Boro", "price": "$895,500", "pct": 81.5, "acres": "109ac"}, {"idx": 8, "lat": -33.8411, "lng": 149.91077, "suburb": "Chatham Valley", "price": "$750,000", "pct": 81.0, "acres": "37ac"}, {"idx": 9, "lat": -35.07994, "lng": 149.8329, "suburb": "Windellama", "price": "$895,000", "pct": 79.0, "acres": "75ac"}, {"idx": 10, "lat": -34.68131248, "lng": 149.86904296, "suburb": "Towrang", "price": "$1,695,000", "pct": 77.5, "acres": "103ac"}, {"idx": 11, "lat": -35.125835, "lng": 150.13, "suburb": "Nerriga", "price": "OFFERS INVITED", "pct": 76.0, "acres": "58ac"}, {"idx": 12, "lat": -34.90825901, "lng": 149.25072696, "suburb": "Gundaroo", "price": "$1,530,000", "pct": 76.0, "acres": "198ac"}, {"idx": 13, "lat": -34.356567, "lng": 150.15936, "suburb": "Bullio", "price": "$895,000", "pct": 75.5, "acres": "107ac"}, {"idx": 14, "lat": -35.001225, "lng": 149.89236, "suburb": "Windellama", "price": "$1,190,000", "pct": 75.0, "acres": "35ac"}, {"idx": 15, "lat": -33.535416, "lng": 149.8726, "suburb": "Tarana", "price": "$890,000", "pct": 74.5, "acres": "119ac"}, {"idx": 16, "lat": -34.897526, "lng": 149.0283, "suburb": "Yass", "price": "$1,950,000", "pct": 74.0, "acres": "146ac"}, {"idx": 17, "lat": -34.73114, "lng": 149.68434, "suburb": "Goulburn", "price": "$1,595,000", "pct": 73.0, "acres": "53ac"}, {"idx": 18, "lat": -34.863403, "lng": 150.69843, "suburb": "Coolangatta", "price": "$1,780,000", "pct": 72.5, "acres": "33ac"}, {"idx": 19, "lat": -34.276333, "lng": 149.77805, "suburb": "Taralga", "price": "$690,000", "pct": 72.5, "acres": "55ac"}, {"idx": 20, "lat": -35.102947, "lng": 150.26216, "suburb": "Sassafras", "price": "$790,000", "pct": 72.5, "acres": "55ac"}, {"idx": 21, "lat": -34.54794675, "lng": 149.76316318, "suburb": "Goulburn", "price": "$895,000", "pct": 72.5, "acres": "137ac"}, {"idx": 22, "lat": -34.54796321, "lng": 149.28207755, "suburb": "Wheeo", "price": "$1,690,000", "pct": 72.0, "acres": "85ac"}, {"idx": 23, "lat": -33.551178, "lng": 149.93057, "suburb": "Tarana", "price": "1,175,000", "pct": 71.5, "acres": "108ac"}, {"idx": 24, "lat": -33.55119079, "lng": 149.93057191, "suburb": "Tarana", "price": "$1,050,000", "pct": 71.5, "acres": "108ac"}, {"idx": 25, "lat": -34.956303, "lng": 149.8774, "suburb": "Windellama", "price": "$685,000", "pct": 71.0, "acres": "82ac"}, {"idx": 26, "lat": -33.06428, "lng": 149.70622, "suburb": "Bathurst", "price": "$800,000", "pct": 70.0, "acres": "194ac"}, {"idx": 27, "lat": -34.646328, "lng": 150.64261, "suburb": "Carrington Falls", "price": "$1,950,000", "pct": 70.0, "acres": "54ac"}, {"idx": 28, "lat": -34.72459, "lng": 150.0731, "suburb": "Tallong", "price": "$1,290,000", "pct": 70.0, "acres": "43ac"}, {"idx": 29, "lat": -34.792206, "lng": 150.15903, "suburb": "Tallong", "price": "$1,750,000", "pct": 70.0, "acres": "99ac"}, {"idx": 30, "lat": -34.83338, "lng": 149.21762, "suburb": "Gunning", "price": "$1,289,000", "pct": 70.0, "acres": "198ac"}, {"idx": 31, "lat": -34.63493233, "lng": 149.63355343, "suburb": "Goulburn", "price": "$1,275,000", "pct": 70.0, "acres": "124ac"}, {"idx": 32, "lat": -33.82072, "lng": 149.83408, "suburb": "Mozart", "price": "$1,225,000", "pct": 69.5, "acres": "70ac"}, {"idx": 33, "lat": -34.517258, "lng": 149.9921, "suburb": "Big Hill", "price": "$650,000", "pct": 69.5, "acres": "98ac"}, {"idx": 34, "lat": -34.825314, "lng": 149.60207, "suburb": "Goulburn", "price": "$1,690,000", "pct": 69.5, "acres": "53ac"}, {"idx": 35, "lat": -34.64396, "lng": 149.78757, "suburb": "Tarlo", "price": "$1,400,000", "pct": 69.5, "acres": "100ac"}, {"idx": 36, "lat": -34.903843, "lng": 149.885, "suburb": "Bungonia", "price": "$925,000", "pct": 69.5, "acres": "32ac"}, {"idx": 37, "lat": -33.560863, "lng": 149.68706, "suburb": "O'Connell", "price": "Auction - Friday 18th September from 10:30am", "pct": 69.0, "acres": "40ac"}, {"idx": 38, "lat": -35.006535, "lng": 149.13046, "suburb": "Murrumbateman", "price": "$850,000", "pct": 68.5, "acres": "62ac"}, {"idx": 39, "lat": -34.234547, "lng": 149.26524, "suburb": "Crookwell", "price": "$920,000", "pct": 68.5, "acres": "185ac"}, {"idx": 40, "lat": -34.3848803, "lng": 149.20097529, "suburb": "Crookwell", "price": "Contact Agent", "pct": 68.0, "acres": "86ac"}, {"idx": 41, "lat": -34.77178, "lng": 150.12697, "suburb": "Tallong", "price": "$1,695,000", "pct": 67.5, "acres": "138ac"}, {"idx": 42, "lat": -33.5086, "lng": 150.11139, "suburb": "Lithgow", "price": "$1,600,000", "pct": 67.0, "acres": "38ac"}, {"idx": 43, "lat": -34.997967, "lng": 149.90381, "suburb": "Windellama", "price": "$1,250,000", "pct": 67.0, "acres": "199ac"}, {"idx": 44, "lat": -34.77611, "lng": 149.73781, "suburb": "Goulburn", "price": "$2,000,000", "pct": 67.0, "acres": "180ac"}, {"idx": 45, "lat": -35.13609, "lng": 149.83466, "suburb": "Lower Boro", "price": "$910,000", "pct": 66.5, "acres": "101ac"}, {"idx": 46, "lat": -34.45797, "lng": 149.47028, "suburb": "Crookwell", "price": "$995,000", "pct": 66.5, "acres": "100ac"}, {"idx": 47, "lat": -35.075134, "lng": 149.93077, "suburb": "Oallen", "price": "$600,000", "pct": 66.5, "acres": "99ac"}, {"idx": 48, "lat": -33.28471, "lng": 149.43694, "suburb": "Billywillinga", "price": "$1,150,000", "pct": 66.0, "acres": "65ac"}, {"idx": 49, "lat": -34.39968, "lng": 149.8198, "suburb": "Taralga", "price": "$400,000", "pct": 66.0, "acres": "40ac"}, {"idx": 50, "lat": -34.418587, "lng": 149.5322, "suburb": "Crookwell", "price": "$1,100,000", "pct": 66.0, "acres": "100ac"}, {"idx": 51, "lat": -35.187344, "lng": 149.7329, "suburb": "Boro", "price": "$698,000", "pct": 66.0, "acres": "111ac"}, {"idx": 52, "lat": -33.435013, "lng": 149.92119, "suburb": "Meadow Flat", "price": "$549,000", "pct": 65.0, "acres": "60ac"}, {"idx": 53, "lat": -34.798374, "lng": 149.71303, "suburb": "Goulburn", "price": "$1,650,000", "pct": 65.0, "acres": "54ac"}, {"idx": 54, "lat": -35.12082, "lng": 149.80858, "suburb": "Lower Boro", "price": "$595,000", "pct": 65.0, "acres": "100ac"}, {"idx": 55, "lat": -34.81110795, "lng": 150.45207375, "suburb": "Budgong", "price": "$990,000", "pct": 65.0, "acres": "40ac"}, {"idx": 56, "lat": -34.67154877, "lng": 149.71239752, "suburb": "Kingsdale", "price": "$620,000", "pct": 65.0, "acres": "40ac"}, {"idx": 57, "lat": -34.39191555, "lng": 149.80923162, "suburb": "Taralga", "price": "Contact Agent", "pct": 65.0, "acres": "144ac"}, {"idx": 58, "lat": -34.629807, "lng": 150.11855, "suburb": "Paddys River", "price": "Contact Agent", "pct": 64.5, "acres": "99ac"}, {"idx": 59, "lat": -34.607933, "lng": 149.62068, "suburb": "Wayo", "price": "$520,000", "pct": 64.5, "acres": "41ac"}, {"idx": 60, "lat": -34.97646132, "lng": 148.98176695, "suburb": "Murrumbateman", "price": "$1,875,000", "pct": 64.5, "acres": "39ac"}, {"idx": 61, "lat": -34.72564, "lng": 149.1545, "suburb": "Gunning", "price": "$1,399,000", "pct": 64.0, "acres": "200ac"}, {"idx": 62, "lat": -34.152092, "lng": 149.21712, "suburb": "Bigga", "price": "Contact Agent", "pct": 63.5, "acres": "99ac"}, {"idx": 63, "lat": -35.3913612, "lng": 149.67269263, "suburb": "Braidwood", "price": "$850,000", "pct": 63.5, "acres": "40ac"}, {"idx": 64, "lat": -35.26843, "lng": 149.79424, "suburb": "Mayfield", "price": "$835,000", "pct": 63.0, "acres": "158ac"}, {"idx": 65, "lat": -34.862186, "lng": 149.81183, "suburb": "Gundary", "price": "Contact Agent", "pct": 62.5, "acres": "99ac"}, {"idx": 66, "lat": -34.884537, "lng": 149.96632, "suburb": "Bungonia", "price": "$795,000", "pct": 62.5, "acres": "37ac"}, {"idx": 67, "lat": -35.01057, "lng": 149.84218, "suburb": "Windellama", "price": "$1,190,000", "pct": 62.5, "acres": "38ac"}, {"idx": 68, "lat": -34.72063, "lng": 149.74873, "suburb": "Goulburn", "price": "$795,000", "pct": 62.0, "acres": "53ac"}, {"idx": 69, "lat": -34.926568112663254, "lng": 149.7270749061798, "suburb": "Goulburn", "price": "$1,550,000", "pct": 62.0, "acres": "104ac"}, {"idx": 70, "lat": -34.92532, "lng": 149.1032, "suburb": "Yass River", "price": "$1,395,000", "pct": 61.5, "acres": "188ac"}, {"idx": 71, "lat": -35.11481, "lng": 149.32678, "suburb": "Gundaroo", "price": "By Negotiation", "pct": 61.5, "acres": "68ac"}, {"idx": 72, "lat": -35.253674, "lng": 149.26979, "suburb": "Wamboin", "price": "$1,725,000", "pct": 61.5, "acres": "30ac"}, {"idx": 73, "lat": -34.94225693, "lng": 149.13771057, "suburb": "Yass River", "price": "$1,300,000", "pct": 61.5, "acres": "188ac"}, {"idx": 74, "lat": -33.318993, "lng": 149.5121, "suburb": "Mount Rankin", "price": "$1,850,000", "pct": 61.0, "acres": "87ac"}, {"idx": 75, "lat": -34.887333, "lng": 148.95049, "suburb": "Yass", "price": "$1,895,000", "pct": 61.0, "acres": "37ac"}, {"idx": 76, "lat": -34.883293, "lng": 149.031, "suburb": "Yass River", "price": "$1,420,000", "pct": 61.0, "acres": "50ac"}, {"idx": 77, "lat": -34.83001905, "lng": 148.89924985, "suburb": "Yass", "price": "$1,985,000", "pct": 61.0, "acres": "37ac"}, {"idx": 78, "lat": -33.446087, "lng": 149.83302, "suburb": "Yetholme", "price": "$1,125,000", "pct": 59.5, "acres": "121ac"}, {"idx": 79, "lat": -34.62995717, "lng": 150.12643555, "suburb": "Paddys River", "price": "Contact Agent", "pct": 59.5, "acres": "99ac"}, {"idx": 80, "lat": -33.365196, "lng": 149.177, "suburb": "Lucknow", "price": "$1,750,000", "pct": 59.0, "acres": "146ac"}, {"idx": 81, "lat": -33.88436, "lng": 149.7778, "suburb": "Black Springs", "price": "$550,000", "pct": 58.5, "acres": "33ac"}, {"idx": 82, "lat": -33.249737, "lng": 149.58081, "suburb": "Duramana", "price": "$900,000", "pct": 58.5, "acres": "181ac"}, {"idx": 83, "lat": -35.434063, "lng": 149.80267, "suburb": "Braidwood", "price": "$1,950,000", "pct": 58.5, "acres": "119ac"}, {"idx": 84, "lat": -34.74898394, "lng": 148.8647454, "suburb": "Bowning", "price": "$1,585,000", "pct": 58.5, "acres": "129ac"}, {"idx": 85, "lat": -35.09750627, "lng": 149.84439497, "suburb": "Lower Boro", "price": "Contact Agent", "pct": 58.0, "acres": "147ac"}, {"idx": 86, "lat": -34.72798, "lng": 149.53697, "suburb": "Goulburn", "price": "$1,450,000", "pct": 57.5, "acres": "99ac"}, {"idx": 87, "lat": -34.962646, "lng": 149.90657, "suburb": "Windellama", "price": "$1,350,000", "pct": 57.5, "acres": "51ac"}, {"idx": 88, "lat": -34.665634, "lng": 149.53172, "suburb": "Mummel", "price": "$425,000", "pct": 57.5, "acres": "34ac"}, {"idx": 89, "lat": -34.6618, "lng": 149.57414, "suburb": "Mummel", "price": "$1,850,000", "pct": 57.5, "acres": "100ac"}, {"idx": 90, "lat": -35.02544623, "lng": 149.86452676, "suburb": "Windellama", "price": "$1,650,000", "pct": 57.5, "acres": "106ac"}, {"idx": 91, "lat": -34.66567438, "lng": 149.53174201, "suburb": "Mummel", "price": "$425,000", "pct": 57.5, "acres": "34ac"}, {"idx": 92, "lat": -34.67154846, "lng": 149.71239747, "suburb": "Kingsdale", "price": "$499,000", "pct": 57.5, "acres": "40ac"}, {"idx": 93, "lat": -34.481346, "lng": 150.15822, "suburb": "Canyonleigh", "price": "Contact Agent", "pct": 56.5, "acres": "128ac"}, {"idx": 94, "lat": -34.75546, "lng": 149.55417, "suburb": "Parkesbourne", "price": "$550,000", "pct": 55.0, "acres": "40ac"}, {"idx": 95, "lat": -35.05683, "lng": 149.84013, "suburb": "Windellama", "price": "$1,390,000", "pct": 55.0, "acres": "185ac"}, {"idx": 96, "lat": -33.365196, "lng": 149.177, "suburb": "Orange", "price": "$1,750,000", "pct": 54.5, "acres": "146ac"}, {"idx": 97, "lat": -34.577206, "lng": 149.46324, "suburb": "Bannister", "price": "$750,000", "pct": 54.5, "acres": "46ac"}, {"idx": 98, "lat": -34.866497, "lng": 149.01103, "suburb": "Manton", "price": "$799,000", "pct": 54.5, "acres": "33ac"}, {"idx": 99, "lat": -34.3073, "lng": 149.3795, "suburb": "Binda", "price": "$715,000", "pct": 54.0, "acres": "57ac"}, {"idx": 100, "lat": -33.695667, "lng": 149.32779, "suburb": "Hobbys Yards", "price": "$1,200,000", "pct": 53.5, "acres": "37ac"}, {"idx": 101, "lat": -33.344448, "lng": 149.18436, "suburb": "Orange", "price": "$1,850,000", "pct": 53.5, "acres": "150ac"}, {"idx": 102, "lat": -34.42796, "lng": 149.46849, "suburb": "Crookwell", "price": "$1,250,000", "pct": 53.5, "acres": "35ac"}, {"idx": 103, "lat": -35.553375, "lng": 149.74948, "suburb": "Majors Creek", "price": "CONTACT AGENT", "pct": 53.5, "acres": "109ac"}, {"idx": 104, "lat": -35.139603, "lng": 149.95634, "suburb": "Oallen", "price": "$539,000", "pct": 53.5, "acres": "104ac"}, {"idx": 105, "lat": -33.69568856, "lng": 149.32776549, "suburb": "Bathurst", "price": "$1,200,000", "pct": 53.5, "acres": "37ac"}, {"idx": 106, "lat": -33.127598, "lng": 149.76848, "suburb": "Upper Turon", "price": "$849,000", "pct": 53.0, "acres": "187ac"}, {"idx": 107, "lat": -35.55098215, "lng": 149.73988438, "suburb": "Majors Creek", "price": "CONTACT AGENT", "pct": 53.0, "acres": "64ac"}, {"idx": 108, "lat": -34.45797, "lng": 149.47028, "suburb": "Crookwell", "price": "$585,000", "pct": 52.5, "acres": "81ac"}, {"idx": 109, "lat": -35.17915, "lng": 149.7379, "suburb": "Boro", "price": "$675,000", "pct": 52.5, "acres": "116ac"}, {"idx": 110, "lat": -34.751198, "lng": 149.8862, "suburb": "Marulan", "price": "$1,050,000", "pct": 52.0, "acres": "42ac"}, {"idx": 111, "lat": -34.884354, "lng": 149.7263, "suburb": "Goulburn", "price": "$1,500,000", "pct": 52.0, "acres": "100ac"}, {"idx": 112, "lat": -35.101295, "lng": 149.6536, "suburb": "Tarago", "price": "$1,150,000", "pct": 51.5, "acres": "170ac"}, {"idx": 113, "lat": -34.827774, "lng": 148.90831, "suburb": "Yass", "price": "$1,239,000", "pct": 51.5, "acres": "54ac"}, {"idx": 114, "lat": -34.88246773, "lng": 148.99068088, "suburb": "Manton", "price": "$1,550,000", "pct": 51.5, "acres": "40ac"}, {"idx": 115, "lat": -35.00944524, "lng": 149.3590498, "suburb": "Gundaroo", "price": "$1,850,000", "pct": 51.5, "acres": "124ac"}, {"idx": 116, "lat": -34.971172, "lng": 149.07068, "suburb": "Murrumbateman", "price": "$1,399,500", "pct": 51.0, "acres": "31ac"}, {"idx": 117, "lat": -35.26763, "lng": 149.31142, "suburb": "Wamboin", "price": "$740,000", "pct": 51.0, "acres": "35ac"}, {"idx": 118, "lat": -33.605762, "lng": 149.22482, "suburb": "Blayney", "price": "Auction - Friday 18th September from 10:30am", "pct": 50.5, "acres": "61ac"}, {"idx": 119, "lat": -34.746414, "lng": 150.10495, "suburb": "Tallong", "price": "$1,000,000", "pct": 50.0, "acres": "40ac"}, {"idx": 120, "lat": -34.967743, "lng": 149.78195, "suburb": "Goulburn", "price": "$580,000", "pct": 50.0, "acres": "40ac"}, {"idx": 121, "lat": -34.92727, "lng": 149.44344, "suburb": "Collector", "price": "Offers Welcome !", "pct": 49.0, "acres": "30ac"}, {"idx": 122, "lat": -33.31457, "lng": 149.55136, "suburb": "Duramana", "price": "AUCTION", "pct": 48.5, "acres": "37ac"}, {"idx": 123, "lat": -33.210007, "lng": 149.74013, "suburb": "Paling Yards", "price": "$550,000", "pct": 48.5, "acres": "40ac"}, {"idx": 124, "lat": -33.651253, "lng": 149.27092, "suburb": "Barry", "price": "Auction - Friday 28th August from 10:30am", "pct": 48.5, "acres": "60ac"}, {"idx": 125, "lat": -34.67758, "lng": 149.71278, "suburb": "Goulburn", "price": "$495,000", "pct": 48.5, "acres": "40ac"}, {"idx": 126, "lat": -35.36332214, "lng": 149.28577511, "suburb": "Carwoola", "price": "$1,550,000", "pct": 48.5, "acres": "31ac"}, {"idx": 127, "lat": -34.72063, "lng": 149.74873, "suburb": "Goulburn", "price": "$550,000", "pct": 47.5, "acres": "40ac"}, {"idx": 128, "lat": -34.47064781, "lng": 149.82146246, "suburb": "Myrtleville", "price": "$1,850,000", "pct": 47.5, "acres": "192ac"}, {"idx": 129, "lat": -34.653217, "lng": 149.54697, "suburb": "Goulburn", "price": "Auction Unless Sold Prior", "pct": 46.5, "acres": "50ac"}, {"idx": 130, "lat": -35.104946, "lng": 149.6504, "suburb": "Tarago", "price": "$975,000", "pct": 46.0, "acres": "72ac"}, {"idx": 131, "lat": -34.782402, "lng": 149.26639, "suburb": "Gunning", "price": "$359,000", "pct": 46.0, "acres": "30ac"}, {"idx": 132, "lat": -34.45797, "lng": 149.47028, "suburb": "Crookwell", "price": "AUCTION UNLESS SOLD PRIOR", "pct": 46.0, "acres": "41ac"}, {"idx": 133, "lat": -35.33881, "lng": 149.69052, "suburb": "Warri", "price": "$1,750,000", "pct": 46.0, "acres": "100ac"}, {"idx": 134, "lat": -34.86389, "lng": 149.4249, "suburb": "Breadalbane", "price": "$1,300,000", "pct": 44.5, "acres": "180ac"}, {"idx": 135, "lat": -35.389732, "lng": 149.92015, "suburb": "Mongarlowe", "price": "$699,000", "pct": 43.5, "acres": "112ac"}, {"idx": 136, "lat": -35.485493, "lng": 149.92455, "suburb": "Monga", "price": "$699,000", "pct": 43.5, "acres": "120ac"}, {"idx": 137, "lat": -33.359478, "lng": 149.42108, "suburb": "Rock Forest", "price": "$1,450,000", "pct": 43.0, "acres": "71ac"}, {"idx": 138, "lat": -33.470203, "lng": 150.18027, "suburb": "Lithgow", "price": "$375,000", "pct": 42.5, "acres": "40ac"}, {"idx": 139, "lat": -34.85978, "lng": 149.83711, "suburb": "Goulburn", "price": "$340,000", "pct": 41.5, "acres": "40ac"}, {"idx": 140, "lat": -35.22155, "lng": 149.69516, "suburb": "Boro", "price": "$885,000", "pct": 41.5, "acres": "100ac"}, {"idx": 141, "lat": -34.27287437, "lng": 149.72409102, "suburb": "Taralga", "price": "$365,000", "pct": 41.5, "acres": "51ac"}, {"idx": 142, "lat": -34.19606, "lng": 149.809, "suburb": "Jerrong", "price": "For Sale", "pct": 41.0, "acres": "40ac"}, {"idx": 143, "lat": -35.23273, "lng": 149.3444, "suburb": "Wamboin", "price": "$1,950,000", "pct": 41.0, "acres": "30ac"}, {"idx": 144, "lat": -34.96426086, "lng": 149.09174706, "suburb": "Murrumbateman", "price": "$749,000", "pct": 41.0, "acres": "31ac"}, {"idx": 145, "lat": -33.85498, "lng": 149.91779, "suburb": "Chatham Valley", "price": "$1,550,000", "pct": 40.0, "acres": "50ac"}, {"idx": 146, "lat": -34.588676, "lng": 149.63396, "suburb": "Wayo", "price": "$1,100,000", "pct": 40.0, "acres": "100ac"}, {"idx": 147, "lat": -34.76365, "lng": 149.51544, "suburb": "Parkesbourne", "price": "$990,000", "pct": 40.0, "acres": "79ac"}, {"idx": 148, "lat": -34.68489412, "lng": 149.74573746, "suburb": "Goulburn", "price": "$775,000", "pct": 39.5, "acres": "50ac"}, {"idx": 149, "lat": -34.6343, "lng": 149.4914, "suburb": "Bannister", "price": "Expressions of Interest", "pct": 39.0, "acres": "100ac"}, {"idx": 150, "lat": -34.92502, "lng": 149.82991, "suburb": "Quialigo", "price": "$1,550,000", "pct": 36.5, "acres": "99ac"}, {"idx": 151, "lat": -34.802856, "lng": 149.95602, "suburb": "Marulan", "price": "$520,000", "pct": 35.0, "acres": "40ac"}, {"idx": 152, "lat": -34.68489412, "lng": 149.74573746, "suburb": "Goulburn", "price": "$550,000", "pct": 35.0, "acres": "42ac"}, {"idx": 153, "lat": -35.00250277, "lng": 149.0378564, "suburb": "Murrumbateman", "price": "$1,830,000", "pct": 33.5, "acres": "40ac"}, {"idx": 154, "lat": -34.233154, "lng": 149.76974, "suburb": "Taralga", "price": "$1,080,000", "pct": 33.0, "acres": "99ac"}, {"idx": 155, "lat": -34.212112, "lng": 149.53433, "suburb": "Crookwell", "price": "$1,300,000", "pct": 31.0, "acres": "145ac"}, {"idx": 156, "lat": -35.56901245, "lng": 149.66244252, "suburb": "Bendoura", "price": "$850,000", "pct": 31.0, "acres": "113ac"}, {"idx": 157, "lat": -35.135174, "lng": 149.761, "suburb": "Lower Boro", "price": "$680,000", "pct": 29.0, "acres": "105ac"}, {"idx": 158, "lat": -33.47259715, "lng": 149.56440035, "suburb": "Orton Park", "price": "$1,650,000", "pct": 29.0, "acres": "77ac"}, {"idx": 159, "lat": -35.10247, "lng": 149.7099, "suburb": "Tarago", "price": "$620,000", "pct": 26.0, "acres": "40ac"}, {"idx": 160, "lat": -35.28781, "lng": 149.74844, "suburb": "Larbert", "price": "$595,000", "pct": 26.0, "acres": "100ac"}, {"idx": 161, "lat": -34.7263, "lng": 149.7292, "suburb": "Taralga", "price": "$365,000", "pct": 20.0, "acres": "51ac"}, {"idx": 162, "lat": -33.114265, "lng": 149.699, "suburb": "Wattle Flat", "price": "$380,000", "pct": 13.5, "acres": "34ac"}, {"idx": 163, "lat": -33.417618, "lng": 149.146, "suburb": "Spring Hill", "price": "$1,000,000", "pct": 6.0, "acres": "69ac"}, {"idx": 164, "lat": -35.011406, "lng": 149.87723, "suburb": "Goulburn", "price": "$699,000", "pct": 75.0, "acres": "40ac"}, {"idx": 165, "lat": -33.916042, "lng": 149.96179, "suburb": "Gingkin", "price": "$1,075,000", "pct": 73.0, "acres": "139ac"}, {"idx": 166, "lat": -33.923134, "lng": 149.95874, "suburb": "Gingkin", "price": "$900,000", "pct": 72.5, "acres": "90ac"}, {"idx": 167, "lat": -33.677624, "lng": 149.28029, "suburb": "Barry", "price": "$950,000", "pct": 64.5, "acres": "34ac"}, {"idx": 168, "lat": -35.603127, "lng": 149.82777, "suburb": "Reidsdale", "price": "$1,495,000", "pct": 64.5, "acres": "68ac"}, {"idx": 169, "lat": -35.47545, "lng": 149.72636, "suburb": "Braidwood", "price": "$1,135,000", "pct": 63.0, "acres": "112ac"}, {"idx": 170, "lat": -33.302002, "lng": 149.49968, "suburb": "Mount Rankin", "price": "Contact Agent", "pct": 53.0, "acres": "87ac"}, {"idx": 171, "lat": -33.663776, "lng": 149.7358, "suburb": "Twenty Forests", "price": "$369,000", "pct": 46.0, "acres": "102ac"}, {"idx": 172, "lat": -33.483036, "lng": 149.08647, "suburb": "Forest Reefs", "price": "Contact Agent", "pct": 43.5, "acres": "70ac"}, {"idx": 173, "lat": -34.9642601, "lng": 149.0917511, "suburb": "Murrumbateman", "price": "$700,000", "pct": 6.0, "acres": "31ac"}, {"idx": 174, "lat": -35.390774, "lng": 149.67302, "suburb": "Braidwood", "price": "$890,000", "pct": 63.5, "acres": "40ac"}, {"idx": 175, "lat": -35.354935, "lng": 150.00558, "suburb": "Braidwood", "price": "Contact Agent", "pct": 58.5, "acres": "160ac"}];
-    const mapPinEls = {};   // idx -> DOM element of the pin div
-    const mapMarkers = {};  // idx -> Leaflet marker
+    const mapPinEls = {};          // idx -> DOM element of the inline pin div
+    const mapMarkers = {};         // idx -> inline Leaflet marker
+    const expandedMapMarkers = {}; // idx -> expanded-map Leaflet marker
+    const mapPreviewSelection = { inline: null, expanded: null };
 
     function pinColor(pct) {
         if (pct >= 70) return '#166534';
@@ -19983,21 +20138,135 @@
         });
     }
 
-    function wireMarkerAccessibility(marker, m) {
+    function wireMarkerAccessibility(marker, m, onSelect) {
         const decorate = () => {
             const el = marker.getElement();
             if (!el) return;
-            el.setAttribute('aria-label', 'Property ' + (m.idx + 1) + ' in ' + m.suburb + '. Open map details.');
+            el.setAttribute('aria-label', 'Property ' + (m.idx + 1) + ' in ' + m.suburb + '. Show property preview.');
             if (el.dataset.keyboardWired === '1') return;
             el.dataset.keyboardWired = '1';
             el.addEventListener('keydown', event => {
                 if (event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
-                marker.openPopup();
+                onSelect();
             });
         };
+        marker.on('click', onSelect);
         decorate();
         marker.on('add', decorate);
+    }
+
+    function updateSelectedMapPins() {
+        document.querySelectorAll('.map-pin[data-idx]').forEach(pin => {
+            const selectedIdx = mapPreviewSelection[pin.dataset.context];
+            pin.classList.toggle('selected-pin', selectedIdx === Number(pin.dataset.idx));
+        });
+    }
+
+    function refreshMapPreviewFavourite(idx) {
+        document.querySelectorAll('.map-preview:not([hidden])').forEach(preview => {
+            if (Number(preview.dataset.idx) !== idx) return;
+            const propertyId = preview.dataset.propertyId || '';
+            const saved = Boolean(state.favourites[propertyId]);
+            const button = preview.querySelector('.map-preview-save');
+            if (!button) return;
+            button.setAttribute('aria-pressed', String(saved));
+            button.textContent = saved ? 'Saved' : 'Save';
+        });
+    }
+
+    function showMapPreview(idx, context) {
+        const preview = document.getElementById('map-preview-' + context);
+        const card = document.getElementById('card-' + idx);
+        if (!preview || !card) return;
+
+        const markerData = markersData.find(item => item.idx === idx);
+        const title = card.querySelector('.headline')?.textContent.trim() || 'Property ' + (idx + 1);
+        const address = card.querySelector('.address')?.textContent.trim() || markerData?.suburb || '';
+        const price = card.querySelector('.price')?.textContent.trim() || markerData?.price || '';
+        const score = card.querySelector('.score-badge')?.textContent.trim() || '';
+        const listing = card.querySelector('.btn-view');
+        const sourcePhoto = card.querySelector('.card-photo img');
+        const previewPhoto = preview.querySelector('.map-preview-photo');
+        const propertyId = card.dataset.propertyId || '';
+
+        preview.dataset.idx = String(idx);
+        preview.dataset.propertyId = propertyId;
+        preview.querySelector('.map-preview-kicker').textContent =
+            '#' + (idx + 1) + (markerData?.suburb ? ' · ' + markerData.suburb : '') + (score ? ' · ' + score : '');
+        preview.querySelector('.map-preview-title').textContent = title;
+        preview.querySelector('.map-preview-price').textContent = price;
+        preview.querySelector('.map-preview-address').textContent = address;
+
+        if (sourcePhoto?.src) {
+            previewPhoto.src = sourcePhoto.src;
+            previewPhoto.alt = title + ' property photo';
+            previewPhoto.hidden = false;
+        } else {
+            previewPhoto.removeAttribute('src');
+            previewPhoto.alt = '';
+            previewPhoto.hidden = true;
+        }
+
+        const stats = preview.querySelector('.map-preview-stats');
+        stats.textContent = '';
+        Array.from(card.querySelectorAll('.stats > *')).slice(0, 4).forEach(source => {
+            const stat = document.createElement('span');
+            stat.className = 'map-preview-stat';
+            stat.textContent = source.textContent.trim();
+            stats.appendChild(stat);
+        });
+
+        const details = preview.querySelector('.map-preview-details');
+        details.dataset.idx = String(idx);
+        const listingLink = preview.querySelector('.map-preview-listing');
+        listingLink.href = listing?.href || '#';
+        const save = preview.querySelector('.map-preview-save');
+        save.dataset.idx = String(idx);
+        save.dataset.propertyId = propertyId;
+
+        preview.classList.remove('is-expanded');
+        const grip = preview.querySelector('.map-preview-grip');
+        grip.setAttribute('aria-expanded', 'false');
+        grip.setAttribute('aria-label', 'Expand property preview');
+        preview.hidden = false;
+        mapPreviewSelection[context] = idx;
+        refreshMapPreviewFavourite(idx);
+        updateSelectedMapPins();
+        if (context === 'expanded') requestAnimationFrame(() => expandedMap?.invalidateSize());
+    }
+
+    function closeMapPreview(context) {
+        const preview = document.getElementById('map-preview-' + context);
+        const idx = mapPreviewSelection[context];
+        if (preview) preview.hidden = true;
+        mapPreviewSelection[context] = null;
+        updateSelectedMapPins();
+        if (context === 'expanded') requestAnimationFrame(() => expandedMap?.invalidateSize());
+        const marker = context === 'expanded' ? expandedMapMarkers[idx] : mapMarkers[idx];
+        marker?.getElement()?.focus();
+    }
+
+    function toggleMapPreviewSheet(button) {
+        const preview = button.closest('.map-preview');
+        if (!preview) return;
+        const expanded = preview.classList.toggle('is-expanded');
+        button.setAttribute('aria-expanded', String(expanded));
+        button.setAttribute('aria-label', expanded ? 'Collapse property preview' : 'Expand property preview');
+    }
+
+    async function toggleMapPreviewFavourite(button) {
+        const idx = Number(button.dataset.idx);
+        const propertyId = button.dataset.propertyId || '';
+        if (!Number.isInteger(idx) || !propertyId) return;
+        await toggleFavourite(idx, propertyId);
+        refreshMapPreviewFavourite(idx);
+    }
+
+    function viewMapPreviewDetails(idx, context) {
+        if (!Number.isInteger(idx)) return;
+        if (context === 'expanded') closeExpandedMap();
+        scrollToCard(idx);
     }
 
     function scrollToCard(idx) {
@@ -20043,11 +20312,11 @@
         const mapEl = document.getElementById('shortlist-map');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (mapEl) mapEl.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
-        // Defer pan/zoom until the smooth-scroll has settled so the popup
-        // anchors correctly relative to the now-visible map viewport.
+        // Defer pan/zoom until the smooth-scroll has settled so the selected
+        // pin and preview update against the now-visible map viewport.
         setTimeout(() => {
             const revealMarker = () => {
-                marker.openPopup();
+                showMapPreview(idx, 'inline');
                 pulsePin(idx);
             };
             if (propertyClusters) {
@@ -20062,6 +20331,7 @@
     function resetMapView() {
         if (!map || !initialMapBounds) return;
         map.closePopup();
+        if (Number.isInteger(mapPreviewSelection.inline)) closeMapPreview('inline');
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             map.fitBounds(initialMapBounds, { padding: [30, 30], animate: false });
         } else {
@@ -20077,6 +20347,7 @@
         button.setAttribute('aria-expanded', String(open));
         button.textContent = open ? 'Hide Map' : 'View Map';
         if (open) setTimeout(() => { if (map) map.invalidateSize(); }, 0);
+        else if (Number.isInteger(mapPreviewSelection.inline)) closeMapPreview('inline');
     }
 
     function updateMapPin(idx, reaction) {
@@ -20133,20 +20404,14 @@
             const color = pinColor(m.pct);
             const icon = L.divIcon({
                 className: '',
-                html: '<div class="map-pin" data-idx="' + m.idx + '" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
+                html: '<div class="map-pin" data-context="inline" data-idx="' + m.idx + '" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
                 iconSize: [28, 28],
                 iconAnchor: [14, 14],
                 popupAnchor: [0, -16]
             });
 
             const marker = L.marker([m.lat, m.lng], { icon: icon });
-            marker.bindPopup(
-                '<strong>' + m.suburb + '</strong><br>' +
-                m.price + (m.acres ? ' &middot; ' + m.acres : '') +
-                ' &middot; ' + m.pct.toFixed(0) + '%<br>' +
-                '<button type="button" class="popup-link" onclick="scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
-            );
-            wireMarkerAccessibility(marker, m);
+            wireMarkerAccessibility(marker, m, () => showMapPreview(m.idx, 'inline'));
             propertyClusters.addLayer(marker);
 
             mapMarkers[m.idx] = marker;
@@ -20155,10 +20420,11 @@
             // Grab pin DOM reference after it renders
             marker.on('add', () => {
                 setTimeout(() => {
-                    const el = document.querySelector('.map-pin[data-idx="' + m.idx + '"]');
+                    const el = marker.getElement()?.querySelector('.map-pin');
                     if (el) {
                         mapPinEls[m.idx] = el;
                         restoreMapPinState(m.idx, m.pct, el);
+                        updateSelectedMapPins();
                     }
                 }, 50);
             });
@@ -20211,23 +20477,32 @@
                 const color = pinColor(m.pct);
                 const icon = L.divIcon({
                     className: '',
-                    html: '<div class="map-pin" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
+                    html: '<div class="map-pin" data-context="expanded" data-idx="' + m.idx + '" style="background:' + color + ';">' + (m.idx + 1) + '</div>',
                     iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16]
                 });
                 const marker = L.marker([m.lat, m.lng], { icon: icon });
-                marker.bindPopup(
-                    '<strong>' + m.suburb + '</strong><br>' +
-                    m.price + (m.acres ? ' &middot; ' + m.acres : '') +
-                    ' &middot; ' + m.pct.toFixed(0) + '%<br>' +
-                    '<button type="button" class="popup-link" onclick="closeExpandedMap(); scrollToCard(' + m.idx + ')">Jump to card &darr;</button>'
-                );
-                wireMarkerAccessibility(marker, m);
+                wireMarkerAccessibility(marker, m, () => showMapPreview(m.idx, 'expanded'));
+                marker.on('add', () => {
+                    setTimeout(() => {
+                        const el = marker.getElement()?.querySelector('.map-pin');
+                        if (el) {
+                            restoreMapPinState(m.idx, m.pct, el);
+                            updateSelectedMapPins();
+                        }
+                    }, 50);
+                });
                 expandedClusters.addLayer(marker);
+                expandedMapMarkers[m.idx] = marker;
                 eb.push([m.lat, m.lng]);
             });
             expandedMap.fitBounds(eb, { padding: [40, 40] });
         }
-        setTimeout(() => { if (expandedMap) expandedMap.invalidateSize(); }, 50);
+        setTimeout(() => {
+            if (expandedMap) expandedMap.invalidateSize();
+            if (Number.isInteger(mapPreviewSelection.inline)) {
+                showMapPreview(mapPreviewSelection.inline, 'expanded');
+            }
+        }, 50);
     }
     function closeExpandedMap() {
         const modal = document.getElementById('map-modal');
